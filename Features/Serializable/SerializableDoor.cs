@@ -1,4 +1,5 @@
 using Exiled.API.Features;
+using Interactables.Interobjects;
 using Interactables.Interobjects.DoorUtils;
 using Mirror;
 using ProjectMER.Features.Enums;
@@ -12,8 +13,11 @@ public class SerializableDoor : SerializableObject
     public DoorType DoorType { get; set; } = DoorType.Lcz;
     public bool IsOpen { get; set; } = false;
     public bool IsLocked { get; set; } = false;
-    public DoorPermissionFlags RequiredPermissions { get; set; } = DoorPermissionFlags.None;
-    public bool RequireAll { get; set; } = true;
+    public DoorPermissionFlags KeycardPermissions { get; set; }
+    public bool RequireAll  { get; set; } = true;
+    public DoorDamageType IgnoredDamageSources { get; set; } = DoorDamageType.Weapon;
+    public float DoorHealth { get; set; } = 150f;
+    public LockOnEvent LockOnEvent { get; set; } = LockOnEvent.None;
 
     public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
     {
@@ -47,7 +51,13 @@ public class SerializableDoor : SerializableObject
     {
         doorVariant.NetworkTargetState = IsOpen;
         doorVariant.ServerChangeLock(DoorLockReason.SpecialDoorFeature, IsLocked);
-        doorVariant.RequiredPermissions = new(RequiredPermissions, RequireAll);
+        doorVariant.RequiredPermissions = new(KeycardPermissions, RequireAll);
+        if (doorVariant is not BreakableDoor breakableDoor)
+            return;
+
+        breakableDoor.IgnoredDamageSources = IgnoredDamageSources;
+        breakableDoor.MaxHealth = DoorHealth;
+        breakableDoor.RemainingHealth = DoorHealth;
     }
 
     private DoorVariant DoorPrefab

@@ -62,7 +62,7 @@ public class ProjectMER : Plugin<Config>
         LabApi.Events.Handlers.WarheadEvents.Stopped += _ev.OnWarheadStopped;
         LabApi.Events.Handlers.WarheadEvents.Detonated += _ev.OnWarheadDetonated;
         LabApi.Events.Handlers.ServerEvents.LczDecontaminationStarted += _ev.OnServerLczDecontaminationStarted;
-        LabApi.Events.Handlers.PlayerEvents.Spawning += _ev.OnPlayerSpawning;
+        LabApi.Events.Handlers.PlayerEvents.Spawned += _ev.OnPlayerSpawning;
         LabApi.Events.Handlers.PlayerEvents.InteractingShootingTarget += _ev.OnPlayerInteractingShootingTarget;
 
         Exiled.Events.Handlers.Player.SearchingPickup += _ev.OnPlayerSearchingPickup;

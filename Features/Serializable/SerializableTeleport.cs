@@ -1,5 +1,6 @@
 using AdminToys;
 using Exiled.API.Features;
+using ProjectMER.Features.Enums;
 using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Interfaces;
 using ProjectMER.Features.Objects;
@@ -11,8 +12,35 @@ namespace ProjectMER.Features.Serializable;
 public class SerializableTeleport : SerializableObject, IIndicatorDefinition
 {
     public List<string> Targets { get; set; } = [];
-
+    public List<string> AllowedRoles { get; set; } = new()
+    {
+        "Scp0492",
+        "Scp049",
+        "Scp096",
+        "Scp106",
+        "Scp173",
+        "Scp939",
+        "Scp3114",
+        "ZombieFlamingo",
+        "ClassD",
+        "Scientist",
+        "FacilityGuard",
+        "NtfPrivate",
+        "NtfSergeant",
+        "NtfSpecialist",
+        "NtfCaptain",
+        "ChaosConscript",
+        "ChaosRifleman",
+        "ChaosRepressor",
+        "ChaosMarauder",
+        "Tutorial",
+        "AlphaFlamingo",
+        "Flamingo",
+    };
     public float Cooldown { get; set; } = 5f;
+    public LockOnEvent LockOnEvent { get; set; } = LockOnEvent.None;
+    public int TeleportSoundId { get; set; } = -1;
+    public TeleportFlags TeleportFlags { get; set; } = TeleportFlags.Player;
 
     public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
     {

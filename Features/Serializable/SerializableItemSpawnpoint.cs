@@ -8,28 +8,32 @@ using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Interfaces;
 using UnityEngine;
 using PrimitiveObjectToy = AdminToys.PrimitiveObjectToy;
+using Random = UnityEngine.Random;
 
 namespace ProjectMER.Features.Serializable;
 
 public class SerializableItemSpawnpoint : SerializableObject, IIndicatorDefinition
 {
     public ItemType ItemType { get; set; } = ItemType.Lantern;
-    public float Weight { get; set; } = -1;
     public string AttachmentsCode { get; set; } = "-1";
+    public int SpawnChance { get; set; } = 100;
     public uint NumberOfItems { get; set; } = 1;
     public int NumberOfUses { get; set; } = 1;
     public bool UseGravity { get; set; } = true;
     public bool CanBePickedUp { get; set; } = true;
+    public float Weight { get; set; } = -1;
 
     public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
     {
+        if (Random.Range(0, 101) > SpawnChance)
+            return null;
+        
         GameObject itemSpawnPoint = instance ?? new GameObject("ItemSpawnpoint");
         Vector3 position = room.GetAbsolutePosition(Position);
         Quaternion rotation = room.GetAbsoluteRotation(Rotation);
         _prevIndex = Index;
 
         itemSpawnPoint.transform.SetPositionAndRotation(position, rotation);
-
         if (instance != null)
         {
             foreach (ItemPickupBase pickup in instance.GetComponentsInChildren<ItemPickupBase>())

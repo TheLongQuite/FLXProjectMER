@@ -1,4 +1,8 @@
+using Exiled.API.Extensions;
 using Exiled.API.Features;
+using FLXLib.Extensions;
+using Mirror;
+using ProjectMER.Features.Enums;
 using ProjectMER.Features.Serializable;
 using UnityEngine;
 
@@ -41,7 +45,27 @@ public class TeleportObject : MonoBehaviour
 
         if (NextTimeUse > DateTime.Now)
             return;
+        
+        if (player.IsConnected && !Base.AllowedRoles.Contains(player.GetCustomOrBasicRole()))
+            return;
 
+        bool flag =
+            (!Map.IsLczDecontaminated || !Base.LockOnEvent.HasFlagFast(LockOnEvent.LightDecontaminated)) &&
+            (!Warhead.IsDetonated || !Base.LockOnEvent.HasFlagFast(LockOnEvent.WarheadDetonated)) &&
+            DateTime.Now >= NextTimeUse;
+
+        if (!flag)
+            return;
+        
+        string objectTag = other.GetComponentInParent<NetworkIdentity>()?.gameObject.tag;
+        if (objectTag == null)
+            return;
+        
+        if (objectTag == "Player" && !Base.TeleportFlags.HasFlagFast(TeleportFlags.Player) ||
+            objectTag == "Projectile" && !Base.TeleportFlags.HasFlagFast(TeleportFlags.ActiveGrenade) ||
+            objectTag == "Pickup" && !Base.TeleportFlags.HasFlagFast(TeleportFlags.Pickup))
+            return;
+        
         TeleportObject? target = GetRandomTarget();
         if (target == null)
             return;
@@ -52,5 +76,11 @@ public class TeleportObject : MonoBehaviour
 
         player.Position = target.gameObject.transform.position;
         player.Rotation = Quaternion.Euler(target.gameObject.transform.eulerAngles);
+        int teleportSoundId = Base.TeleportSoundId;
+        if (teleportSoundId != -1)
+        {
+            Log.Assert(teleportSoundId >= 0 && teleportSoundId <= 31, $"The teleport sound id must be between 0 and 31. It is currently {teleportSoundId} for teleport with [{Base.Targets}] targets.");
+            MirrorExtensions.SendFakeTargetRpc(player, ReferenceHub._hostHub.networkIdentity, typeof(AmbientSoundPlayer), "RpcPlaySound", teleportSoundId);
+        }
     }
 }

@@ -1,5 +1,6 @@
 using AdminToys;
 using Exiled.API.Features;
+using Exiled.API.Features.Roles;
 using PlayerRoles;
 using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Interfaces;
@@ -12,7 +13,7 @@ namespace ProjectMER.Features.Serializable;
 
 public class SerializablePlayerSpawnpoint : SerializableObject, IIndicatorDefinition
 {
-    public List<RoleTypeId> Roles { get; set; } = [];
+    public List<string> Roles { get; set; } = [];
 
     [YamlIgnore]
     public override Vector3 Scale { get; set; }
@@ -87,9 +88,12 @@ public class SerializablePlayerSpawnpoint : SerializableObject, IIndicatorDefini
         {
             if (Roles.Count > 0)
             {
-                Color colorSum = new(0f, 0f, 0f, 1f);
-                foreach (RoleTypeId roleType in Roles)
+                Color colorSum = new(10f, 10f, 10f, 1f);
+                foreach (string roleId in Roles)
                 {
+                    if (!Enum.TryParse(roleId, out RoleTypeId roleType))
+                        continue;
+                    
                     Color roleColor = roleType.GetRoleColor();
                     colorSum.r += roleColor.r;
                     colorSum.g += roleColor.g;

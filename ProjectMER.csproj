@@ -33,6 +33,9 @@
         <Reference Include="Exiled.Starter">
             <HintPath>$(EXILED_REFERENCES)\Exiled.Starter.dll</HintPath>
         </Reference>
+        <Reference Include="FLXLib">
+          <HintPath>..\References\FLXLib.dll</HintPath>
+        </Reference>
         <Reference Include="LabApi">
             <HintPath>..\References\LabApi.dll</HintPath>
         </Reference>

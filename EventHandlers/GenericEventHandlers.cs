@@ -1,6 +1,7 @@
 ﻿using Exiled.API.Features;
 using LabApi.Events.Arguments.PlayerEvents;
 using MEC;
+using FLXLib.Extensions;
 using ProjectMER.Features;
 using ProjectMER.Features.Objects;
 using ProjectMER.Features.Serializable;
@@ -21,7 +22,7 @@ public partial class EventHandlers
         PickupUsesLeft.Clear();
     }
 
-    public void OnPlayerSpawning(PlayerSpawningEventArgs ev)
+    public void OnPlayerSpawning(PlayerSpawnedEventArgs ev)
     {
         if (!ev.UseSpawnPoint)
             return;
@@ -31,7 +32,7 @@ public partial class EventHandlers
         {
             foreach (KeyValuePair<string, SerializablePlayerSpawnpoint> spawnpoint in map.PlayerSpawnpoints)
             {
-                if (!spawnpoint.Value.Roles.Contains(ev.Role.RoleTypeId))
+                if (!spawnpoint.Value.Roles.Contains(RoleExtensions.GetCustomOrBasicRole(ev.Player)))
                     continue;
 
                 list.AddRange(map.SpawnedObjects.Where(x => x.Id == spawnpoint.Key));
@@ -43,7 +44,7 @@ public partial class EventHandlers
 
         MapEditorObject randomElement = list[UnityEngine.Random.Range(0, list.Count)];
 
-        ev.SpawnLocation = randomElement.transform.position;
+        ev.Player.Position = randomElement.transform.position;
         Timing.CallDelayed(0.05f, () =>
         {
             try
