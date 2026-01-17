@@ -9,84 +9,78 @@ namespace ProjectMER.Features.Objects;
 
 public class IndicatorObject : MapEditorObject
 {
-	public static Dictionary<IndicatorObject, MapEditorObject> Dictionary = [];
+    public static Dictionary<IndicatorObject, MapEditorObject> Dictionary = [];
 
-	public static bool TrySpawnOrUpdateIndicator(MapEditorObject mapEditorObject)
-	{
-		if (mapEditorObject.Base is not IIndicatorDefinition indicatorDefinition)
-			return false;
+    public static bool TrySpawnOrUpdateIndicator(MapEditorObject mapEditorObject)
+    {
+        if (mapEditorObject.Base is not IIndicatorDefinition indicatorDefinition)
+            return false;
 
-		if (TryGetIndicator(mapEditorObject, out IndicatorObject indicator))
-		{
-			indicatorDefinition.SpawnOrUpdateIndicator(mapEditorObject.Room, indicator.gameObject);
-		}
-		else
-		{
-			indicator = indicatorDefinition.SpawnOrUpdateIndicator(mapEditorObject.Room).AddComponent<IndicatorObject>();
-			BoxCollider collider = indicator.gameObject.AddComponent<BoxCollider>();
-			collider.isTrigger = true;
-			indicator.GetComponentsInChildren<NetworkIdentity>().ForEach(x => NetworkServer.Spawn(x.gameObject));
-			Dictionary.Add(indicator, mapEditorObject);
-		}
+        if (TryGetIndicator(mapEditorObject, out IndicatorObject indicator))
+            indicatorDefinition.SpawnOrUpdateIndicator(mapEditorObject.Room, indicator.gameObject);
+        else
+        {
+            indicator = indicatorDefinition.SpawnOrUpdateIndicator(mapEditorObject.Room)
+                .AddComponent<IndicatorObject>();
 
-		if (Dictionary[indicator].TryGetComponent(out WaypointToy waypoint))
-		{
-			waypoint.NetworkVisualizeBounds = true;
-		}
+            BoxCollider collider = indicator.gameObject.AddComponent<BoxCollider>();
+            collider.isTrigger = true;
+            indicator.GetComponentsInChildren<NetworkIdentity>().ForEach(x => NetworkServer.Spawn(x.gameObject));
+            Dictionary.Add(indicator, mapEditorObject);
+        }
 
-		return true;
-	}
+        if (Dictionary[indicator].TryGetComponent(out WaypointToy waypoint))
+            waypoint.NetworkVisualizeBounds = true;
 
-	public static bool TryGetIndicator(MapEditorObject mapEditorObject, out IndicatorObject indicator)
-	{
-		indicator = null!;
-		if (mapEditorObject.Base is not IIndicatorDefinition _)
-			return false;
+        return true;
+    }
 
-		if (!Dictionary.ContainsValue(mapEditorObject))
-			return false;
+    public static bool TryGetIndicator(MapEditorObject mapEditorObject, out IndicatorObject indicator)
+    {
+        indicator = null!;
+        if (mapEditorObject.Base is not IIndicatorDefinition _)
+            return false;
 
-		indicator = Dictionary.First(x => x.Value == mapEditorObject).Key;
-		return true;
-	}
+        if (!Dictionary.ContainsValue(mapEditorObject))
+            return false;
 
-	public static bool TryDestroyIndicator(MapEditorObject mapEditorObject)
-	{
-		if (!TryGetIndicator(mapEditorObject, out IndicatorObject indicator))
-			return false;
+        indicator = Dictionary.First(x => x.Value == mapEditorObject).Key;
+        return true;
+    }
 
-		if (Dictionary[indicator].TryGetComponent(out WaypointToy waypoint))
-		{
-			waypoint.NetworkVisualizeBounds = false;
-		}
+    public static bool TryDestroyIndicator(MapEditorObject mapEditorObject)
+    {
+        if (!TryGetIndicator(mapEditorObject, out IndicatorObject indicator))
+            return false;
 
-		Dictionary.Remove(indicator);
-		indicator.Destroy();
-		return true;
-	}
+        if (Dictionary[indicator].TryGetComponent(out WaypointToy waypoint))
+            waypoint.NetworkVisualizeBounds = false;
 
-	public static void ClearIndicators()
-	{
-		List<MapEditorObject> values = ListPool<MapEditorObject>.Shared.Rent(Dictionary.Values);
-		foreach (MapEditorObject mapEditorObject in values)
-			TryDestroyIndicator(mapEditorObject);
+        Dictionary.Remove(indicator);
+        indicator.Destroy();
+        return true;
+    }
 
-		ListPool<MapEditorObject>.Shared.Return(values);
-		Dictionary.Clear();
-	}
+    public static void ClearIndicators()
+    {
+        List<MapEditorObject> values = ListPool<MapEditorObject>.Shared.Rent(Dictionary.Values);
+        foreach (MapEditorObject mapEditorObject in values)
+            TryDestroyIndicator(mapEditorObject);
 
-	public static void RefreshIndicators()
-	{
-		ClearIndicators();
+        ListPool<MapEditorObject>.Shared.Return(values);
+        Dictionary.Clear();
+    }
 
-		foreach (MapSchematic map in MapUtils.LoadedMaps.Values)
-		{
-			foreach (MapEditorObject mapEditorObject in map.SpawnedObjects)
-			{
-				TrySpawnOrUpdateIndicator(mapEditorObject);
-			}
-		}
-	}
+    public static void RefreshIndicators()
+    {
+        ClearIndicators();
 
-	public void Update() => transform.position = Dictionary[this].transform.position;
+        foreach (MapSchematic map in MapUtils.LoadedMaps.Values)
+        {
+            foreach (MapEditorObject mapEditorObject in map.SpawnedObjects)
+                TrySpawnOrUpdateIndicator(mapEditorObject);
+        }
+    }
+
+    public void Update() => transform.position = Dictionary[this].transform.position;
 }

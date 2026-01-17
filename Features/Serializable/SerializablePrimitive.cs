@@ -1,6 +1,5 @@
-
 using AdminToys;
-using LabApi.Features.Wrappers;
+using Exiled.API.Features;
 using Mirror;
 using ProjectMER.Features.Extensions;
 using UnityEngine;
@@ -10,39 +9,41 @@ namespace ProjectMER.Features.Serializable;
 
 public class SerializablePrimitive : SerializableObject
 {
-	/// <summary>
-	/// Gets or sets the <see cref="UnityEngine.PrimitiveType"/>.
-	/// </summary>
-	public PrimitiveType PrimitiveType { get; set; } = PrimitiveType.Cube;
+    /// <summary>
+    /// Gets or sets the <see cref="UnityEngine.PrimitiveType"/>.
+    /// </summary>
+    public PrimitiveType PrimitiveType { get; set; } = PrimitiveType.Cube;
 
-	/// <summary>
-	/// Gets or sets the <see cref="SerializablePrimitive"/>'s color.
-	/// </summary>
-	public string Color { get; set; } = "#FF0000";
+    /// <summary>
+    /// Gets or sets the <see cref="SerializablePrimitive"/>'s color.
+    /// </summary>
+    public string Color { get; set; } = "#FF0000";
 
-	/// <summary>
-	/// Gets or sets the <see cref="SerializablePrimitive"/>'s flags.
-	/// </summary>
-	public PrimitiveFlags PrimitiveFlags { get; set; } = (PrimitiveFlags)3;
+    /// <summary>
+    /// Gets or sets the <see cref="SerializablePrimitive"/>'s flags.
+    /// </summary>
+    public PrimitiveFlags PrimitiveFlags { get; set; } = (PrimitiveFlags)3;
 
-	public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
-	{
-		PrimitiveObjectToy primitive = instance == null ? UnityEngine.Object.Instantiate(PrefabManager.PrimitiveObject) : instance.GetComponent<PrimitiveObjectToy>();
-		Vector3 position = room.GetAbsolutePosition(Position);
-		Quaternion rotation = room.GetAbsoluteRotation(Rotation);
-		_prevIndex = Index;
+    public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
+    {
+        PrimitiveObjectToy primitive = instance == null ? UnityEngine.Object.Instantiate(PrefabManager.PrimitiveObject)
+            : instance.GetComponent<PrimitiveObjectToy>();
 
-		primitive.transform.SetPositionAndRotation(position, rotation);
-		primitive.transform.localScale = Scale;
-		primitive.NetworkMovementSmoothing = 60;
+        Vector3 position = room.GetAbsolutePosition(Position);
+        Quaternion rotation = room.GetAbsoluteRotation(Rotation);
+        _prevIndex = Index;
 
-		primitive.NetworkMaterialColor = Color.GetColorFromString();
-		primitive.NetworkPrimitiveType = PrimitiveType;
-		primitive.NetworkPrimitiveFlags = PrimitiveFlags;
+        primitive.transform.SetPositionAndRotation(position, rotation);
+        primitive.transform.localScale = Scale;
+        primitive.NetworkMovementSmoothing = 60;
 
-		if (instance == null)
-			NetworkServer.Spawn(primitive.gameObject);
+        primitive.NetworkMaterialColor = Color.GetColorFromString();
+        primitive.NetworkPrimitiveType = PrimitiveType;
+        primitive.NetworkPrimitiveFlags = PrimitiveFlags;
 
-		return primitive.gameObject;
-	}
+        if (instance == null)
+            NetworkServer.Spawn(primitive.gameObject);
+
+        return primitive.gameObject;
+    }
 }

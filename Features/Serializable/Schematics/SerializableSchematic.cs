@@ -1,5 +1,5 @@
 using AdminToys;
-using LabApi.Features.Wrappers;
+using Exiled.API.Features;
 using Mirror;
 using ProjectMER.Events.Arguments;
 using ProjectMER.Events.Handlers;
@@ -12,46 +12,48 @@ namespace ProjectMER.Features.Serializable.Schematics;
 
 public class SerializableSchematic : SerializableObject
 {
-	public string SchematicName { get; set; } = "None";
+    public string SchematicName { get; set; } = "None";
 
-	public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
-	{
-		PrimitiveObjectToy schematic = instance == null ? UnityEngine.Object.Instantiate(PrefabManager.PrimitiveObject) : instance.GetComponent<PrimitiveObjectToy>();
-		schematic.NetworkPrimitiveFlags = PrimitiveFlags.None;
-		schematic.NetworkMovementSmoothing = 60;
+    public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
+    {
+        PrimitiveObjectToy schematic = instance == null ? UnityEngine.Object.Instantiate(PrefabManager.PrimitiveObject)
+            : instance.GetComponent<PrimitiveObjectToy>();
 
-		Vector3 position = room.GetAbsolutePosition(Position);
-		Quaternion rotation = room.GetAbsoluteRotation(Rotation);
-		_prevIndex = Index;
+        schematic.NetworkPrimitiveFlags = PrimitiveFlags.None;
+        schematic.NetworkMovementSmoothing = 60;
 
-		schematic.name = $"CustomSchematic-{SchematicName}";
-		schematic.transform.SetPositionAndRotation(position, rotation);
-		schematic.transform.localScale = Scale;
+        Vector3 position = room.GetAbsolutePosition(Position);
+        Quaternion rotation = room.GetAbsoluteRotation(Rotation);
+        _prevIndex = Index;
 
-		if (instance == null)
-		{
-			_ = MapUtils.TryGetSchematicDataByName(SchematicName, out SchematicObjectDataList? data) ? data : null;
+        schematic.name = $"CustomSchematic-{SchematicName}";
+        schematic.transform.SetPositionAndRotation(position, rotation);
+        schematic.transform.localScale = Scale;
 
-			if (data == null)
-			{
-				GameObject.Destroy(schematic.gameObject);
-				return null;
-			}
+        if (instance == null)
+        {
+            _ = MapUtils.TryGetSchematicDataByName(SchematicName, out SchematicObjectDataList? data) ? data : null;
 
-			SchematicSpawningEventArgs ev = new(data, SchematicName);
-			Schematic.OnSchematicSpawning(ev);
-			data = ev.Data;
+            if (data == null)
+            {
+                GameObject.Destroy(schematic.gameObject);
+                return null;
+            }
 
-			if (!ev.IsAllowed)
-			{
-				GameObject.Destroy(schematic.gameObject);
-				return null;
-			}
-			
-			NetworkServer.Spawn(schematic.gameObject);
-			schematic.gameObject.AddComponent<SchematicObject>().Init(data);
-		}
+            SchematicSpawningEventArgs ev = new(data, SchematicName);
+            Schematic.OnSchematicSpawning(ev);
+            data = ev.Data;
 
-		return schematic.gameObject;
-	}
+            if (!ev.IsAllowed)
+            {
+                GameObject.Destroy(schematic.gameObject);
+                return null;
+            }
+
+            NetworkServer.Spawn(schematic.gameObject);
+            schematic.gameObject.AddComponent<SchematicObject>().Init(data);
+        }
+
+        return schematic.gameObject;
+    }
 }

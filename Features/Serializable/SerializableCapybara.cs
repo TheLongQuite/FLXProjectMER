@@ -1,4 +1,4 @@
-using LabApi.Features.Wrappers;
+using Exiled.API.Features;
 using Mirror;
 using ProjectMER.Features.Extensions;
 using UnityEngine;
@@ -8,21 +8,23 @@ namespace ProjectMER.Features.Serializable;
 
 public class SerializableCapybara : SerializableObject
 {
-	public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
-	{
-		CapybaraToy capybara = instance == null ? UnityEngine.Object.Instantiate(PrefabManager.Capybara) : instance.GetComponent<CapybaraToy>();
-		Vector3 position = room.GetAbsolutePosition(Position);
-		Quaternion rotation = room.GetAbsoluteRotation(Rotation);
-		_prevIndex = Index;
+    public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
+    {
+        CapybaraToy capybara = instance == null ? UnityEngine.Object.Instantiate(PrefabManager.Capybara)
+            : instance.GetComponent<CapybaraToy>();
 
-		capybara.transform.SetPositionAndRotation(position, rotation);
-		capybara.transform.localScale = Scale;
+        Vector3 position = room.GetAbsolutePosition(Position);
+        Quaternion rotation = room.GetAbsoluteRotation(Rotation);
+        _prevIndex = Index;
 
-		capybara.NetworkCollisionsEnabled = true;
+        capybara.transform.SetPositionAndRotation(position, rotation);
+        capybara.transform.localScale = Scale;
 
-		if (instance == null)
-			NetworkServer.Spawn(capybara.gameObject);
+        capybara.NetworkCollisionsEnabled = true;
 
-		return capybara.gameObject;
-	}
+        if (instance == null)
+            NetworkServer.Spawn(capybara.gameObject);
+
+        return capybara.gameObject;
+    }
 }

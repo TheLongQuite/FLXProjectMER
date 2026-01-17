@@ -1,4 +1,5 @@
-using LabApi.Features.Wrappers;
+using Exiled.API.Enums;
+using Exiled.API.Features;
 using MapGeneration;
 using NorthwoodLib.Pools;
 using ProjectMER.Features.Serializable;
@@ -8,44 +9,51 @@ namespace ProjectMER.Features.Extensions;
 
 public static class RoomExtensions
 {
-	public static Room GetRoomAtPosition(Vector3 position) => Room.TryGetRoomAtPosition(position, out Room? room) ? room : Room.List.First(x => x.Base != null && x.Name == RoomName.Outside);
+    public static Room GetRoomAtPosition(Vector3 position)
+    {
+        Room room = Room.Get(position);
+        return room ?? Room.List.First(x => x != null && x.Type == RoomType.Surface);
+    }
 
-	public static string GetRoomStringId(this Room room) => $"{room.Zone}_{room.Shape}_{room.Name}";
+    public static string GetRoomStringId(this Room room) => $"{room.Zone}_{room.RoomShape}_{room.Type}";
 
-	public static List<Room> GetRooms(this SerializableObject serializableObject)
-	{
-		string[] split = serializableObject.Room.Split('_');
-		if (split.Length != 3)
-			return ListPool<Room>.Shared.Rent(Room.List.Where(x => x.Base != null && x.Name == RoomName.Outside));
+    public static List<Room> GetRooms(this SerializableObject serializableObject)
+    {
+        string[] split = serializableObject.Room.Split('_');
+        if (split.Length != 3)
+            return ListPool<Room>.Shared.Rent(Room.List.Where(x => x != null && x.Type == RoomType.Surface));
 
-		FacilityZone facilityZone = (FacilityZone)Enum.Parse(typeof(FacilityZone), split[0], true);
-		RoomShape roomShape = (RoomShape)Enum.Parse(typeof(RoomShape), split[1], true);
-		RoomName roomName = (RoomName)Enum.Parse(typeof(RoomName), split[2], true);
+        ZoneType facilityZone = (ZoneType)Enum.Parse(typeof(ZoneType), split[0], true);
+        RoomShape roomShape = (RoomShape)Enum.Parse(typeof(RoomShape), split[1], true);
+        RoomType roomName = (RoomType)Enum.Parse(typeof(RoomType), split[2], true);
 
-		return ListPool<Room>.Shared.Rent(Room.List.Where(x => x.Base != null && x.Zone == facilityZone && x.Shape == roomShape && x.Name == roomName));
-	}
+        return ListPool<Room>.Shared.Rent(Room.List.Where(x
+            => x != null && x.Zone == facilityZone && x.RoomShape == roomShape && x.Type == roomName));
+    }
 
-	public static int GetRoomIndex(this Room room)
-	{
-		List<Room> list = ListPool<Room>.Shared.Rent(Room.List.Where(x => x.Base != null && x.Zone == room.Zone && x.Shape == room.Shape && x.Name == room.Name));
-		int index = list.IndexOf(room);
-		ListPool<Room>.Shared.Return(list);
-		return index;
-	}
+    public static int GetRoomIndex(this Room room)
+    {
+        List<Room> list = ListPool<Room>.Shared.Rent(Room.List.Where(x
+            => x != null && x.Zone == room.Zone && x.RoomShape == room.RoomShape && x.Type == room.Type));
 
-	public static Vector3 GetAbsolutePosition(this Room? room, Vector3 position)
-	{
-		if (room is null || room.Name == RoomName.Outside)
-			return position;
+        int index = list.IndexOf(room);
+        ListPool<Room>.Shared.Return(list);
+        return index;
+    }
 
-		return room.Transform.TransformPoint(position);
-	}
+    public static Vector3 GetAbsolutePosition(this Room? room, Vector3 position)
+    {
+        if (room is null || room.Type == RoomType.Surface)
+            return position;
 
-	public static Quaternion GetAbsoluteRotation(this Room? room, Vector3 eulerAngles)
-	{
-		if (room is null || room.Name == RoomName.Outside)
-			return Quaternion.Euler(eulerAngles);
+        return room.Transform.TransformPoint(position);
+    }
 
-		return room.Transform.rotation * Quaternion.Euler(eulerAngles);
-	}
+    public static Quaternion GetAbsoluteRotation(this Room? room, Vector3 eulerAngles)
+    {
+        if (room is null || room.Type == RoomType.Surface)
+            return Quaternion.Euler(eulerAngles);
+
+        return room.Transform.rotation * Quaternion.Euler(eulerAngles);
+    }
 }

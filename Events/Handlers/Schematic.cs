@@ -1,23 +1,23 @@
-using LabApi.Events;
+using Exiled.Events.Features;
 using ProjectMER.Events.Arguments;
 
 namespace ProjectMER.Events.Handlers;
 
 public static class Schematic
 {
-	public static event LabEventHandler<SchematicSpawningEventArgs> SchematicSpawning;
+    public static Event<SchematicSpawningEventArgs> SchematicSpawning { get; set; } = new();
 
-	public static event LabEventHandler<SchematicSpawnedEventArgs> SchematicSpawned;
+    public static Event<SchematicSpawnedEventArgs> SchematicSpawned { get; set; } = new();
 
-	public static event LabEventHandler<ButtonInteractedEventArgs> ButtonInteracted;
+    public static Event<ButtonInteractedEventArgs> ButtonInteracted { get; set; } = new();
 
-	public static event LabEventHandler<SchematicDestroyedEventArgs> SchematicDestroyed;
+    public static Event<SchematicDestroyedEventArgs> SchematicDestroyed { get; set; } = new();
 
-	internal static void OnSchematicSpawning(SchematicSpawningEventArgs ev) => SchematicSpawning.InvokeEvent(ev);
+    internal static void OnSchematicSpawning(SchematicSpawningEventArgs ev) => SchematicSpawning.InvokeSafely(ev);
 
-	internal static void OnSchematicSpawned(SchematicSpawnedEventArgs ev) => SchematicSpawned.InvokeEvent(ev);
+    internal static void OnSchematicSpawned(SchematicSpawnedEventArgs ev) => SchematicSpawned.InvokeSafely(ev);
 
-	internal static void OnButtonInteracted(ButtonInteractedEventArgs ev) => ButtonInteracted.InvokeEvent(ev);
+    internal static void OnButtonInteracted(ButtonInteractedEventArgs ev) => ButtonInteracted.InvokeSafely(ev);
 
-	internal static void OnSchematicDestroyed(SchematicDestroyedEventArgs ev) => SchematicDestroyed.InvokeEvent(ev);
+    internal static void OnSchematicDestroyed(SchematicDestroyedEventArgs ev) => SchematicDestroyed.InvokeSafely(ev);
 }

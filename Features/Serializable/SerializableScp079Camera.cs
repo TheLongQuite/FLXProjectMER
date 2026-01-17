@@ -1,6 +1,6 @@
 ﻿using AdminToys;
-using LabApi.Features.Wrappers;
-using MapGeneration;
+using Exiled.API.Enums;
+using Exiled.API.Features;
 using Mirror;
 using ProjectMER.Features.Extensions;
 using UnityEngine;
@@ -10,62 +10,59 @@ namespace ProjectMER.Features.Serializable;
 
 public class SerializableScp079Camera : SerializableObject
 {
-	public CameraType CameraType { get; set; } = CameraType.Lcz;
-	public string Label { get; set; } = "CustomCamera";
+    public CameraType CameraType { get; set; } = CameraType.Lcz;
+    public string Label { get; set; } = "CustomCamera";
 
-	public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
-	{
-		Scp079CameraToy cameraVariant;
-		Vector3 position = room.GetAbsolutePosition(Position);
-		Quaternion rotation = room.GetAbsoluteRotation(Rotation);
-		_prevIndex = Index;
+    public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
+    {
+        Scp079CameraToy cameraVariant;
+        Vector3 position = room.GetAbsolutePosition(Position);
+        Quaternion rotation = room.GetAbsoluteRotation(Rotation);
+        _prevIndex = Index;
 
-		if (instance == null)
-		{
-			cameraVariant = GameObject.Instantiate(CameraPrefab);
-		}
-		else
-		{
-			cameraVariant = instance.GetComponent<Scp079CameraToy>();
-		}
+        if (instance == null)
+            cameraVariant = GameObject.Instantiate(CameraPrefab);
+        else
+            cameraVariant = instance.GetComponent<Scp079CameraToy>();
 
-		cameraVariant.transform.SetPositionAndRotation(position, rotation);
-		cameraVariant.transform.localScale = Scale;
-		cameraVariant.NetworkScale = cameraVariant.transform.localScale;
+        cameraVariant.transform.SetPositionAndRotation(position, rotation);
+        cameraVariant.transform.localScale = Scale;
+        cameraVariant.NetworkScale = cameraVariant.transform.localScale;
 
-		_prevIndex = Index;
-		_prevType = CameraType;
+        _prevIndex = Index;
+        _prevType = CameraType;
 
-		cameraVariant.NetworkMovementSmoothing = 60;
-		cameraVariant.NetworkLabel = Label;
-		cameraVariant.NetworkRoom = room == null ? LabApi.Features.Wrappers.Room.Get(RoomName.Outside).First().Base : room.Base;
+        cameraVariant.NetworkMovementSmoothing = 60;
+        cameraVariant.NetworkLabel = Label;
+        cameraVariant.NetworkRoom =
+            room == null ? Exiled.API.Features.Room.Get(RoomType.Surface).Identifier : room.Identifier;
 
-		if (instance == null)
-			NetworkServer.Spawn(cameraVariant.gameObject);
+        if (instance == null)
+            NetworkServer.Spawn(cameraVariant.gameObject);
 
-		return cameraVariant.gameObject;
-	}
+        return cameraVariant.gameObject;
+    }
 
 
-	private Scp079CameraToy CameraPrefab
-	{
-		get
-		{
-			Scp079CameraToy prefab = CameraType switch
-			{
-				CameraType.Lcz => PrefabManager.CameraLcz,
-				CameraType.Hcz => PrefabManager.CameraHcz,
-				CameraType.Ez => PrefabManager.CameraEz,
-				CameraType.EzArm => PrefabManager.CameraEzArm,
-				CameraType.Sz => PrefabManager.CameraSz,
-				_ => throw new InvalidOperationException(),
-			};
+    private Scp079CameraToy CameraPrefab
+    {
+        get
+        {
+            Scp079CameraToy prefab = CameraType switch
+            {
+                CameraType.Lcz => PrefabManager.CameraLcz,
+                CameraType.Hcz => PrefabManager.CameraHcz,
+                CameraType.Ez => PrefabManager.CameraEz,
+                CameraType.EzArm => PrefabManager.CameraEzArm,
+                CameraType.Sz => PrefabManager.CameraSz,
+                _ => throw new InvalidOperationException()
+            };
 
-			return prefab;
-		}
-	}
+            return prefab;
+        }
+    }
 
-	public override bool RequiresReloading => CameraType != _prevType || base.RequiresReloading;
+    public override bool RequiresReloading => CameraType != _prevType || base.RequiresReloading;
 
-	internal CameraType _prevType;
+    internal CameraType _prevType;
 }

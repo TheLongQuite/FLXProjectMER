@@ -4,5 +4,5 @@ namespace ProjectMER.Events.Arguments.Interfaces;
 
 public interface ISchematicEvent
 {
-	public SchematicObject Schematic { get; }
+    public SchematicObject Schematic { get; }
 }

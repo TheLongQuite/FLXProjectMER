@@ -5,13 +5,13 @@ namespace ProjectMER.Events.Arguments;
 
 public class SchematicSpawnedEventArgs : EventArgs, ISchematicEvent
 {
-	public SchematicSpawnedEventArgs(SchematicObject schematic, string name)
-	{
-		Schematic = schematic;
-		Name = name;
-	}
+    public SchematicSpawnedEventArgs(SchematicObject schematic, string name)
+    {
+        Schematic = schematic;
+        Name = name;
+    }
 
-	public SchematicObject Schematic { get; }
+    public SchematicObject Schematic { get; }
 
-	public string Name { get; }
+    public string Name { get; }
 }

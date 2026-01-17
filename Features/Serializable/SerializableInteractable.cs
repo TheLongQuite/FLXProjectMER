@@ -1,5 +1,5 @@
 using AdminToys;
-using LabApi.Features.Wrappers;
+using Exiled.API.Features;
 using Mirror;
 using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Interfaces;
@@ -11,70 +11,71 @@ namespace ProjectMER.Features.Serializable;
 
 public class SerializableInteractable : SerializableObject, IIndicatorDefinition
 {
-	public ColliderShape ColliderShape { get; set; } = ColliderShape.Box;
-	public float InteractionDuration { get; set; } = 0f;
-	public bool IsLocked { get; set; } = false;
+    public ColliderShape ColliderShape { get; set; } = ColliderShape.Box;
+    public float InteractionDuration { get; set; } = 0f;
+    public bool IsLocked { get; set; } = false;
 
-	public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
-	{
-		InvisibleInteractableToy interactable = instance == null ? UnityEngine.Object.Instantiate(PrefabManager.Interactable) : instance.GetComponent<InvisibleInteractableToy>();
-		Vector3 position = room.GetAbsolutePosition(Position);
-		Quaternion rotation = room.GetAbsoluteRotation(Rotation);
-		_prevIndex = Index;
+    public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
+    {
+        InvisibleInteractableToy interactable = instance == null
+            ? UnityEngine.Object.Instantiate(PrefabManager.Interactable)
+            : instance.GetComponent<InvisibleInteractableToy>();
 
-		interactable.transform.SetPositionAndRotation(position, rotation);
-		interactable.transform.localScale = Scale;
-		interactable.NetworkMovementSmoothing = 60;
+        Vector3 position = room.GetAbsolutePosition(Position);
+        Quaternion rotation = room.GetAbsoluteRotation(Rotation);
+        _prevIndex = Index;
 
-		interactable.NetworkShape = ColliderShape;
-		interactable.NetworkInteractionDuration = InteractionDuration;
-		interactable.NetworkIsLocked = IsLocked;
+        interactable.transform.SetPositionAndRotation(position, rotation);
+        interactable.transform.localScale = Scale;
+        interactable.NetworkMovementSmoothing = 60;
 
-		if (instance == null)
-			NetworkServer.Spawn(interactable.gameObject);
+        interactable.NetworkShape = ColliderShape;
+        interactable.NetworkInteractionDuration = InteractionDuration;
+        interactable.NetworkIsLocked = IsLocked;
 
-		return interactable.gameObject;
-	}
+        if (instance == null)
+            NetworkServer.Spawn(interactable.gameObject);
 
-	public GameObject SpawnOrUpdateIndicator(Room room, GameObject? instance = null)
-	{
-		PrimitiveObjectToy cube;
+        return interactable.gameObject;
+    }
 
-		Vector3 position = room.GetAbsolutePosition(Position);
-		Quaternion rotation = room.GetAbsoluteRotation(Rotation);
+    public GameObject SpawnOrUpdateIndicator(Room room, GameObject? instance = null)
+    {
+        PrimitiveObjectToy cube;
 
-		if (instance == null)
-		{
-			cube = UnityEngine.Object.Instantiate(PrefabManager.PrimitiveObject);
-			cube.NetworkPrimitiveFlags = PrimitiveFlags.Visible;
-			cube.NetworkMaterialColor = new Color(1f, 1f, 0f, 0.9f);
-		}
-		else
-		{
-			cube = instance.GetComponent<PrimitiveObjectToy>();
-		}
+        Vector3 position = room.GetAbsolutePosition(Position);
+        Quaternion rotation = room.GetAbsoluteRotation(Rotation);
 
-		cube.NetworkPrimitiveType = PrimitiveType;
-		cube.transform.localScale = Scale;
+        if (instance == null)
+        {
+            cube = UnityEngine.Object.Instantiate(PrefabManager.PrimitiveObject);
+            cube.NetworkPrimitiveFlags = PrimitiveFlags.Visible;
+            cube.NetworkMaterialColor = new(1f, 1f, 0f, 0.9f);
+        }
+        else
+            cube = instance.GetComponent<PrimitiveObjectToy>();
 
-		cube.transform.SetPositionAndRotation(position, rotation);
+        cube.NetworkPrimitiveType = PrimitiveType;
+        cube.transform.localScale = Scale;
 
-		return cube.gameObject;
-	}
+        cube.transform.SetPositionAndRotation(position, rotation);
 
-	private PrimitiveType PrimitiveType
-	{
-		get
-		{
-			PrimitiveType primitiveType = ColliderShape switch
-			{
-				ColliderShape.Box => PrimitiveType.Cube,
-				ColliderShape.Sphere => PrimitiveType.Sphere,
-				ColliderShape.Capsule => PrimitiveType.Capsule,
-				_ => throw new InvalidOperationException(),
-			};
+        return cube.gameObject;
+    }
 
-			return primitiveType;
-		}
-	}
+    private PrimitiveType PrimitiveType
+    {
+        get
+        {
+            PrimitiveType primitiveType = ColliderShape switch
+            {
+                ColliderShape.Box => PrimitiveType.Cube,
+                ColliderShape.Sphere => PrimitiveType.Sphere,
+                ColliderShape.Capsule => PrimitiveType.Capsule,
+                _ => throw new InvalidOperationException()
+            };
+
+            return primitiveType;
+        }
+    }
 }

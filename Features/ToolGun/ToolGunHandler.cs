@@ -1,5 +1,5 @@
-using LabApi.Features.Wrappers;
-using MapGeneration;
+using Exiled.API.Enums;
+using Exiled.API.Features;
 using ProjectMER.Configs;
 using ProjectMER.Features.Enums;
 using ProjectMER.Features.Extensions;
@@ -12,139 +12,143 @@ namespace ProjectMER.Features.ToolGun;
 
 public static class ToolGunHandler
 {
-	public static Dictionary<Player, MapEditorObject> PlayerSelectedObjectDict { get; private set; } = [];
+    public static Dictionary<Player, MapEditorObject> PlayerSelectedObjectDict { get; private set; } = [];
 
-	public static void CreateObject(Player player, ToolGunObjectType objectType, string schematicName = "")
-	{
-		if (!Raycast(player, out RaycastHit hit))
-			return;
+    public static void CreateObject(Player player, ToolGunObjectType objectType, string schematicName = "")
+    {
+        if (!Raycast(player, out RaycastHit hit))
+            return;
 
-		CreateObject(hit.point, objectType, schematicName);
-		if (Config.AutoSelect)
-			SelectObject(player, MapUtils.UntitledMap.SpawnedObjects.LastOrDefault());
-	}
+        CreateObject(hit.point, objectType, schematicName);
+        if (Config.AutoSelect)
+            SelectObject(player, MapUtils.UntitledMap.SpawnedObjects.LastOrDefault());
+    }
 
-	public static void CreateObject(Vector3 position, ToolGunObjectType objectType, string schematicName = "")
-	{
-		Room room = RoomExtensions.GetRoomAtPosition(position);
+    public static void CreateObject(Vector3 position, ToolGunObjectType objectType, string schematicName = "")
+    {
+        Room room = RoomExtensions.GetRoomAtPosition(position);
 
-		position = room.Name == RoomName.Outside ? position : room.Transform.InverseTransformPoint(position);
-		string roomId = room.GetRoomStringId();
+        position = room.Type == RoomType.Surface ? position : room.Transform.InverseTransformPoint(position);
+        string roomId = room.GetRoomStringId();
 
-		MapSchematic map = MapUtils.UntitledMap;
-		string id = Guid.NewGuid().ToString("N").Substring(0, 8);
+        MapSchematic map = MapUtils.UntitledMap;
+        string id = Guid.NewGuid().ToString("N").Substring(0, 8);
 
-		SerializableObject serializableObject = (SerializableObject)Activator.CreateInstance(ToolGunItem.TypesDictionary[objectType]);
-		serializableObject.Room = roomId;
-		serializableObject.Index = room.GetRoomIndex();
+        SerializableObject serializableObject =
+            (SerializableObject)Activator.CreateInstance(ToolGunItem.TypesDictionary[objectType]);
 
-		switch (serializableObject)
-		{
-			case SerializablePlayerSpawnpoint _:
-				{
-					serializableObject.Position = position + Vector3.up * 0.01f;
-					break;
-				}
+        serializableObject.Room = roomId;
+        serializableObject.Index = room.GetRoomIndex();
 
-			case SerializableTeleport _:
-				{
-					serializableObject.Position = position + Vector3.up;
-					break;
-				}
+        switch (serializableObject)
+        {
+            case SerializablePlayerSpawnpoint _:
+            {
+                serializableObject.Position = position + Vector3.up * 0.01f;
+                break;
+            }
 
-			case SerializableSchematic serializableSchematic:
-				{
-					serializableObject.Position = position;
-					serializableSchematic.SchematicName = schematicName!;
-					break;
-				}
+            case SerializableTeleport _:
+            {
+                serializableObject.Position = position + Vector3.up;
+                break;
+            }
 
-			default:
-				serializableObject.Position = position;
-				break;
-		}
+            case SerializableSchematic serializableSchematic:
+            {
+                serializableObject.Position = position;
+                serializableSchematic.SchematicName = schematicName!;
+                break;
+            }
 
-		if (map.TryAddElement(id, serializableObject))
-			map.SpawnObject(id, serializableObject);
+            default:
+                serializableObject.Position = position;
+                break;
+        }
 
-		foreach (MapEditorObject mapEditorObject in map.SpawnedObjects)
-		{
-			if (mapEditorObject.Id != id)
-				continue;
+        if (map.TryAddElement(id, serializableObject))
+            map.SpawnObject(id, serializableObject);
 
-			IndicatorObject.TrySpawnOrUpdateIndicator(mapEditorObject);
-		}
-	}
+        foreach (MapEditorObject mapEditorObject in map.SpawnedObjects)
+        {
+            if (mapEditorObject.Id != id)
+                continue;
 
-	public static void DeleteObject(MapEditorObject mapEditorObject)
-	{
-		IndicatorObject.TryDestroyIndicator(mapEditorObject);
+            IndicatorObject.TrySpawnOrUpdateIndicator(mapEditorObject);
+        }
+    }
 
-		MapSchematic map = MapUtils.LoadedMaps[mapEditorObject.MapName];
-		if (map.TryRemoveElement(mapEditorObject.Id))
-			map.DestroyObject(mapEditorObject.Id);
-	}
+    public static void DeleteObject(MapEditorObject mapEditorObject)
+    {
+        IndicatorObject.TryDestroyIndicator(mapEditorObject);
 
-	public static bool TryGetMapObject(Player player, out MapEditorObject mapEditorObject)
-	{
-		mapEditorObject = null!;
-		if (!Raycast(player, out RaycastHit hit))
-			return false;
+        MapSchematic map = MapUtils.LoadedMaps[mapEditorObject.MapName];
+        if (map.TryRemoveElement(mapEditorObject.Id))
+            map.DestroyObject(mapEditorObject.Id);
+    }
 
-		if (!hit.transform.TryGetComponentInParent(out mapEditorObject))
-			return false;
+    public static bool TryGetMapObject(Player player, out MapEditorObject mapEditorObject)
+    {
+        mapEditorObject = null!;
+        if (!Raycast(player, out RaycastHit hit))
+            return false;
 
-		if (mapEditorObject is IndicatorObject indicatorObject)
-			mapEditorObject = IndicatorObject.Dictionary[indicatorObject];
+        if (!hit.transform.TryGetComponentInParent(out mapEditorObject))
+            return false;
 
-		return true;
-	}
+        if (mapEditorObject is IndicatorObject indicatorObject)
+            mapEditorObject = IndicatorObject.Dictionary[indicatorObject];
 
-	public static bool TryGetSelectedMapObject(Player player, out MapEditorObject mapEditorObject)
-	{
-		if (!PlayerSelectedObjectDict.ContainsKey(player))
-		{
-			mapEditorObject = null!;
-			return false;
-		}
+        return true;
+    }
 
-		return PlayerSelectedObjectDict.TryGetValue(player, out mapEditorObject) && mapEditorObject != null;
-	}
+    public static bool TryGetSelectedMapObject(Player player, out MapEditorObject mapEditorObject)
+    {
+        if (!PlayerSelectedObjectDict.ContainsKey(player))
+        {
+            mapEditorObject = null!;
+            return false;
+        }
 
-	public static void SelectObject(Player player, MapEditorObject mapEditorObject)
-	{
-		if (!PlayerSelectedObjectDict.ContainsKey(player))
-		{
-			PlayerSelectedObjectDict.Add(player, mapEditorObject);
-			return;
-		}
+        return PlayerSelectedObjectDict.TryGetValue(player, out mapEditorObject) && mapEditorObject != null;
+    }
 
-		PlayerSelectedObjectDict[player] = mapEditorObject;
-	}
+    public static void SelectObject(Player player, MapEditorObject mapEditorObject)
+    {
+        if (!PlayerSelectedObjectDict.ContainsKey(player))
+        {
+            PlayerSelectedObjectDict.Add(player, mapEditorObject);
+            return;
+        }
 
-	public static bool TryGetObjectById(string id, out MapEditorObject mapEditorObject)
-	{
-		foreach (MapSchematic map in MapUtils.LoadedMaps.Values)
-		{
-			foreach (MapEditorObject meo in map.SpawnedObjects)
-			{
-				if (meo.Id == id)
-				{
-					mapEditorObject = meo;
-					return true;
-				}
-			}
-		}
+        PlayerSelectedObjectDict[player] = mapEditorObject;
+    }
 
-		mapEditorObject = null!;
-		return false;
-	}
+    public static bool TryGetObjectById(string id, out MapEditorObject mapEditorObject)
+    {
+        foreach (MapSchematic map in MapUtils.LoadedMaps.Values)
+        {
+            foreach (MapEditorObject meo in map.SpawnedObjects)
+            {
+                if (meo.Id == id)
+                {
+                    mapEditorObject = meo;
+                    return true;
+                }
+            }
+        }
 
-	public static bool Raycast(Player player, out RaycastHit hit) => Raycast(player.Camera.position, player.Camera.forward, out hit);
+        mapEditorObject = null!;
+        return false;
+    }
 
-	public static bool Raycast(Vector3 origin, Vector3 direction, out RaycastHit hit) => Physics.Raycast(origin, direction, out hit, 100f, ToolGunMask.Mask);
+    public static bool Raycast(Player player, out RaycastHit hit)
+        => Raycast(player.CameraTransform.position, player.CameraTransform.forward, out hit);
 
-	private static readonly CachedLayerMask ToolGunMask = new("Default", "Door", "CCTV");
+    public static bool Raycast(Vector3 origin, Vector3 direction, out RaycastHit hit)
+        => Physics.Raycast(origin, direction, out hit, 100f, ToolGunMask.Mask);
 
-	private static Config Config => ProjectMER.Singleton.Config!;
+    private static readonly CachedLayerMask ToolGunMask = new("Default", "Door", "CCTV");
+
+    private static Config Config => ProjectMER.Singleton.Config!;
 }
