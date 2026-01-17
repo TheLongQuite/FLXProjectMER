@@ -19,7 +19,7 @@ public class TeleportObject : MonoBehaviour
     public SerializableTeleport Base;
     private MapEditorObject _mapEditorObject;
 
-    public DateTime NextTimeUse;
+    public Dictionary<GameObject, DateTime> ObjectAndNextUseTime;
 
     public TeleportObject? GetRandomTarget()
     {
@@ -43,7 +43,7 @@ public class TeleportObject : MonoBehaviour
         if (player is null)
             return;
 
-        if (NextTimeUse > DateTime.Now)
+        if (ObjectAndNextUseTime.TryGetValue(other.gameObject, out DateTime time) && time > DateTime.Now)
             return;
         
         if (player.IsConnected && !Base.AllowedRoles.Contains(player.GetCustomOrBasicRole()))
@@ -51,8 +51,7 @@ public class TeleportObject : MonoBehaviour
 
         bool flag =
             (!Map.IsLczDecontaminated || !Base.LockOnEvent.HasFlagFast(LockOnEvent.LightDecontaminated)) &&
-            (!Warhead.IsDetonated || !Base.LockOnEvent.HasFlagFast(LockOnEvent.WarheadDetonated)) &&
-            DateTime.Now >= NextTimeUse;
+            (!Warhead.IsDetonated || !Base.LockOnEvent.HasFlagFast(LockOnEvent.WarheadDetonated));
 
         if (!flag)
             return;
@@ -71,8 +70,8 @@ public class TeleportObject : MonoBehaviour
             return;
 
         DateTime dateTime = DateTime.Now.AddSeconds(Base.Cooldown);
-        NextTimeUse = dateTime;
-        target.NextTimeUse = dateTime;
+        ObjectAndNextUseTime[other.gameObject] = dateTime;
+        target.ObjectAndNextUseTime[other.gameObject] = dateTime;
 
         player.Position = target.gameObject.transform.position;
         player.Rotation = Quaternion.Euler(target.gameObject.transform.eulerAngles);
