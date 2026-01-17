@@ -1,5 +1,7 @@
 using Exiled.API.Features;
 using Exiled.Loader;
+using PlayerRoles;
+using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Objects;
 using ProjectMER.Features.Serializable;
 using ProjectMER.Features.Serializable.Schematics;
@@ -74,9 +76,20 @@ public static class MapUtils
     public static MapSchematic GetMapData(string mapName)
     {
         MapSchematic map;
+        
+        string? foundPath = null;
+        foreach (var mapFile in FileExtensions.GetAllMaps())
+        {
+            if (Path.GetFileName(mapFile) != $"{mapName}.yml")
+            {
+                continue;
+            }
 
-        string path = Path.Combine(ProjectMER.MapsDir, $"{mapName}.yml");
-        if (!File.Exists(path))
+            foundPath = mapFile;
+            break;
+        }
+        
+        if (foundPath == null)
         {
             string error = $"Failed to load map data: File {mapName}.yml does not exist!";
             throw new FileNotFoundException(error);
@@ -84,7 +97,7 @@ public static class MapUtils
 
         try
         {
-            map = Loader.Deserializer.Deserialize<MapSchematic>(File.ReadAllText(path));
+            map = Loader.Deserializer.Deserialize<MapSchematic>(File.ReadAllText(foundPath));
             map.Name = mapName;
         }
         catch (YamlException e)

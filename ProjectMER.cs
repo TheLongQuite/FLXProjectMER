@@ -14,11 +14,6 @@ public class ProjectMER : Plugin<Config>
     public static ProjectMER Singleton { get; private set; }
 
     /// <summary>
-    /// Gets the MapEditorReborn parent folder path.
-    /// </summary>
-    public static string PluginDir { get; private set; }
-
-    /// <summary>
     /// Gets the folder path in which the maps are stored.
     /// </summary>
     public static string MapsDir { get; private set; }
@@ -37,13 +32,13 @@ public class ProjectMER : Plugin<Config>
         _harmony = new($"michal78900.mapEditorReborn-{DateTime.Now.Ticks}");
         _harmony.PatchAll();
 
-        MapsDir = Path.Combine(PluginDir, "Maps");
-        SchematicsDir = Path.Combine(PluginDir, "Schematics");
+        MapsDir = Path.Combine(Config.PluginFilesDir, "Maps");
+        SchematicsDir = Path.Combine(Config.PluginFilesDir, "Schematics");
 
-        if (!Directory.Exists(PluginDir))
+        if (!Directory.Exists(Config.PluginFilesDir))
         {
             Log.Warn("Plugin directory does not exist. Creating...");
-            Directory.CreateDirectory(PluginDir);
+            Directory.CreateDirectory(Config.PluginFilesDir);
         }
 
         if (!Directory.Exists(MapsDir))
