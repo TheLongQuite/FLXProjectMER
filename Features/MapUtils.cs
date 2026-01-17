@@ -127,6 +127,7 @@ public static class MapUtils
         }
     }
 
+    // TODO: Проделать те же махинации по поиску и взятию схематика.
     public static SchematicObjectDataList GetSchematicDataByName(string schematicName)
     {
         SchematicObjectDataList data;
