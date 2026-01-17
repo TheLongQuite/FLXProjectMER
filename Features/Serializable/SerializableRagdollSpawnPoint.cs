@@ -12,7 +12,7 @@ using Server = Exiled.API.Features.Server;
 
 namespace ProjectMER.Features.Serializable;
 
-// TODO: Впихнуть
+// TODO: Впихнуть реализацию в остальные методы PMER ака SpawnObject
 public class SerializableRagdollSpawnPoint : SerializableObject
 {
     /// <summary>
@@ -41,13 +41,15 @@ public class SerializableRagdollSpawnPoint : SerializableObject
     
     public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
     {        
+        // TODO: Метод используется для спавна и обновления, будет странно, если из-за ебаного шанса, он попросту не обновится
+        // TODO: Нужна переменная ака "bool isForced" когда мы игнорим подобные исключительно игровые проверки
         if (Random.Range(0, 101) > SpawnChance)
             return null;
         
         if (instance != null)
             Object.Destroy(instance);
         
-        // TODO: Рандомные Name. 
+        // TODO: Рандомные Name для рэгдолов, раньше они были в каком-то уёбищном словаре. 
         RagdollData ragdollInfo;
         if (byte.TryParse(DeathReason, out byte deathReasonId) && deathReasonId <= 22)
             ragdollInfo = new RagdollData(Server.Host.ReferenceHub, new UniversalDamageHandler(-1f, DeathTranslations.TranslationsById[deathReasonId]), RoleType, new RelativePosition(Position), Quaternion.Euler(Rotation), Name, double.MaxValue);

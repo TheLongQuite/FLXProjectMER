@@ -18,6 +18,7 @@ public static class MapUtils
 
     public static Dictionary<string, MapSchematic> LoadedMaps { get; private set; } = [];
 
+    // TODO: Нужно как-то правильно сохранять, ровно как и правильно грузить
     public static void SaveMap(string mapName)
     {
         if (mapName == UntitledMapName)
@@ -29,7 +30,7 @@ public static class MapUtils
             map.Merge(UntitledMap);
         else // Map isn't loaded and map file doesn't exist
             map = new MapSchematic(mapName).Merge(UntitledMap);
-
+        
         string path = Path.Combine(ProjectMER.MapsDir, $"{mapName}.yml");
         File.WriteAllText(path, Loader.Serializer.Serialize(map));
         map.IsDirty = false;
@@ -89,6 +90,7 @@ public static class MapUtils
             break;
         }
         
+        // TODO: Почему-то не находит карту
         if (foundPath == null)
         {
             string error = $"Failed to load map data: File {mapName}.yml does not exist!";
