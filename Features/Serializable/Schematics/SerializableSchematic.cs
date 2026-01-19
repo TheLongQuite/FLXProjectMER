@@ -13,6 +13,7 @@ namespace ProjectMER.Features.Serializable.Schematics;
 public class SerializableSchematic : SerializableObject
 {
     public string SchematicName { get; set; } = "None";
+    public bool IsStatic { get; set; } = false;
 
     public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null,
         bool isForced = false)
