@@ -38,16 +38,7 @@ public class SerializableRoomLight : SerializableObject
         bool isForced = false)
     {
         Color color = Color.GetColorFromString();
-        if (room is null)
-        {
-            if (!Enum.TryParse(Room, out RoomType roomType))
-            {
-                Log.Error($"Invalid room type {Room}");
-                return null;
-            }
-
-            room = Exiled.API.Features.Room.Get(roomType);
-        }
+        room ??= Room.Get(RoomType);
 
         if (OnlyWarheadLight && (Warhead.IsInProgress || Warhead.IsDetonated))
             return base.SpawnOrUpdateObject(room, instance);

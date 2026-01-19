@@ -17,20 +17,6 @@ public static class RoomExtensions
 
     public static string GetRoomStringId(this Room room) => $"{room.Zone}_{room.RoomShape}_{room.Type}";
 
-    public static List<Room> GetRooms(this SerializableObject serializableObject)
-    {
-        string[] split = serializableObject.Room.Split('_');
-        if (split.Length != 3)
-            return ListPool<Room>.Shared.Rent(Room.List.Where(x => x != null && x.Type == RoomType.Surface));
-
-        ZoneType facilityZone = (ZoneType)Enum.Parse(typeof(ZoneType), split[0], true);
-        RoomShape roomShape = (RoomShape)Enum.Parse(typeof(RoomShape), split[1], true);
-        RoomType roomName = (RoomType)Enum.Parse(typeof(RoomType), split[2], true);
-
-        return ListPool<Room>.Shared.Rent(Room.List.Where(x
-            => x != null && x.Zone == facilityZone && x.RoomShape == roomShape && x.Type == roomName));
-    }
-
     public static int GetRoomIndex(this Room room)
     {
         List<Room> list = ListPool<Room>.Shared.Rent(Room.List.Where(x

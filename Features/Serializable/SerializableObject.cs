@@ -1,3 +1,4 @@
+using Exiled.API.Enums;
 using Exiled.API.Features;
 using UnityEngine;
 using YamlDotNet.Serialization;
@@ -26,7 +27,7 @@ public abstract class SerializableObject
     /// </summary>
     public virtual Vector3 Scale { get; set; } = Vector3.one;
 
-    public virtual string Room { get; set; } = "Unknown";
+    public virtual RoomType RoomType { get; set; } = RoomType.Unknown;
 
     public virtual int Index { get; set; } = -1;
 

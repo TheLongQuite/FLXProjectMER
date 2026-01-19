@@ -24,24 +24,43 @@ public static class MapUtils
         if (mapName == UntitledMapName)
             throw new InvalidOperationException("This map name is reserved for internal use!");
 
-        if (LoadedMaps.TryGetValue(mapName, out MapSchematic map)) // Map is already loaded
+        MapSchematic map;
+    
+        if (LoadedMaps.TryGetValue(mapName, out map))
+        {
+            Log.Info($"[SaveMap] Карта '{mapName}' найдена в LoadedMaps");
+            Log.Info($"[SaveMap] Схематик в карте: {map.Schematics.Count}");
+            Log.Info($"[SaveMap] Примитивов в карте: {map.Primitives.Count}");
+            Log.Info($"[SaveMap] Схематик в UntitledMap: {UntitledMap.Schematics.Count}");
             map.Merge(UntitledMap);
-        else if (TryGetMapData(mapName, out map)) // Map isn't loaded but map file exists
+        }
+        else if (TryGetMapData(mapName, out map))
+        {
+            Log.Info($"[SaveMap] Карта '{mapName}' загружена из файла");
+            Log.Info($"[SaveMap] Схематик в карте: {map.Schematics.Count}");
             map.Merge(UntitledMap);
-        else // Map isn't loaded and map file doesn't exist
+        }
+        else
+        {
+            Log.Info($"[SaveMap] Создаём новую карту '{mapName}'");
             map = new MapSchematic(mapName).Merge(UntitledMap);
+        }
+
+        Log.Info($"[SaveMap] После merge - Схематик: {map.Schematics.Count}");
 
         string path = Path.Combine(ProjectMER.MapsDir, "UNSORTED");
         if (!Directory.Exists(path))
         {
-            Log.Warn(
-                $"Map saving is not enabled. To enable it, create directory named 'UNSORTED' in your maps directory");
-
+            Log.Warn($"Map saving is not enabled. To enable it, create directory named 'UNSORTED' in your maps directory");
             return;
         }
 
         path = Path.Combine(path, $"{map.Name}.yml");
-        File.WriteAllText(path, Loader.Serializer.Serialize(map));
+    
+        string serialized = Loader.Serializer.Serialize(map);
+        Log.Info($"[SaveMap] Размер сериализованных данных: {serialized.Length} символов");
+    
+        File.WriteAllText(path, serialized);
         map.IsDirty = false;
 
         UnloadMap(UntitledMapName);
@@ -150,7 +169,7 @@ public static class MapUtils
                 if (name is null || name != schematicName)
                     continue;
 
-                Log.Info("Нашлось.");
+                Log.Info($"Схематик '{schematicName}' найден в: {schematicDirectory}");
                 schematicDirPath = schematicDirectory;
                 break;
             }
@@ -161,8 +180,9 @@ public static class MapUtils
 
         if (schematicDirPath == null)
         {
-            Log.Info($"Схематик '{schematicName}' не найден");
-            return null;
+            string error = $"Failed to load schematic data: Directory {schematicName} does not exist!";
+            Log.Error(error);
+            throw new DirectoryNotFoundException(error);
         }
 
         string schematicJsonPath = Path.Combine(schematicDirPath, $"{schematicName}.json");
