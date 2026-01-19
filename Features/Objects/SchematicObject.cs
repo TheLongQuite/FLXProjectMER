@@ -116,6 +116,7 @@ public class SchematicObject : MonoBehaviour
     }
 
     public AnimationController AnimationController => AnimationController.Get(this);
+    public bool ShouldBeOptimized { get; set; }
 
     public SchematicObject Init(SchematicObjectDataList data)
     {
