@@ -1,12 +1,17 @@
 using AdminToys;
+using Exiled.API.Enums;
 using Exiled.API.Features;
 using Exiled.API.Features.Pickups;
+using Interactables.Interobjects.DoorUtils;
 using InventorySystem.Items.Firearms.Attachments;
+using MapGeneration.Distributors;
 using ProjectMER.Features.Enums;
 using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Objects;
+using ProjectMER.Features.Serializable.Lockers;
 using UnityEngine;
 using LightSourceToy = AdminToys.LightSourceToy;
+using Object = UnityEngine.Object;
 using PrimitiveObjectToy = AdminToys.PrimitiveObjectToy;
 using TextToy = AdminToys.TextToy;
 using WaypointToy = AdminToys.WaypointToy;
@@ -38,6 +43,7 @@ public class SchematicBlockData
         GameObject gameObject = BlockType switch
         {
             BlockType.Empty => CreateEmpty(),
+            BlockType.Locker => CreateLocker(),
             BlockType.Primitive => CreatePrimitive(),
             BlockType.Light => CreateLight(),
             BlockType.Pickup => CreatePickup(schematicObject),
@@ -71,6 +77,84 @@ public class SchematicBlockData
         }
 
         return gameObject;
+    }
+
+    private GameObject CreateLocker()
+    {
+        LockerType lockerType = Properties.TryGetValue("LockerType", out object lockerTypeProperty)
+            ? (LockerType)Convert.ToInt32(lockerTypeProperty)
+            : LockerType.Unknown;
+
+        Locker locker = Object.Instantiate(SerializableLocker.GetLockerObjectByType(lockerType));
+
+        if (Properties.TryGetValue("ChambersSettings", out object chambersProperty) &&
+            chambersProperty is List<object> chambersList)
+            ApplyChambersSettings(locker, chambersList);
+
+        if (Properties.TryGetValue("Loot", out object lootProperty) && lootProperty is List<object> lootList)
+            ApplyLootSettings(locker, lootList);
+
+        return locker.gameObject;
+    }
+
+    private void ApplyChambersSettings(Locker locker, List<object> chambersList)
+    {
+        for (int i = 0; i < chambersList.Count && i < locker.Chambers.Length; i++)
+        {
+            if (chambersList[i] is not Dictionary<string, object> chamberData)
+                continue;
+
+            LockerChamber chamber = locker.Chambers[i];
+
+            if (chamberData.TryGetValue("IsOpen", out object isOpen))
+                chamber.SetDoor(Convert.ToBoolean(isOpen), null);
+
+            if (chamberData.TryGetValue("RequiredPermissions", out object permissions))
+                chamber.RequiredPermissions = (DoorPermissionFlags)Convert.ToInt32(permissions);
+
+            if (chamberData.TryGetValue("AcceptableItems", out object acceptableItems) &&
+                acceptableItems is List<object> itemsList)
+            {
+                chamber.AcceptableItems = itemsList
+                    .Select(item => (ItemType)Convert.ToInt32(item))
+                    .ToArray();
+            }
+        }
+    }
+
+    private void ApplyLootSettings(Locker locker, List<object> lootList)
+    {
+        List<LockerLoot> lockerLootEntries = new();
+
+        foreach (object lootEntry in lootList)
+        {
+            if (lootEntry is not Dictionary<string, object> lootData)
+                continue;
+
+            LockerLoot loot = new()
+            {
+                TargetItem = lootData.TryGetValue("TargetItem", out object targetItem)
+                    ? (ItemType)Convert.ToInt32(targetItem)
+                    : ItemType.None,
+                RemainingUses = lootData.TryGetValue("RemainingUses", out object remainingUses)
+                    ? Convert.ToInt32(remainingUses)
+                    : 1,
+                MaxPerChamber = lootData.TryGetValue("MaxPerChamber", out object maxPerChamber)
+                    ? Convert.ToInt32(maxPerChamber)
+                    : 1,
+                ProbabilityPoints = lootData.TryGetValue("ProbabilityPoints", out object probabilityPoints)
+                    ? Convert.ToInt32(probabilityPoints)
+                    : 100,
+                MinPerChamber = lootData.TryGetValue("MinPerChamber", out object minPerChamber)
+                    ? Convert.ToInt32(minPerChamber)
+                    : 1
+            };
+
+            lockerLootEntries.Add(loot);
+        }
+
+        if (lockerLootEntries.Count > 0)
+            locker.Loot = lockerLootEntries.ToArray();
     }
 
     private GameObject CreateEmpty(bool fallback = false)

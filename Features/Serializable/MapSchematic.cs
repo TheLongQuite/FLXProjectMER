@@ -1,6 +1,7 @@
 using System.Collections;
 using Exiled.API.Features;
 using Exiled.API.Features.Doors;
+using Exiled.API.Features.Items;
 using MapGeneration;
 using NorthwoodLib.Pools;
 using ProjectMER.Features.Extensions;
@@ -104,109 +105,73 @@ public class MapSchematic
 
         SpawnedObjects.Clear();
 
-        SafeSpawn("Primitives", Primitives);
-        SafeSpawn("LightSources", LightSources);
-        
+        LightSources.ForEach(SpawnObject);
+        Primitives.ForEach(SpawnObject);
+
         Doors.ForEach(obj =>
         {
-            Door? vanillaDoor = Door.Get(obj.Id);
+            Door? vanillaDoor = Door.Get(obj.ObjectId);
             if (vanillaDoor != null)
             {
                 obj.SetupDoor(vanillaDoor.Base);
                 return;
             }
+
             SpawnObject(obj);
         });
 
-        SafeSpawn("WorkStations", WorkStations);
-        SafeSpawn("ItemSpawnPoints", ItemSpawnPoints);
-        SafeSpawn("PlayerSpawnPoints", PlayerSpawnPoints);
-        SafeSpawn("Capybaras", Capybaras);
-        SafeSpawn("Texts", Texts);
-        SafeSpawn("Interactables", Interactables);
-        
-        // Схематики - главный подозреваемый!
-        Log.Info($"Начинаем спавн {Schematics.Count} схематик...");
-        foreach (var schematic in Schematics)
-        {
-            try
-            {
-                Log.Info($"Спавним схематику: {schematic.SchematicName}, Id: {schematic.Id}");
-                SpawnObject(schematic);
-                Log.Info($"Схематика {schematic.SchematicName} заспавнена успешно");
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"Ошибка при спавне схематики {schematic.SchematicName}: {ex.Message}");
-                Log.Error($"StackTrace: {ex.StackTrace}");
-            }
-        }
+        WorkStations.ForEach(SpawnObject);
+        PlayerSpawnPoints.ForEach(SpawnObject);
+        ItemSpawnPoints.ForEach(SpawnObject);
 
-        SafeSpawn("Scp079Cameras", Scp079Cameras);
-        SafeSpawn("ShootingTargets", ShootingTargets);
-        SafeSpawn("Teleports", Teleports);
-        
+        Capybaras.ForEach(SpawnObject);
+        Texts.ForEach(SpawnObject);
+        Interactables.ForEach(SpawnObject);
+
+        Schematics.ForEach(SpawnObject);
+        Scp079Cameras.ForEach(SpawnObject);
+        ShootingTargets.ForEach(SpawnObject);
+        Teleports.ForEach(SpawnObject);
+
         Lockers.ForEach(obj =>
         {
             obj._prevType = obj.LockerType;
             SpawnObject(obj);
         });
 
-        SafeSpawn("RoomLights", RoomLights);
-        SafeSpawn("Waypoints", Waypoints);
-        SafeSpawn("RagdollSpawnPoints", RagdollSpawnPoints);
-    }
-
-    private void SafeSpawn<T>(string listName, List<T> list) where T : SerializableObject
-    {
-        foreach (var obj in list)
-        {
-            try
-            {
-                SpawnObject(obj);
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"Ошибка в {listName}, объект Id={obj.Id}: {ex.Message}");
-                Log.Error($"StackTrace: {ex.StackTrace}");
-            }
-        }
+        RoomLights.ForEach(SpawnObject);
+        Waypoints.ForEach(SpawnObject);
+        RagdollSpawnPoints.ForEach(SpawnObject);
     }
 
     public void SpawnObject<T>(T serializableObject) where T : SerializableObject
     {
-        List<Room> rooms = Room.Get(x => x.Type == serializableObject.RoomType).ToList();
-    
-        Log.Info($"[SpawnObject] Объект: {serializableObject.Id}, Room: '{serializableObject.RoomType}', Найдено комнат: {rooms.Count}");
-    
+        List<Room> rooms = ListPool<Room>.Shared.Rent();
+        rooms.AddRange(Room.Get(x => x.Type == serializableObject.RoomType));
+
         if (rooms.Count == 0)
         {
-            Log.Warn($"[SpawnObject] Не найдено комнат для объекта {serializableObject.Id} (Room: '{serializableObject.RoomType}')");
-            ListPool<Room>.Shared.Return(rooms);
+            Log.Warn($"[SpawnObject] Не найдено комнат для объекта {serializableObject.ObjectId} (Room: '{
+                serializableObject.RoomType}')");
+
             return;
         }
-    
+
         foreach (Room room in rooms)
         {
-            Log.Info($"[SpawnObject] Проверяем комнату: {room.Type}, Index объекта: {serializableObject.Index}, Index комнаты: {room.GetRoomIndex()}");
-        
             if (serializableObject.Index >= 0 && serializableObject.Index != room.GetRoomIndex())
-            {
-                Log.Info($"[SpawnObject] Пропускаем комнату {room.Type} - индексы не совпадают");
                 continue;
-            }
 
             GameObject? gameObject = serializableObject.SpawnOrUpdateObject(room);
             if (gameObject == null)
             {
-                Log.Warn($"[SpawnObject] SpawnOrUpdateObject вернул null для {serializableObject.Id}");
+                Log.Warn($"[SpawnObject] SpawnOrUpdateObject вернул null для {serializableObject.ObjectId}");
                 continue;
             }
 
-            Log.Info($"[SpawnObject] Объект {serializableObject.Id} успешно создан в комнате {room.Type}");
-        
             MapEditorObject mapEditorObject =
-                gameObject.AddComponent<MapEditorObject>().Init(serializableObject, Name, serializableObject.Id, room);
+                gameObject.AddComponent<MapEditorObject>()
+                    .Init(serializableObject, Name, serializableObject.ObjectId, room);
 
             SpawnedObjects.Add(mapEditorObject);
         }
@@ -237,7 +202,7 @@ public class MapSchematic
             IList? list = accessor.GetList();
             foreach (SerializableObject existing in list)
             {
-                if (existing.Id == obj.Id)
+                if (existing.ObjectId == obj.ObjectId)
                     return false;
             }
 
@@ -256,7 +221,7 @@ public class MapSchematic
             IList? list = accessor.GetList();
             for (int i = 0; i < list.Count; i++)
             {
-                if (list[i] is not SerializableObject obj || obj.Id != id)
+                if (list[i] is not SerializableObject obj || obj.ObjectId != id)
                     continue;
 
                 list.RemoveAt(i);

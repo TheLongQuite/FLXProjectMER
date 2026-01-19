@@ -10,7 +10,7 @@ public abstract class SerializableObject
     /// <summary>
     /// Gets or sets the unique Id of future MapEditorObject.
     /// </summary>
-    public string Id { get; set; } = "Id";
+    public string ObjectId { get; set; } = "Id";
 
     /// <summary>
     /// Gets or sets the objects's position.

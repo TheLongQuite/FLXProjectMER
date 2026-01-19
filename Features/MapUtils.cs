@@ -27,41 +27,27 @@ public static class MapUtils
             throw new InvalidOperationException("This map name is reserved for internal use!");
 
         MapSchematic map;
-    
-        if (LoadedMaps.TryGetValue(mapName, out map))
-        {
-            Log.Info($"[SaveMap] Карта '{mapName}' найдена в LoadedMaps");
-            Log.Info($"[SaveMap] Схематик в карте: {map.Schematics.Count}");
-            Log.Info($"[SaveMap] Примитивов в карте: {map.Primitives.Count}");
-            Log.Info($"[SaveMap] Схематик в UntitledMap: {UntitledMap.Schematics.Count}");
-            map.Merge(UntitledMap);
-        }
-        else if (TryGetMapData(mapName, out map))
-        {
-            Log.Info($"[SaveMap] Карта '{mapName}' загружена из файла");
-            Log.Info($"[SaveMap] Схематик в карте: {map.Schematics.Count}");
-            map.Merge(UntitledMap);
-        }
-        else
-        {
-            Log.Info($"[SaveMap] Создаём новую карту '{mapName}'");
-            map = new MapSchematic(mapName).Merge(UntitledMap);
-        }
 
-        Log.Info($"[SaveMap] После merge - Схематик: {map.Schematics.Count}");
+        if (LoadedMaps.TryGetValue(mapName, out map))
+            map.Merge(UntitledMap);
+        else if (TryGetMapData(mapName, out map))
+            map.Merge(UntitledMap);
+        else
+            map = new MapSchematic(mapName).Merge(UntitledMap);
 
         string path = Path.Combine(ProjectMER.MapsDir, "UNSORTED");
         if (!Directory.Exists(path))
         {
-            Log.Warn($"Map saving is not enabled. To enable it, create directory named 'UNSORTED' in your maps directory");
+            Log.Warn(
+                $"Map saving is not enabled. To enable it, create directory named 'UNSORTED' in your maps directory");
+
             return;
         }
 
         path = Path.Combine(path, $"{map.Name}.yml");
-    
+
         string serialized = Loader.Serializer.Serialize(map);
-        Log.Info($"[SaveMap] Размер сериализованных данных: {serialized.Length} символов");
-    
+
         File.WriteAllText(path, serialized);
         map.IsDirty = false;
 
@@ -69,8 +55,9 @@ public static class MapUtils
         LoadMap(mapName);
     }
 
-    public static Vector3 GetRelativePosition(Vector3 position, Room room) => room.Type == RoomType.Surface ? position : room.Transform.TransformPoint(position);
-    
+    public static Vector3 GetRelativePosition(Vector3 position, Room room)
+        => room.Type == RoomType.Surface ? position : room.Transform.TransformPoint(position);
+
     public static void LoadMap(string mapName)
     {
         MapSchematic map = GetMapData(mapName);
@@ -115,10 +102,7 @@ public static class MapUtils
         {
             string name = Path.GetFileName(mapFile);
             if (name != $"{mapName}.yml")
-            {
-                Log.Info($"Найдено: {name}, нужно найти: {mapName}.yml");
                 continue;
-            }
 
             foundPath = mapFile;
             break;
@@ -173,7 +157,6 @@ public static class MapUtils
                 if (name is null || name != schematicName)
                     continue;
 
-                Log.Info($"Схематик '{schematicName}' найден в: {schematicDirectory}");
                 schematicDirPath = schematicDirectory;
                 break;
             }

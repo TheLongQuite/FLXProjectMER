@@ -8,12 +8,8 @@ public static class FileExtensions
     {
         List<string> mapsPaths = new();
         foreach (string? mapsDir in Directory.GetDirectories(ProjectMER.MapsDir))
-        {
-            List<string> files = Directory.GetFiles(mapsDir).Where(x => x.EndsWith(".yml")).ToList();
             mapsPaths.AddRange(Directory.GetFiles(mapsDir).Where(x => x.EndsWith(".yml")));
-        }
 
-        Log.Info($"[{nameof(GetAllMaps)}] Total maps count: {mapsPaths.Count}");
         return mapsPaths;
     }
 

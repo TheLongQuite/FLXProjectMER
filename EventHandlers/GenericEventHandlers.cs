@@ -35,7 +35,7 @@ public partial class EventHandlers
                 if (!spawnpoint.Roles.Contains(RoleExtensions.GetCustomOrBasicRole(ev.Player)))
                     continue;
 
-                list.AddRange(map.SpawnedObjects.Where(x => x.Id == spawnpoint.Id));
+                list.AddRange(map.SpawnedObjects.Where(x => x.Id == spawnpoint.ObjectId));
             }
         }
 

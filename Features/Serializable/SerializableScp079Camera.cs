@@ -36,7 +36,7 @@ public class SerializableScp079Camera : SerializableObject
         cameraVariant.NetworkMovementSmoothing = 60;
         cameraVariant.NetworkLabel = Label;
         cameraVariant.NetworkRoom =
-            room == null ? Exiled.API.Features.Room.Get(RoomType.Surface).Identifier : room.Identifier;
+            room == null ? Room.Get(RoomType.Surface).Identifier : room.Identifier;
 
         if (instance == null)
             NetworkServer.Spawn(cameraVariant.gameObject);

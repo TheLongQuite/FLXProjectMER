@@ -44,7 +44,7 @@ public class SchematicObject : MonoBehaviour
 
     public bool IsStatic { get; set; }
 
-/// <summary>
+    /// <summary>
     /// Gets or sets the global euler angles of the object.
     /// </summary>
     public Vector3 EulerAngles

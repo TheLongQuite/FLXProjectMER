@@ -3,6 +3,7 @@ using Exiled.Loader;
 using Exiled.Permissions.Extensions;
 using NorthwoodLib.Pools;
 using ProjectMER.Features;
+using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Serializable;
 
 namespace ProjectMER.Commands.Utility;
@@ -58,8 +59,25 @@ public class Merge : ICommand
 
         ListPool<MapSchematic>.Shared.Return(maps);
 
-        string path = Path.Combine(ProjectMER.MapsDir, $"{mapName}.yml");
-        File.WriteAllText(path, Loader.Serializer.Serialize(outputMap));
+        // string path = Path.Combine(ProjectMER.MapsDir, $"{mapName}.yml");
+        string? foundPath = null;
+        foreach (string? mapFile in FileExtensions.GetAllMaps())
+        {
+            string name = Path.GetFileName(mapFile);
+            if (name != $"{mapName}.yml")
+                continue;
+
+            foundPath = mapFile;
+            break;
+        }
+
+        if (foundPath == null)
+        {
+            string error = $"Failed to load map data: File {mapName}.yml does not exist!";
+            throw new FileNotFoundException(error);
+        }
+
+        File.WriteAllText(foundPath, Loader.Serializer.Serialize(outputMap));
 
         response = $"You've successfully merged {arguments.Count - 1} maps into one!";
         return true;

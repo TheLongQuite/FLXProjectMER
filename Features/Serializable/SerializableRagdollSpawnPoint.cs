@@ -52,12 +52,16 @@ public class SerializableRagdollSpawnPoint : SerializableObject, IIndicatorDefin
 
         RagdollData ragdollInfo;
         if (byte.TryParse(DeathReason, out byte deathReasonId) && deathReasonId <= 22)
+        {
             ragdollInfo = new(Server.Host.ReferenceHub,
                 new UniversalDamageHandler(-1f, DeathTranslations.TranslationsById[deathReasonId]), RoleType,
                 new(Position), Quaternion.Euler(Rotation), Name, double.MaxValue);
+        }
         else
+        {
             ragdollInfo = new(Server.Host.ReferenceHub, new CustomReasonDamageHandler(DeathReason), RoleType,
                 new(Position), Quaternion.Euler(Rotation), Name, double.MaxValue);
+        }
 
         if (!Ragdoll.TryCreate(ragdollInfo, out Ragdoll ragdoll))
             return null;

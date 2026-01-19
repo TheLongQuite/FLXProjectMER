@@ -1,3 +1,4 @@
+using Exiled.API.Enums;
 using Exiled.API.Features;
 using InventorySystem.Items.Pickups;
 using MapGeneration.Distributors;
@@ -12,16 +13,14 @@ namespace ProjectMER.Features.Serializable.Lockers;
 
 public class SerializableLocker : SerializableObject
 {
-    public LockerType LockerType { get; set; } = LockerType.PedestalScp500;
-
+    public LockerType LockerType { get; set; } = LockerType.Scp500Pedestal;
+    public List<SerializableLockerChamber> ChambersSettings { get; set; } = [];
     public List<SerializableLockerLoot> Loot { get; set; } = [];
-
-    public List<SerializableLockerChamber> Chambers { get; set; } = [];
 
     public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null,
         bool isForced = false)
     {
-        Locker locker = instance == null ? UnityEngine.Object.Instantiate(LockerPrefab)
+        Locker locker = instance == null ? UnityEngine.Object.Instantiate(GetLockerObjectByType(LockerType))
             : instance.GetComponent<Locker>();
 
         Vector3 position = room.GetAbsolutePosition(Position);
@@ -53,11 +52,11 @@ public class SerializableLocker : SerializableObject
         labApiLocker.ClearAllChambers();
         foreach (LockerChamber chamber in labApiLocker.Chambers)
         {
-            if (i > Chambers.Count - 1)
+            if (i > ChambersSettings.Count - 1)
                 break;
 
-            chamber.AcceptableItems = Chambers[i].AcceptableItems.ToArray();
-            chamber.RequiredPermissions = Chambers[i].RequiredPermissions;
+            chamber.AcceptableItems = ChambersSettings[i].AcceptableItems.ToArray();
+            chamber.RequiredPermissions = ChambersSettings[i].RequiredPermissions;
             i++;
         }
 
@@ -76,7 +75,7 @@ public class SerializableLocker : SerializableObject
             int i = 0;
             foreach (LockerChamber chamber in labApiLocker.Chambers)
             {
-                chamber.IsOpen = Chambers[i].IsOpen;
+                chamber.IsOpen = ChambersSettings[i].IsOpen;
                 i++;
             }
         });
@@ -87,7 +86,7 @@ public class SerializableLocker : SerializableObject
     private void SetDefaultSettings(LabApi.Features.Wrappers.Locker labApiLocker)
     {
         Loot.Clear();
-        Chambers.Clear();
+        ChambersSettings.Clear();
 
         foreach (LockerLoot loot in labApiLocker.Loot)
         {
@@ -96,39 +95,37 @@ public class SerializableLocker : SerializableObject
         }
 
         foreach (LockerChamber chamber in labApiLocker.Chambers)
-            Chambers.Add(new(chamber.AcceptableItems, chamber.IsOpen, chamber.RequiredPermissions));
+            ChambersSettings.Add(new(chamber.AcceptableItems, chamber.IsOpen, chamber.RequiredPermissions));
     }
 
-    private Locker LockerPrefab
+    public static Locker GetLockerObjectByType(LockerType lockerType)
     {
-        get
+        Locker prefab = lockerType switch
         {
-            Locker prefab = LockerType switch
-            {
-                LockerType.PedestalScp500 => PrefabManager.PedestalScp500,
-                LockerType.LargeGun => PrefabManager.LockerLargeGun,
-                LockerType.RifleRack => PrefabManager.LockerRifleRack,
-                LockerType.Misc => PrefabManager.LockerMisc,
-                LockerType.Medkit => PrefabManager.LockerRegularMedkit,
-                LockerType.Adrenaline => PrefabManager.LockerAdrenalineMedkit,
-                LockerType.PedestalScp018 => PrefabManager.PedestalScp018,
-                LockerType.PedestalScp207 => PrefabManager.PedstalScp207,
-                LockerType.PedestalScp244 => PrefabManager.PedestalScp244,
-                LockerType.PedestalScp268 => PrefabManager.PedestalScp268,
-                LockerType.PedestalScp1853 => PrefabManager.PedstalScp1853,
-                LockerType.PedestalScp2176 => PrefabManager.PedestalScp2176,
-                LockerType.PedestalScpScp1576 => PrefabManager.PedestalScp1576,
-                LockerType.PedestalAntiScp207 => PrefabManager.PedestalAntiScp207,
-                LockerType.PedestalScp1344 => PrefabManager.PedestalScp1344,
-                LockerType.ExperimentalWeapon => PrefabManager.LockerExperimentalWeapon,
-                _ => throw new InvalidOperationException()
-            };
+            LockerType.Scp500Pedestal => PrefabManager.PedestalScp500,
+            LockerType.LargeGun => PrefabManager.LockerLargeGun,
+            LockerType.RifleRack => PrefabManager.LockerRifleRack,
+            LockerType.Misc => PrefabManager.LockerMisc,
+            LockerType.Medkit => PrefabManager.LockerRegularMedkit,
+            LockerType.Adrenaline => PrefabManager.LockerAdrenalineMedkit,
+            LockerType.Scp018Pedestal => PrefabManager.PedestalScp018,
+            LockerType.Scp207Pedestal => PrefabManager.PedstalScp207,
+            LockerType.Scp244Pedestal => PrefabManager.PedestalScp244,
+            LockerType.Scp268Pedestal => PrefabManager.PedestalScp268,
+            LockerType.Scp1853Pedestal => PrefabManager.PedstalScp1853,
+            LockerType.Scp2176Pedestal => PrefabManager.PedestalScp2176,
+            LockerType.Scp1576Pedestal => PrefabManager.PedestalScp1576,
+            LockerType.AntiScp207Pedestal => PrefabManager.PedestalAntiScp207,
+            LockerType.Scp1344Pedestal => PrefabManager.PedestalScp1344,
+            LockerType.ScpPedestal => PrefabManager.PedestalScp500,
+            LockerType.ExperimentalWeapon => PrefabManager.LockerExperimentalWeapon,
+            _ => throw new InvalidOperationException()
+        };
 
-            return prefab;
-        }
+        return prefab;
     }
 
     public override bool RequiresReloading => true;
 
-    internal LockerType _prevType = LockerType.None;
+    internal LockerType _prevType = LockerType.Unknown;
 }

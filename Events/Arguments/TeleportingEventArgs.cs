@@ -9,7 +9,7 @@ public class TeleportingEventArgs
     /// <summary>
     /// Initializes a new instance of the <see cref="TeleportingEventArgs"/> class.
     /// </summary>
-    public TeleportingEventArgs(TeleportObject entranceTeleport, TeleportObject exitTeleport, Player player, 
+    public TeleportingEventArgs(TeleportObject entranceTeleport, TeleportObject exitTeleport, Player player,
         GameObject gameObject, Vector3 destination, Quaternion playerRotation, int teleportSoundId)
     {
         EntranceTeleport = entranceTeleport;

@@ -163,7 +163,7 @@ public class Modify : ICommand
                 return false;
             }
 
-            mapEditorObject.Base.Id = newId;
+            mapEditorObject.Base.ObjectId = newId;
             mapEditorObject.Map.Reload();
             response = "You've successfully modified the object's ID!";
             return true;

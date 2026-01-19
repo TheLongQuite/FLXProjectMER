@@ -27,8 +27,8 @@ internal static class DoorOpenerPatch
             return;
 
         __instance.TargetDoor.NetworkTargetState = false;
-        __instance.TargetDoor.ServerChangeLock(
-            eventType == DoorEventOpenerExtension.OpenerEventType.DeconFinish ? DoorLockReason.DecontLockdown
-                : DoorLockReason.Warhead, false);
+        __instance.TargetDoor.ServerChangeLock(eventType == DoorEventOpenerExtension.OpenerEventType.DeconFinish
+            ? DoorLockReason.DecontLockdown
+            : DoorLockReason.Warhead, false);
     }
 }
