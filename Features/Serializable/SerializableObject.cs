@@ -25,7 +25,7 @@ public abstract class SerializableObject
 
     public virtual int Index { get; set; } = -1;
 
-    public virtual GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
+    public virtual GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null, bool isForced = false)
         => throw new NotSupportedException();
 
     [YamlIgnore]

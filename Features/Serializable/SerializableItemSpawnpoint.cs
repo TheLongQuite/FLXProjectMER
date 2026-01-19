@@ -25,9 +25,9 @@ public class SerializableItemSpawnpoint : SerializableObject, IIndicatorDefiniti
     public bool CanBePickedUp { get; set; } = true;
     public float Weight { get; set; } = -1;
 
-    public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
+    public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null, bool isForced = false)
     {
-        if (Random.Range(0, 101) > SpawnChance)
+        if (!isForced && Random.Range(0, 101) > SpawnChance)
             return null;
         
         GameObject itemSpawnPoint = instance ?? new GameObject("ItemSpawnpoint");

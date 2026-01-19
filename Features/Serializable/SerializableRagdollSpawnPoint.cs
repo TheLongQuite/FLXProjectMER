@@ -39,11 +39,9 @@ public class SerializableRagdollSpawnPoint : SerializableObject
     [YamlIgnore]
     public override Vector3 Scale { get; set; }
     
-    public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
+    public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null, bool isForced = false)
     {        
-        // TODO: Метод используется для спавна и обновления, будет странно, если из-за ебаного шанса, он попросту не обновится
-        // TODO: Нужна переменная ака "bool isForced" когда мы игнорим подобные исключительно игровые проверки
-        if (Random.Range(0, 101) > SpawnChance)
+        if (!isForced && Random.Range(0, 101) > SpawnChance)
             return null;
         
         if (instance != null)

@@ -24,7 +24,7 @@ public class SerializablePrimitive : SerializableObject
     /// </summary>
     public PrimitiveFlags PrimitiveFlags { get; set; } = (PrimitiveFlags)3;
 
-    public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
+    public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null, bool isForced = false)
     {
         PrimitiveObjectToy primitive = instance == null ? UnityEngine.Object.Instantiate(PrefabManager.PrimitiveObject)
             : instance.GetComponent<PrimitiveObjectToy>();

@@ -17,7 +17,7 @@ public class SerializablePlayerSpawnpoint : SerializableObject, IIndicatorDefini
     [YamlIgnore]
     public override Vector3 Scale { get; set; }
 
-    public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
+    public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null, bool isForced = false)
     {
         GameObject spawnpoint = instance ?? new GameObject("PlayerSpawnpoint");
         Vector3 position = room.GetAbsolutePosition(Position);

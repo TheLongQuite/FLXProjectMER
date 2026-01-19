@@ -18,7 +18,7 @@ public class SerializableLocker : SerializableObject
 
     public List<SerializableLockerChamber> Chambers { get; set; } = [];
 
-    public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
+    public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null, bool isForced = false)
     {
         Locker locker = instance == null ? UnityEngine.Object.Instantiate(LockerPrefab)
             : instance.GetComponent<Locker>();

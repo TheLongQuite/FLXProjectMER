@@ -15,7 +15,7 @@ public class SerializableInteractable : SerializableObject, IIndicatorDefinition
     public float InteractionDuration { get; set; } = 0f;
     public bool IsLocked { get; set; } = false;
 
-    public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
+    public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null, bool isForced = false)
     {
         InvisibleInteractableToy interactable = instance == null
             ? UnityEngine.Object.Instantiate(PrefabManager.Interactable)

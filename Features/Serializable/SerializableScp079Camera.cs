@@ -13,7 +13,7 @@ public class SerializableScp079Camera : SerializableObject
     public CameraType CameraType { get; set; } = CameraType.Lcz;
     public string Label { get; set; } = "CustomCamera";
 
-    public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
+    public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null, bool isForced = false)
     {
         Scp079CameraToy cameraVariant;
         Vector3 position = room.GetAbsolutePosition(Position);

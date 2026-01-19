@@ -14,7 +14,7 @@ public class SerializableSchematic : SerializableObject
 {
     public string SchematicName { get; set; } = "None";
 
-    public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
+    public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null, bool isForced = false)
     {
         PrimitiveObjectToy schematic = instance == null ? UnityEngine.Object.Instantiate(PrefabManager.PrimitiveObject)
             : instance.GetComponent<PrimitiveObjectToy>();

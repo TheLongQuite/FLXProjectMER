@@ -42,7 +42,7 @@ public class SerializableTeleport : SerializableObject, IIndicatorDefinition
     public int TeleportSoundId { get; set; } = -1;
     public TeleportFlags TeleportFlags { get; set; } = TeleportFlags.Player;
 
-    public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
+    public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null, bool isForced = false)
     {
         GameObject gameObject = instance ?? new GameObject("Teleport");
         Vector3 position = room.GetAbsolutePosition(Position);

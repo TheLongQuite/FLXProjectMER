@@ -8,7 +8,7 @@ namespace ProjectMER.Features.Serializable;
 
 public class SerializableCapybara : SerializableObject
 {
-    public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
+    public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null, bool isForced = false)
     {
         CapybaraToy capybara = instance == null ? UnityEngine.Object.Instantiate(PrefabManager.Capybara)
             : instance.GetComponent<CapybaraToy>();

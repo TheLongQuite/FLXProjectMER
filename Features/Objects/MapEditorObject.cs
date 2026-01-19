@@ -63,7 +63,7 @@ public class MapEditorObject : MonoBehaviour
     private void UpdateCopy()
     {
         IndicatorObject.TrySpawnOrUpdateIndicator(this);
-        Base.SpawnOrUpdateObject(Room, gameObject);
+        Base.SpawnOrUpdateObject(Room, gameObject, true);
     }
 
     /// <summary>
