@@ -30,7 +30,7 @@ public class TeleportObject : MonoBehaviour
     {
         if (Teleports.IsEmpty())
         {
-            foreach (TargetTeleporter teleport in Base.Targets)
+            foreach (TargetTeleporter teleport in Base.TargetTeleporters)
                 Teleports.Add(teleport.Id, teleport.Chance);
         }
 
@@ -89,7 +89,7 @@ public class TeleportObject : MonoBehaviour
         {
             Log.Assert(teleportSoundId >= 0 && teleportSoundId <= 31,
                 $"The teleport sound id must be between 0 and 31. It is currently {teleportSoundId} for teleport with [{
-                    Base.Targets}] targets.");
+                    Base.TargetTeleporters}] targets.");
 
             MirrorExtensions.SendFakeTargetRpc(player, ReferenceHub._hostHub.networkIdentity,
                 typeof(AmbientSoundPlayer), "RpcPlaySound", teleportSoundId);

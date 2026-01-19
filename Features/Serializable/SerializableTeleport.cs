@@ -12,7 +12,7 @@ namespace ProjectMER.Features.Serializable;
 
 public class SerializableTeleport : SerializableObject, IIndicatorDefinition
 {
-    public List<TargetTeleporter> Targets { get; set; } = [];
+    public List<TargetTeleporter> TargetTeleporters { get; set; } = [];
 
     public List<string> AllowedRoles { get; set; } = new()
     {
@@ -112,7 +112,7 @@ public class SerializableTeleport : SerializableObject, IIndicatorDefinition
 
         foreach (PrimitiveObjectToy primitive in root.GetComponentsInChildren<PrimitiveObjectToy>())
         {
-            if (Targets.Count > 0)
+            if (TargetTeleporters.Count > 0)
                 primitive.NetworkMaterialColor = new(0.11f, 0.98f, 0.92f, 0.5f);
             else
                 primitive.NetworkMaterialColor = new(1f, 1f, 1f, 0.25f);
