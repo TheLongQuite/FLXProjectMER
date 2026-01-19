@@ -13,11 +13,11 @@ public static class Schematic
 
     public static Event<SchematicDestroyedEventArgs> SchematicDestroyed { get; set; } = new();
 
-    internal static void OnSchematicSpawning(SchematicSpawningEventArgs ev) => SchematicSpawning.InvokeSafely(ev);
+    public static void OnSchematicSpawning(SchematicSpawningEventArgs ev) => SchematicSpawning.InvokeSafely(ev);
 
-    internal static void OnSchematicSpawned(SchematicSpawnedEventArgs ev) => SchematicSpawned.InvokeSafely(ev);
+    public static void OnSchematicSpawned(SchematicSpawnedEventArgs ev) => SchematicSpawned.InvokeSafely(ev);
 
-    internal static void OnButtonInteracted(ButtonInteractedEventArgs ev) => ButtonInteracted.InvokeSafely(ev);
+    public static void OnButtonInteracted(ButtonInteractedEventArgs ev) => ButtonInteracted.InvokeSafely(ev);
 
-    internal static void OnSchematicDestroyed(SchematicDestroyedEventArgs ev) => SchematicDestroyed.InvokeSafely(ev);
+    public static void OnSchematicDestroyed(SchematicDestroyedEventArgs ev) => SchematicDestroyed.InvokeSafely(ev);
 }

@@ -246,7 +246,7 @@ public class SchematicObject : MonoBehaviour
 
     public void Destroy() => Destroy(gameObject);
 
-    private void OnDestroy()
+    public void OnDestroy()
     {
         AnimationController.Dictionary.Remove(this);
         NetworkServer.Destroy(gameObject);

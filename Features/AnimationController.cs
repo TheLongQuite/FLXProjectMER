@@ -86,5 +86,5 @@ public class AnimationController
     /// A <see cref="Dictionary{TKey, TValue}"/> of <see cref="SchematicObject"/> and <see cref="AnimationController"/>
     /// <br>containing all the relative <see cref="AnimationController"/> for each <see cref="SchematicObject"/>.</br>
     /// </summary>
-    internal static readonly Dictionary<SchematicObject, AnimationController> Dictionary = new();
+    public static readonly Dictionary<SchematicObject, AnimationController> Dictionary = new();
 }
