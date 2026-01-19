@@ -14,12 +14,13 @@ public class SerializableDoor : SerializableObject
     public bool IsOpen { get; set; } = false;
     public bool IsLocked { get; set; } = false;
     public DoorPermissionFlags KeycardPermissions { get; set; }
-    public bool RequireAll  { get; set; } = true;
+    public bool RequireAll { get; set; } = true;
     public DoorDamageType IgnoredDamageSources { get; set; } = DoorDamageType.Weapon;
     public float DoorHealth { get; set; } = 150f;
     public LockOnEvent LockOnEvent { get; set; } = LockOnEvent.None;
 
-    public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null, bool isForced = false)
+    public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null,
+        bool isForced = false)
     {
         DoorVariant doorVariant;
         Vector3 position = room.GetAbsolutePosition(Position);

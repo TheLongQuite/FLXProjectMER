@@ -47,19 +47,20 @@ public class List : ICommand
         foreach (string filePath in FileExtensions.GetAllMaps())
         {
             string owner = Directory.GetParent(filePath)?.Name ?? "NO OWNER";
-            mapStatuses.AddIfNotContains(new(Path.GetFileNameWithoutExtension(filePath), owner));   
+            mapStatuses.AddIfNotContains(new(Path.GetFileNameWithoutExtension(filePath), owner));
         }
 
         foreach (string loaderMapName in MapUtils.LoadedMaps.Keys)
         {
             string owner = Directory.GetParent(loaderMapName)?.Name ?? "NO OWNER";
-            mapStatuses.AddIfNotContains(new(Path.GetFileNameWithoutExtension(loaderMapName), owner));   
+            mapStatuses.AddIfNotContains(new(Path.GetFileNameWithoutExtension(loaderMapName), owner));
         }
 
-        foreach (var kvp in mapStatuses.OrderByDescending(x => x.IsLoaded).ThenByDescending(x => x.IsDirty).GroupBy(x => x.Owner))
+        foreach (IGrouping<string, MapStatus>? kvp in mapStatuses.OrderByDescending(x => x.IsLoaded)
+                     .ThenByDescending(x => x.IsDirty).GroupBy(x => x.Owner))
         {
             builder.AppendLine($"- <color=yellow>{kvp.Key}</color>");
-            foreach (var mapStatus in kvp) 
+            foreach (MapStatus mapStatus in kvp)
                 builder.AppendLine($"- {mapStatus}");
         }
 
@@ -69,36 +70,36 @@ public class List : ICommand
         builder.AppendLine();
         builder.AppendLine("<color=orange><b>Список схематик:</b></color>");
 
-        foreach (var kvp in GroupByOwnerSchematics(FileExtensions.GetAllSchematicDirectories(), true))
+        foreach (KeyValuePair<string, List<string>> kvp in GroupByOwnerSchematics(
+                     FileExtensions.GetAllSchematicDirectories(), true))
         {
             builder.AppendLine($"- <color=yellow>{kvp.Key}</color>");
-            foreach (var file in kvp.Value) 
+            foreach (string? file in kvp.Value)
                 builder.AppendLine($"<size=15>   - {file}</size>");
         }
-        
+
         response = StringBuilderPool.Shared.ToStringReturn(builder);
         return true;
     }
-    
+
     /// <summary>
     /// Берёт список файлов и сортирует их в словарь из папок-владельцев этих файлов и самих файлов
     /// </summary>
     private Dictionary<string, List<string>> GroupByOwnerSchematics(List<string> files, bool isSchematic = false)
     {
         Log.Debug($"[{nameof(GroupByOwnerSchematics)}] Input files: {files.Count}");
-        Dictionary<string, List<string>> toReturn = new Dictionary<string, List<string>>();
-        foreach (var file in files)
+        Dictionary<string, List<string>> toReturn = new();
+        foreach (string? file in files)
         {
-            string owner = (isSchematic ? Directory.GetParent(file)?.Name : Path.GetFileName(Path.GetDirectoryName(file))) ?? "ERR";
+            string owner =
+                (isSchematic ? Directory.GetParent(file)?.Name : Path.GetFileName(Path.GetDirectoryName(file))) ??
+                "ERR";
+
             string fileName = Path.GetFileNameWithoutExtension(file);
             if (toReturn.TryGetValue(owner, out List<string> owns))
-            {
                 owns.Add(fileName);
-            }
             else
-            {
-                toReturn[owner] = new List<string>() { fileName };
-            }
+                toReturn[owner] = new() { fileName };
         }
 
         Log.Debug($"[{nameof(GroupByOwnerSchematics)}] Output groups: {toReturn.Count}");

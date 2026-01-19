@@ -18,20 +18,20 @@ public class TeleportObject : MonoBehaviour
         Base = (SerializableTeleport)_mapEditorObject.Base;
         Teleports = [];
     }
-    
+
     public SerializableTeleport Base;
     private MapEditorObject _mapEditorObject;
 
     public Dictionary<GameObject, DateTime> ObjectAndNextUseTime;
 
-    public StaticWeightedRandomizer<string> Teleports; 
-    
+    public StaticWeightedRandomizer<string> Teleports;
+
     public TeleportObject? GetRandomTarget()
     {
         if (Teleports.IsEmpty())
         {
             foreach (TargetTeleporter teleport in Base.Targets)
-                Teleports.Add(teleport.Id, teleport.Chance);   
+                Teleports.Add(teleport.Id, teleport.Chance);
         }
 
         foreach (TeleportObject teleportObject in FindObjectsByType<TeleportObject>(FindObjectsInactive.Exclude,
@@ -54,7 +54,7 @@ public class TeleportObject : MonoBehaviour
 
         if (ObjectAndNextUseTime.TryGetValue(other.gameObject, out DateTime time) && time > DateTime.Now)
             return;
-        
+
         if (player.IsConnected && !Base.AllowedRoles.Contains(player.GetCustomOrBasicRole()))
             return;
 
@@ -64,16 +64,16 @@ public class TeleportObject : MonoBehaviour
 
         if (!flag)
             return;
-        
+
         string objectTag = other.GetComponentInParent<NetworkIdentity>()?.gameObject.tag;
         if (objectTag == null)
             return;
-        
+
         if (objectTag == "Player" && !Base.TeleportFlags.HasFlagFast(TeleportFlags.Player) ||
             objectTag == "Projectile" && !Base.TeleportFlags.HasFlagFast(TeleportFlags.ActiveGrenade) ||
             objectTag == "Pickup" && !Base.TeleportFlags.HasFlagFast(TeleportFlags.Pickup))
             return;
-        
+
         TeleportObject? target = GetRandomTarget();
         if (target == null)
             return;
@@ -87,8 +87,12 @@ public class TeleportObject : MonoBehaviour
         int teleportSoundId = Base.TeleportSoundId;
         if (teleportSoundId != -1)
         {
-            Log.Assert(teleportSoundId >= 0 && teleportSoundId <= 31, $"The teleport sound id must be between 0 and 31. It is currently {teleportSoundId} for teleport with [{Base.Targets}] targets.");
-            MirrorExtensions.SendFakeTargetRpc(player, ReferenceHub._hostHub.networkIdentity, typeof(AmbientSoundPlayer), "RpcPlaySound", teleportSoundId);
+            Log.Assert(teleportSoundId >= 0 && teleportSoundId <= 31,
+                $"The teleport sound id must be between 0 and 31. It is currently {teleportSoundId} for teleport with [{
+                    Base.Targets}] targets.");
+
+            MirrorExtensions.SendFakeTargetRpc(player, ReferenceHub._hostHub.networkIdentity,
+                typeof(AmbientSoundPlayer), "RpcPlaySound", teleportSoundId);
         }
     }
 }

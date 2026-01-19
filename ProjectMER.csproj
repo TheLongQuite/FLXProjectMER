@@ -34,7 +34,7 @@
             <HintPath>$(EXILED_REFERENCES)\Exiled.Starter.dll</HintPath>
         </Reference>
         <Reference Include="FLXLib">
-          <HintPath>$(EXILED_REFERENCES)\FLXLib.dll</HintPath>
+            <HintPath>$(EXILED_REFERENCES)\FLXLib.dll</HintPath>
         </Reference>
         <Reference Include="LabApi">
             <HintPath>$(EXILED_REFERENCES)\LabApi.dll</HintPath>
@@ -50,7 +50,7 @@
         <Reference Include="Assembly-CSharp-firstpass" HintPath="$(EXILED_REFERENCES)\Assembly-CSharp-firstpass.dll"/>
         <Reference Include="CommandSystem.Core" HintPath="$(EXILED_REFERENCES)\CommandSystem.Core.dll"/>
         <Reference Include="WeightedRandomizer">
-          <HintPath>$(EXILED_REFERENCES)\WeightedRandomizer.dll</HintPath>
+            <HintPath>$(EXILED_REFERENCES)\WeightedRandomizer.dll</HintPath>
         </Reference>
         <Reference Include="YamlDotNet" HintPath="$(EXILED_REFERENCES)\YamlDotNet.dll"/>
         <Reference Include="NorthwoodLib" HintPath="$(EXILED_REFERENCES)\NorthwoodLib.dll"/>
@@ -64,7 +64,7 @@
         <Exec Command="
     copy /Y &quot;$(TargetPath)&quot; &quot;$(EXILED)\Plugins\&quot;
     copy /Y &quot;$(TargetPath)&quot; &quot;$(EXILED_REFERENCES)\&quot;
-  " />
+  "/>
     </Target>
 
 </Project>

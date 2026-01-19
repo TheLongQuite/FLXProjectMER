@@ -34,7 +34,8 @@ public class SerializableRoomLight : SerializableObject
     [YamlIgnore]
     public override Vector3 Scale { get; set; }
 
-    public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null, bool isForced = false)
+    public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null,
+        bool isForced = false)
     {
         Color color = Color.GetColorFromString();
         if (room is null)
@@ -44,16 +45,15 @@ public class SerializableRoomLight : SerializableObject
                 Log.Error($"Invalid room type {Room}");
                 return null;
             }
+
             room = Exiled.API.Features.Room.Get(roomType);
         }
-        
+
         if (OnlyWarheadLight && (Warhead.IsInProgress || Warhead.IsDetonated))
-        {
             return base.SpawnOrUpdateObject(room, instance);
-        }
-        
+
         room.Color = color;
-       
+
         return base.SpawnOrUpdateObject(room, instance, isForced);
     }
 }

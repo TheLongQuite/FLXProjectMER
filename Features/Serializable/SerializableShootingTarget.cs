@@ -11,7 +11,8 @@ public class SerializableShootingTarget : SerializableObject
 {
     public TargetType TargetType { get; set; } = TargetType.ClassD;
 
-    public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null, bool isForced = false)
+    public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null,
+        bool isForced = false)
     {
         ShootingTarget shootingTarget = instance == null ? UnityEngine.Object.Instantiate(TargetPrefab)
             : instance.GetComponent<ShootingTarget>();

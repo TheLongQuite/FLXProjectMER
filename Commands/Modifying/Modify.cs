@@ -162,7 +162,7 @@ public class Modify : ICommand
                 response = $"This ID is already used by an other object!";
                 return false;
             }
-            
+
             mapEditorObject.Base.Id = newId;
             mapEditorObject.Map.Reload();
             response = "You've successfully modified the object's ID!";

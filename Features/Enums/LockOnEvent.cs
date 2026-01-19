@@ -5,5 +5,5 @@ public enum LockOnEvent
 {
     None = 0,
     LightDecontaminated = 1,
-    WarheadDetonated = 2,
+    WarheadDetonated = 2
 }

@@ -28,22 +28,17 @@ public class MapSchematic
 
     private ListAccessor[] ListAccessors => _listAccessors ??=
     [
-        new(() => Primitives, typeof(SerializablePrimitive)),
-        new(() => LightSources, typeof(SerializableLight)),
-        new(() => Doors, typeof(SerializableDoor)),
-        new(() => WorkStations, typeof(SerializableWorkstation)),
+        new(() => Primitives, typeof(SerializablePrimitive)), new(() => LightSources, typeof(SerializableLight)),
+        new(() => Doors, typeof(SerializableDoor)), new(() => WorkStations, typeof(SerializableWorkstation)),
         new(() => ItemSpawnPoints, typeof(SerializableItemSpawnpoint)),
         new(() => PlayerSpawnPoints, typeof(SerializablePlayerSpawnpoint)),
-        new(() => Capybaras, typeof(SerializableCapybara)),
-        new(() => Texts, typeof(SerializableText)),
+        new(() => Capybaras, typeof(SerializableCapybara)), new(() => Texts, typeof(SerializableText)),
         new(() => Interactables, typeof(SerializableInteractable)),
         new(() => Schematics, typeof(SerializableSchematic)),
         new(() => Scp079Cameras, typeof(SerializableScp079Camera)),
         new(() => ShootingTargets, typeof(SerializableShootingTarget)),
-        new(() => Teleports, typeof(SerializableTeleport)),
-        new(() => Lockers, typeof(SerializableLocker)),
-        new(() => Waypoints, typeof(SerializableWaypoint)),
-        new ListAccessor(() => RoomLights, typeof(SerializableRoomLight))
+        new(() => Teleports, typeof(SerializableTeleport)), new(() => Lockers, typeof(SerializableLocker)),
+        new(() => Waypoints, typeof(SerializableWaypoint)), new(() => RoomLights, typeof(SerializableRoomLight))
     ];
 
     public List<SerializableDoor> Doors { get; set; } = [];
@@ -137,6 +132,7 @@ public class MapSchematic
             obj._prevType = obj.LockerType;
             SpawnObject(obj);
         });
+
         RoomLights.ForEach(SpawnObject);
         Waypoints.ForEach(SpawnObject);
         RagdollSpawnPoints.ForEach(SpawnObject);
@@ -194,13 +190,13 @@ public class MapSchematic
             IsDirty = true;
             return true;
         }
-        
+
         return false;
     }
 
     public bool TryRemoveElement(string id)
     {
-        foreach (var accessor in ListAccessors)
+        foreach (ListAccessor accessor in ListAccessors)
         {
             IList? list = accessor.GetList();
             for (int i = 0; i < list.Count; i++)
@@ -213,7 +209,7 @@ public class MapSchematic
                 return true;
             }
         }
-        
+
         return false;
     }
 }

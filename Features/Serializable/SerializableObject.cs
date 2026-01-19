@@ -10,7 +10,7 @@ public abstract class SerializableObject
     /// Gets or sets the unique Id of future MapEditorObject.
     /// </summary>
     public string Id { get; set; } = "Id";
-    
+
     /// <summary>
     /// Gets or sets the objects's position.
     /// </summary>
@@ -30,8 +30,8 @@ public abstract class SerializableObject
 
     public virtual int Index { get; set; } = -1;
 
-    public virtual GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null, bool isForced = false)
-        => throw new NotSupportedException();
+    public virtual GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null,
+        bool isForced = false) => throw new NotSupportedException();
 
     [YamlIgnore]
     public virtual bool RequiresReloading => Index != _prevIndex;

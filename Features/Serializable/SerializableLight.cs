@@ -33,7 +33,8 @@ public class SerializableLight : SerializableObject, IIndicatorDefinition
     [YamlIgnore]
     public override Vector3 Scale { get; set; }
 
-    public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null, bool isForced = false)
+    public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null,
+        bool isForced = false)
     {
         LightSourceToy light = instance == null ? UnityEngine.Object.Instantiate(PrefabManager.LightSource)
             : instance.GetComponent<LightSourceToy>();

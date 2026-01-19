@@ -40,20 +40,24 @@ public class SerializableRagdollSpawnPoint : SerializableObject, IIndicatorDefin
 
     [YamlIgnore]
     public override Vector3 Scale { get; set; }
-    
-    public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null, bool isForced = false)
-    {        
+
+    public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null,
+        bool isForced = false)
+    {
         if (!isForced && Random.Range(0, 101) > SpawnChance)
             return null;
-        
+
         if (instance != null)
             Object.Destroy(instance);
-        
+
         RagdollData ragdollInfo;
         if (byte.TryParse(DeathReason, out byte deathReasonId) && deathReasonId <= 22)
-            ragdollInfo = new RagdollData(Server.Host.ReferenceHub, new UniversalDamageHandler(-1f, DeathTranslations.TranslationsById[deathReasonId]), RoleType, new RelativePosition(Position), Quaternion.Euler(Rotation), Name, double.MaxValue);
+            ragdollInfo = new(Server.Host.ReferenceHub,
+                new UniversalDamageHandler(-1f, DeathTranslations.TranslationsById[deathReasonId]), RoleType,
+                new(Position), Quaternion.Euler(Rotation), Name, double.MaxValue);
         else
-            ragdollInfo = new RagdollData(Server.Host.ReferenceHub, new CustomReasonDamageHandler(DeathReason), RoleType, new RelativePosition(Position), Quaternion.Euler(Rotation), Name, double.MaxValue);
+            ragdollInfo = new(Server.Host.ReferenceHub, new CustomReasonDamageHandler(DeathReason), RoleType,
+                new(Position), Quaternion.Euler(Rotation), Name, double.MaxValue);
 
         if (!Ragdoll.TryCreate(ragdollInfo, out Ragdoll ragdoll))
             return null;

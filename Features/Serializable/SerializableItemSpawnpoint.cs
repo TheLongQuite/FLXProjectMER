@@ -25,11 +25,12 @@ public class SerializableItemSpawnpoint : SerializableObject, IIndicatorDefiniti
     public bool CanBePickedUp { get; set; } = true;
     public float Weight { get; set; } = -1;
 
-    public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null, bool isForced = false)
+    public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null,
+        bool isForced = false)
     {
         if (!isForced && Random.Range(0, 101) > SpawnChance)
             return null;
-        
+
         GameObject itemSpawnPoint = instance ?? new GameObject("ItemSpawnpoint");
         Vector3 position = room.GetAbsolutePosition(Position);
         Quaternion rotation = room.GetAbsoluteRotation(Rotation);
@@ -44,7 +45,7 @@ public class SerializableItemSpawnpoint : SerializableObject, IIndicatorDefiniti
                 pickup.DestroySelf();
             }
         }
-        
+
         if (uint.TryParse(ItemType, out uint customId) && CustomItem.TryGet(customId, out CustomItem ci))
         {
             for (int i = 0; i < NumberOfItems; i++)
@@ -52,13 +53,13 @@ public class SerializableItemSpawnpoint : SerializableObject, IIndicatorDefiniti
                 Pickup pickup = ci.Spawn(position)!;
                 pickup.Rotation = rotation;
                 pickup.Base.transform.parent = itemSpawnPoint.transform;
-                
+
                 if (!UseGravity && pickup.Base.gameObject.TryGetComponent(out Rigidbody rb))
                     rb.isKinematic = true;
 
                 if (!CanBePickedUp)
                     pickup.IsLocked = true;
-                
+
                 EventHandlers.EventHandlers.PickupUsesLeft.Add(pickup.Serial, NumberOfUses);
             }
         }
@@ -68,7 +69,7 @@ public class SerializableItemSpawnpoint : SerializableObject, IIndicatorDefiniti
             for (int i = 0; i < NumberOfItems; i++)
             {
                 Pickup pickup = Pickup.CreateAndSpawn(parsedItem, position, rotation);
-                
+
                 pickup.Scale = Scale;
                 pickup.Base.transform.parent = itemSpawnPoint.transform;
 
@@ -77,10 +78,10 @@ public class SerializableItemSpawnpoint : SerializableObject, IIndicatorDefiniti
 
                 if (!CanBePickedUp)
                     pickup.IsLocked = true;
-                
+
                 if (Weight != -1)
                     pickup.Weight = Weight;
-                
+
                 if (pickup is FirearmPickup firearmPickup)
                 {
                     Timing.CallDelayed(0.01f, () =>
@@ -97,7 +98,7 @@ public class SerializableItemSpawnpoint : SerializableObject, IIndicatorDefiniti
         }
         else
             Log.Error($"Failed to parse item {ItemType} at {room?.Type ?? RoomType.Unknown}");
-        
+
         return itemSpawnPoint.gameObject;
     }
 

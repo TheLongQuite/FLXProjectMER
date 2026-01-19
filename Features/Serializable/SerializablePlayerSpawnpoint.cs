@@ -17,7 +17,8 @@ public class SerializablePlayerSpawnpoint : SerializableObject, IIndicatorDefini
     [YamlIgnore]
     public override Vector3 Scale { get; set; }
 
-    public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null, bool isForced = false)
+    public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null,
+        bool isForced = false)
     {
         GameObject spawnpoint = instance ?? new GameObject("PlayerSpawnpoint");
         Vector3 position = room.GetAbsolutePosition(Position);
@@ -92,7 +93,7 @@ public class SerializablePlayerSpawnpoint : SerializableObject, IIndicatorDefini
                 {
                     if (!Enum.TryParse(roleId, out RoleTypeId roleType))
                         continue;
-                    
+
                     Color roleColor = roleType.GetRoleColor();
                     colorSum.r += roleColor.r;
                     colorSum.g += roleColor.g;

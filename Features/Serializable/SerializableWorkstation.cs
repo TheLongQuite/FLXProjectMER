@@ -14,7 +14,8 @@ public class SerializableWorkstation : SerializableObject
     /// </summary>
     public bool IsInteractable { get; set; } = true;
 
-    public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null, bool isForced = false)
+    public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null,
+        bool isForced = false)
     {
         WorkstationController workstation = instance == null ? UnityEngine.Object.Instantiate(PrefabManager.Workstation)
             : instance.GetComponent<WorkstationController>();

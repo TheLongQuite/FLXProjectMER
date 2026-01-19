@@ -18,7 +18,7 @@ public static class MapUtils
     public static MapSchematic UntitledMap => LoadedMaps.GetOrAdd(UntitledMapName, () => new(UntitledMapName));
 
     public static Dictionary<string, MapSchematic> LoadedMaps { get; private set; } = [];
-    
+
     public static void SaveMap(string mapName)
     {
         if (mapName == UntitledMapName)
@@ -30,14 +30,16 @@ public static class MapUtils
             map.Merge(UntitledMap);
         else // Map isn't loaded and map file doesn't exist
             map = new MapSchematic(mapName).Merge(UntitledMap);
-        
+
         string path = Path.Combine(ProjectMER.MapsDir, "UNSORTED");
         if (!Directory.Exists(path))
         {
-            Log.Warn($"Map saving is not enabled. To enable it, create directory named 'UNSORTED' in your maps directory");
+            Log.Warn(
+                $"Map saving is not enabled. To enable it, create directory named 'UNSORTED' in your maps directory");
+
             return;
         }
-        
+
         path = Path.Combine(path, $"{map.Name}.yml");
         File.WriteAllText(path, Loader.Serializer.Serialize(map));
         map.IsDirty = false;
@@ -84,9 +86,9 @@ public static class MapUtils
     public static MapSchematic GetMapData(string mapName)
     {
         MapSchematic map;
-        
+
         string? foundPath = null;
-        foreach (var mapFile in FileExtensions.GetAllMaps())
+        foreach (string? mapFile in FileExtensions.GetAllMaps())
         {
             string name = Path.GetFileName(mapFile);
             if (name != $"{mapName}.yml")
@@ -98,7 +100,7 @@ public static class MapUtils
             foundPath = mapFile;
             break;
         }
-        
+
         if (foundPath == null)
         {
             string error = $"Failed to load map data: File {mapName}.yml does not exist!";
@@ -134,15 +136,15 @@ public static class MapUtils
             return false;
         }
     }
-    
+
     public static SchematicObjectDataList GetSchematicDataByName(string schematicName)
     {
         SchematicObjectDataList data;
         string? schematicDirPath = null;
-        
+
         foreach (string ownerDirectory in Directory.GetDirectories(ProjectMER.SchematicsDir))
         {
-            foreach (var schematicDirectory in Directory.GetDirectories(ownerDirectory))
+            foreach (string? schematicDirectory in Directory.GetDirectories(ownerDirectory))
             {
                 string name = Path.GetFileName(schematicDirectory);
                 if (name is null || name != schematicName)
@@ -150,9 +152,9 @@ public static class MapUtils
 
                 Log.Info("Нашлось.");
                 schematicDirPath = schematicDirectory;
-                break;   
+                break;
             }
-            
+
             if (schematicDirPath != null)
                 break;
         }
@@ -162,7 +164,7 @@ public static class MapUtils
             Log.Info($"Схематик '{schematicName}' не найден");
             return null;
         }
-        
+
         string schematicJsonPath = Path.Combine(schematicDirPath, $"{schematicName}.json");
         string misplacedSchematicJsonPath = schematicDirPath + ".json";
 

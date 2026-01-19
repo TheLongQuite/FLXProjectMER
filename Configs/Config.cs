@@ -12,6 +12,7 @@ public class Config : IConfig
     [Description(
         "Enables FileSystemWatcher in this plugin. What it does is when you manually change values in a currently loaded map file, after saving the file the plugin will automatically reload the map in-game with the new changes so you won't need to do it yourself.")]
     public bool EnableFileSystemWatcher { get; set; } = false;
+
     public string PluginFilesDir { get; set; } = Path.Combine(Paths.Configs, "MapEditorReborn");
 
     [Description("Whether the object will be auto selected when spawning it.")]
