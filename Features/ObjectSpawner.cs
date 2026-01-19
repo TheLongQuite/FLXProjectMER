@@ -1,8 +1,16 @@
 using AdminToys;
+using Exiled.API.Enums;
+using Exiled.API.Features;
+using Exiled.API.Features.Doors;
+using Interactables.Interobjects.DoorUtils;
+using MapGeneration;
 using ProjectMER.Features.Objects;
 using ProjectMER.Features.Serializable;
 using ProjectMER.Features.Serializable.Schematics;
+using RelativePositioning;
 using UnityEngine;
+using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 
 namespace ProjectMER.Features;
 
@@ -13,7 +21,31 @@ public static class ObjectSpawner
         GameObject gameObject = serializablePrimitive.SpawnOrUpdateObject();
         return gameObject.GetComponent<PrimitiveObjectToy>();
     }
+    
+    /// <summary>
+    /// Spawns a door.
+    /// </summary>
+    /// <param name="door">The <see cref="SerializableDoor"/> which is used to spawn a door.</param>
+    /// <returns>The spawned <see cref="Door"/>.</returns>
+    public static Door? SpawnDoor(SerializableDoor door)
+    {
+        Room room = GetRandomRoom(door.RoomType);
+        return room == null ? null : Door.Get(door.SpawnOrUpdateObject());
+    }
+    
+    /// <summary>
+    /// Gets a random <see cref="Room"/> from the <see cref="RoomType"/>.
+    /// </summary>
+    /// <param name="type">The <see cref="RoomType"/> from which the room should be chosen.</param>
+    /// <returns>A random <see cref="Room"/> that has <see cref="Room.Type"/> of the argument.</returns>
+    public static Room GetRandomRoom(RoomType type)
+    {
+        if (type == RoomType.Unknown)
+            return null;
 
+        return Room.Get(type);
+    }
+    
     public static SchematicObject SpawnSchematic(SerializableSchematic serializableSchematic)
     {
         GameObject? gameObject = serializableSchematic.SpawnOrUpdateObject();

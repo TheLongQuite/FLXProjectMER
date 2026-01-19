@@ -1,3 +1,4 @@
+using Exiled.API.Enums;
 using Exiled.API.Features;
 using MEC;
 using ProjectMER.Features.Serializable;
@@ -14,7 +15,7 @@ public class MapEditorObject : MonoBehaviour
 
     public string Id { get; protected set; }
 
-    public Room Room { get; protected set; }
+    public Room CurrentRoom { get; protected set; }
 
     public MapSchematic Map => MapUtils.LoadedMaps[MapName];
 
@@ -23,7 +24,7 @@ public class MapEditorObject : MonoBehaviour
         Base = serializableObject;
         MapName = mapName;
         Id = id;
-        Room = room;
+        CurrentRoom = room;
 
         return this;
     }
@@ -63,7 +64,7 @@ public class MapEditorObject : MonoBehaviour
     private void UpdateCopy()
     {
         IndicatorObject.TrySpawnOrUpdateIndicator(this);
-        Base.SpawnOrUpdateObject(Room, gameObject, true);
+        Base.SpawnOrUpdateObject(CurrentRoom, gameObject, true);
     }
 
     /// <summary>

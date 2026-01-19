@@ -1,4 +1,5 @@
 using System.Drawing.Drawing2D;
+using Exiled.API.Enums;
 using Exiled.API.Features;
 using Exiled.Loader;
 using PlayerRoles;
@@ -6,6 +7,7 @@ using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Objects;
 using ProjectMER.Features.Serializable;
 using ProjectMER.Features.Serializable.Schematics;
+using UnityEngine;
 using Utf8Json;
 using YamlDotNet.Core;
 
@@ -67,6 +69,8 @@ public static class MapUtils
         LoadMap(mapName);
     }
 
+    public static Vector3 GetRelativePosition(Vector3 position, Room room) => room.Type == RoomType.Surface ? position : room.Transform.TransformPoint(position);
+    
     public static void LoadMap(string mapName)
     {
         MapSchematic map = GetMapData(mapName);

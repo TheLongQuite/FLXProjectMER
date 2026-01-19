@@ -1,12 +1,15 @@
 using Exiled.API.Extensions;
 using Exiled.API.Features;
+using Exiled.Events.EventArgs.Scp106;
 using FLXLib.Extensions;
 using Mirror;
+using ProjectMER.Events.Handlers;
 using ProjectMER.Features.Enums;
 using ProjectMER.Features.Serializable;
 using ProjectMER.Features.Serializable.Utility;
 using UnityEngine;
 using Weighted_Randomizer;
+using TeleportingEventArgs = ProjectMER.Events.Arguments.TeleportingEventArgs;
 
 namespace ProjectMER.Features.Objects;
 
@@ -84,6 +87,10 @@ public class TeleportObject : MonoBehaviour
 
         player.Position = target.gameObject.transform.position;
         player.Rotation = Quaternion.Euler(target.gameObject.transform.eulerAngles);
+        
+        TeleportingEventArgs ev = new(this, target, player, gameObject, player.Position, player.Rotation, Base.TeleportSoundId);
+        Teleport.OnTeleporting(ev);
+        
         int teleportSoundId = Base.TeleportSoundId;
         if (teleportSoundId != -1)
         {

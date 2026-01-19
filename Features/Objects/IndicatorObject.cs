@@ -17,10 +17,10 @@ public class IndicatorObject : MapEditorObject
             return false;
 
         if (TryGetIndicator(mapEditorObject, out IndicatorObject indicator))
-            indicatorDefinition.SpawnOrUpdateIndicator(mapEditorObject.Room, indicator.gameObject);
+            indicatorDefinition.SpawnOrUpdateIndicator(mapEditorObject.CurrentRoom, indicator.gameObject);
         else
         {
-            indicator = indicatorDefinition.SpawnOrUpdateIndicator(mapEditorObject.Room)
+            indicator = indicatorDefinition.SpawnOrUpdateIndicator(mapEditorObject.CurrentRoom)
                 .AddComponent<IndicatorObject>();
 
             BoxCollider collider = indicator.gameObject.AddComponent<BoxCollider>();

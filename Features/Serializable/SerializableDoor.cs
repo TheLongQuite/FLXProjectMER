@@ -61,7 +61,7 @@ public class SerializableDoor : SerializableObject
         breakableDoor.RemainingHealth = DoorHealth;
     }
 
-    private DoorVariant DoorPrefab
+    public DoorVariant DoorPrefab
     {
         get
         {

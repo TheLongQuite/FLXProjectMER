@@ -42,7 +42,7 @@ public class Bring : ICommand
             return false;
         }
 
-        mapEditorObject.Base.Position = mapEditorObject.Room.Transform.InverseTransformPoint(player.Position);
+        mapEditorObject.Base.Position = mapEditorObject.CurrentRoom.Transform.InverseTransformPoint(player.Position);
         mapEditorObject.UpdateObjectAndCopies();
 
         response = mapEditorObject.Base.Position.ToString("F3");

@@ -48,9 +48,9 @@ public class Grab : ICommand
             Timing.KillCoroutines(GrabbingPlayers[player]);
             GrabbingPlayers.Remove(player);
 
-            Room room = mapEditorObject.Room;
+            Room room = mapEditorObject.CurrentRoom;
             mapEditorObject.Base.Position = room.Type == RoomType.Surface ? mapEditorObject.transform.position
-                : mapEditorObject.Room.Transform.InverseTransformPoint(mapEditorObject.transform.position);
+                : mapEditorObject.CurrentRoom.Transform.InverseTransformPoint(mapEditorObject.transform.position);
 
             mapEditorObject.UpdateObjectAndCopies();
 
@@ -96,7 +96,7 @@ public class Grab : ICommand
         if (mapEditorObject != null)
         {
             mapEditorObject.Base.Position =
-                mapEditorObject.Room.Transform.InverseTransformPoint(mapEditorObject.transform.position);
+                mapEditorObject.CurrentRoom.Transform.InverseTransformPoint(mapEditorObject.transform.position);
 
             mapEditorObject.UpdateObjectAndCopies();
         }
