@@ -54,6 +54,7 @@ public class MapSchematic
     public Dictionary<string, SerializableScp079Camera> Scp079Cameras { get; set; } = [];
 
     public Dictionary<string, SerializableWaypoint> Waypoints { get; set; } = [];
+    public Dictionary<string, SerializableRoomLight> RoomLights { get; set; } = [];
 
     public List<MapEditorObject> SpawnedObjects = [];
 
