@@ -4,7 +4,9 @@ using FLXLib.Extensions;
 using Mirror;
 using ProjectMER.Features.Enums;
 using ProjectMER.Features.Serializable;
+using ProjectMER.Features.Serializable.Utility;
 using UnityEngine;
+using Weighted_Randomizer;
 
 namespace ProjectMER.Features.Objects;
 
@@ -14,21 +16,28 @@ public class TeleportObject : MonoBehaviour
     {
         _mapEditorObject = GetComponent<MapEditorObject>();
         Base = (SerializableTeleport)_mapEditorObject.Base;
+        Teleports = [];
     }
-
+    
     public SerializableTeleport Base;
     private MapEditorObject _mapEditorObject;
 
     public Dictionary<GameObject, DateTime> ObjectAndNextUseTime;
 
+    public StaticWeightedRandomizer<string> Teleports; 
+    
     public TeleportObject? GetRandomTarget()
     {
-        string targetId = Base.Targets.RandomItem();
+        if (Teleports.IsEmpty())
+        {
+            foreach (TargetTeleporter teleport in Base.Targets)
+                Teleports.Add(teleport.Id, teleport.Chance);   
+        }
 
         foreach (TeleportObject teleportObject in FindObjectsByType<TeleportObject>(FindObjectsInactive.Exclude,
                      FindObjectsSortMode.None))
         {
-            if (teleportObject._mapEditorObject.Id != targetId)
+            if (teleportObject._mapEditorObject.Id != Teleports.NextWithReplacement())
                 continue;
 
             return teleportObject;

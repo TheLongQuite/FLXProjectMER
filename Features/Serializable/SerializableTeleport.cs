@@ -4,6 +4,7 @@ using ProjectMER.Features.Enums;
 using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Interfaces;
 using ProjectMER.Features.Objects;
+using ProjectMER.Features.Serializable.Utility;
 using UnityEngine;
 using PrimitiveObjectToy = AdminToys.PrimitiveObjectToy;
 
@@ -11,7 +12,7 @@ namespace ProjectMER.Features.Serializable;
 
 public class SerializableTeleport : SerializableObject, IIndicatorDefinition
 {
-    public List<string> Targets { get; set; } = [];
+    public List<TargetTeleporter> Targets { get; set; } = [];
     public List<string> AllowedRoles { get; set; } = new()
     {
         "Scp0492",
