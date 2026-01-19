@@ -196,15 +196,14 @@ public class MapSchematic
             list.Add(obj);
             IsDirty = true;
             return true;
-
         }
-
+        
         return false;
     }
 
     public bool TryRemoveElement(string id)
     {
-        foreach (ListAccessor accessor in ListAccessors)
+        foreach (var accessor in ListAccessors)
         {
             IList? list = accessor.GetList();
             for (int i = 0; i < list.Count; i++)
@@ -212,9 +211,9 @@ public class MapSchematic
                 if (list[i] is not SerializableObject obj || obj.Id != id)
                     continue;
 
-
-                IsDirty = dirtyPrevValue;
-                return false;
+                list.RemoveAt(i);
+                IsDirty = true;
+                return true;
             }
         }
         
