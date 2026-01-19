@@ -46,13 +46,15 @@ public static class ObjectSpawner
         return Room.Get(type);
     }
     
-    public static SchematicObject SpawnSchematic(SerializableSchematic serializableSchematic)
+    public static SchematicObject SpawnSchematic(SerializableSchematic serializableSchematic, bool isOptimized = false)
     {
         GameObject? gameObject = serializableSchematic.SpawnOrUpdateObject();
         if (gameObject == null)
             return null!;
-
-        return gameObject.GetComponent<SchematicObject>();
+        
+        SchematicObject schematic = gameObject.GetComponent<SchematicObject>();
+        schematic.ShouldBeOptimized = isOptimized;
+        return schematic;
     }
 
     public static SchematicObject SpawnSchematic(string schematicName, Vector3 position)
@@ -73,6 +75,27 @@ public static class ObjectSpawner
 
     public static SchematicObject
         SpawnSchematic(string schematicName, Vector3 position, Vector3 eulerAngles, Vector3 scale) => SpawnSchematic(
+        new() { SchematicName = schematicName, Position = position, Rotation = eulerAngles, Scale = scale });
+    
+    //
+    public static SchematicObject SpawnSchematicOptimized(string schematicName, Vector3 position)
+        => SpawnSchematic(new() { SchematicName = schematicName, Position = position });
+
+    public static SchematicObject SpawnSchematicOptimized(string schematicName, Vector3 position, Quaternion rotation)
+        => SpawnSchematic(new()
+        {
+            SchematicName = schematicName, Position = position, Rotation = rotation.eulerAngles
+        });
+
+    public static SchematicObject SpawnSchematicOptimized(string schematicName, Vector3 position, Vector3 eulerAngles)
+        => SpawnSchematic(new() { SchematicName = schematicName, Position = position, Rotation = eulerAngles });
+
+    public static SchematicObject
+        SpawnSchematicOptimized(string schematicName, Vector3 position, Quaternion rotation, Vector3 scale) => SpawnSchematic(
+        new() { SchematicName = schematicName, Position = position, Rotation = rotation.eulerAngles, Scale = scale });
+
+    public static SchematicObject
+        SpawnSchematicOptimized(string schematicName, Vector3 position, Vector3 eulerAngles, Vector3 scale) => SpawnSchematic(
         new() { SchematicName = schematicName, Position = position, Rotation = eulerAngles, Scale = scale });
 
     public static bool TrySpawnSchematic(SerializableSchematic serializableSchematic, out SchematicObject schematic)
