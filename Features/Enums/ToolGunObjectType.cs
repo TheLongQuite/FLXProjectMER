@@ -18,4 +18,5 @@ public enum ToolGunObjectType
     Interactable = 13,
     Waypoint = 14,
     RagdollSpawnpoint = 15,
+    RoomLight = 16
 }
