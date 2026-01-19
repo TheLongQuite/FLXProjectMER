@@ -24,11 +24,11 @@ public class MapSchematic
     public string Name;
 
     public bool IsDirty;
-    
+
     private readonly record struct ListAccessor(Func<IList> GetList, Type ElementType);
 
     private ListAccessor[]? _listAccessors;
-    
+
     private ListAccessor[] ListAccessors => _listAccessors ??=
     [
         new(() => Primitives, typeof(SerializablePrimitive)),
@@ -46,27 +46,28 @@ public class MapSchematic
         new(() => Teleports, typeof(SerializableTeleport)),
         new(() => Lockers, typeof(SerializableLocker)),
         new(() => Waypoints, typeof(SerializableWaypoint)),
+        new ListAccessor(() => RoomLights, typeof(SerializableRoomLight))
     ];
 
     public List<SerializableDoor> Doors { get; set; } = [];
-    
+
     public List<SerializableWorkstation> WorkStations { get; set; } = [];
-    
+
     public List<SerializableItemSpawnpoint> ItemSpawnPoints { get; set; } = [];
 
-    public Dictionary<string, SerializablePlayerSpawnpoint> PlayerSpawnPoints { get; set; } = [];
-    public Dictionary<string, SerializableRagdollSpawnPoint> RagdollSpawnPoints { get; set; } = [];
-    public Dictionary<string, SerializableShootingTarget> ShootingTargets { get; set; } = [];
-    
+    public List<SerializablePlayerSpawnpoint> PlayerSpawnPoints { get; set; } = [];
+    public List<SerializableRagdollSpawnPoint> RagdollSpawnPoints { get; set; } = [];
+    public List<SerializableShootingTarget> ShootingTargets { get; set; } = [];
+
     public List<SerializablePrimitive> Primitives { get; set; } = [];
 
     public List<SerializableLight> LightSources { get; set; } = [];
 
-    public Dictionary<string, SerializableRoomLight> RoomLights { get; set; } = [];
-    public Dictionary<string, SerializableTeleport> Teleports { get; set; } = [];
-    
+    public List<SerializableRoomLight> RoomLights { get; set; } = [];
+    public List<SerializableTeleport> Teleports { get; set; } = [];
+
     public List<SerializableLocker> Lockers { get; set; } = [];
-    
+
     public List<SerializableSchematic> Schematics { get; set; } = [];
     public List<SerializableCapybara> Capybaras { get; set; } = [];
 
@@ -99,7 +100,7 @@ public class MapSchematic
         Waypoints.AddRange(other.Waypoints);
         RoomLights.AddRange(other.RoomLights);
         RagdollSpawnPoints.AddRange(other.RagdollSpawnPoints);
-        
+
         return this;
     }
 
@@ -139,9 +140,9 @@ public class MapSchematic
             obj._prevType = obj.LockerType;
             SpawnObject(obj);
         });
-        RoomLights.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
-        Waypoints.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
-        RagdollSpawnPoints.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
+        RoomLights.ForEach(SpawnObject);
+        Waypoints.ForEach(SpawnObject);
+        RagdollSpawnPoints.ForEach(SpawnObject);
     }
 
     public void SpawnObject<T>(T serializableObject) where T : SerializableObject
@@ -195,17 +196,12 @@ public class MapSchematic
             list.Add(obj);
             IsDirty = true;
             return true;
-        
-        if(RoomLights.TryAdd(id, serializableObject))
-            return true;
-        
-        if(RagdollSpawnPoints.TryAdd(id, serializableObject))
-            return true;
 
-        IsDirty = dirtyPrevValue;
+        }
+
         return false;
     }
-    
+
     public bool TryRemoveElement(string id)
     {
         foreach (ListAccessor accessor in ListAccessors)
@@ -216,13 +212,12 @@ public class MapSchematic
                 if (list[i] is not SerializableObject obj || obj.Id != id)
                     continue;
 
-        if(RoomLights.Remove(id))
-            return true;
+
+                IsDirty = dirtyPrevValue;
+                return false;
+            }
+        }
         
-        if(RagdollSpawnPoints.Remove(id))
-            return true;
-        
-        IsDirty = dirtyPrevValue;
         return false;
     }
 }
