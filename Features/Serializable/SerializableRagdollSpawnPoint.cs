@@ -49,7 +49,6 @@ public class SerializableRagdollSpawnPoint : SerializableObject
         if (instance != null)
             Object.Destroy(instance);
         
-        // TODO: Рандомные Name для рэгдолов, раньше они были в каком-то уёбищном словаре. 
         RagdollData ragdollInfo;
         if (byte.TryParse(DeathReason, out byte deathReasonId) && deathReasonId <= 22)
             ragdollInfo = new RagdollData(Server.Host.ReferenceHub, new UniversalDamageHandler(-1f, DeathTranslations.TranslationsById[deathReasonId]), RoleType, new RelativePosition(Position), Quaternion.Euler(Rotation), Name, double.MaxValue);

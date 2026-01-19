@@ -1,5 +1,7 @@
+using Exiled.API.Enums;
 using Exiled.API.Features;
 using Exiled.API.Features.Pickups;
+using Exiled.CustomItems.API.Features;
 using InventorySystem.Items.Firearms.Attachments;
 using InventorySystem.Items.Firearms.Modules;
 using InventorySystem.Items.Pickups;
@@ -14,7 +16,7 @@ namespace ProjectMER.Features.Serializable;
 
 public class SerializableItemSpawnpoint : SerializableObject, IIndicatorDefinition
 {
-    public ItemType ItemType { get; set; } = ItemType.Lantern;
+    public string ItemType { get; set; } = "KeycardJanitor";
     public string AttachmentsCode { get; set; } = "-1";
     public int SpawnChance { get; set; } = 100;
     public uint NumberOfItems { get; set; } = 1;
@@ -42,38 +44,60 @@ public class SerializableItemSpawnpoint : SerializableObject, IIndicatorDefiniti
                 pickup.DestroySelf();
             }
         }
-
-        for (int i = 0; i < NumberOfItems; i++)
+        
+        if (uint.TryParse(ItemType, out uint customId) && CustomItem.TryGet(customId, out CustomItem ci))
         {
-            Pickup pickup = Pickup.Create(ItemType);
-            pickup.Position = position;
-            pickup.Rotation = rotation;
-            pickup.Scale = Scale;
-
-            pickup.Transform.parent = itemSpawnPoint.transform;
-            if (Weight != -1)
-                pickup.Weight = Weight;
-
-            pickup.Rigidbody!.isKinematic = !UseGravity;
-            pickup.IsLocked = !CanBePickedUp;
-            EventHandlers.EventHandlers.PickupUsesLeft.Add(pickup.Serial, NumberOfUses);
-
-            pickup.Spawn();
-
-            if (pickup is FirearmPickup firearmPickup)
+            for (int i = 0; i < NumberOfItems; i++)
             {
-                Timing.CallDelayed(0.01f, () =>
-                {
-                    firearmPickup.Base.OnDistributed();
-                    firearmPickup.Attachments = uint.TryParse(AttachmentsCode, out uint attachmentsCode)
-                        ? attachmentsCode : AttachmentsUtils.GetRandomAttachmentsCode(firearmPickup.Type);
+                Pickup pickup = ci.Spawn(position)!;
+                pickup.Rotation = rotation;
+                pickup.Base.transform.parent = itemSpawnPoint.transform;
+                
+                if (!UseGravity && pickup.Base.gameObject.TryGetComponent(out Rigidbody rb))
+                    rb.isKinematic = true;
 
-                    if (firearmPickup.Base.Template.TryGetModule(out MagazineModule magazineModule))
-                        magazineModule.ServerResyncData();
-                });
+                if (!CanBePickedUp)
+                    pickup.IsLocked = true;
+                
+                EventHandlers.EventHandlers.PickupUsesLeft.Add(pickup.Serial, NumberOfUses);
             }
         }
+        else if (Enum.TryParse(ItemType, out ItemType parsedItem))
+        {
+            Log.Debug($"Spawning vanilla item {parsedItem} at {room?.Type ?? RoomType.Unknown}");
+            for (int i = 0; i < NumberOfItems; i++)
+            {
+                Pickup pickup = Pickup.CreateAndSpawn(parsedItem, position, rotation);
+                
+                pickup.Scale = Scale;
+                pickup.Base.transform.parent = itemSpawnPoint.transform;
 
+                if (!UseGravity && pickup.Base.gameObject.TryGetComponent(out Rigidbody rb))
+                    rb.isKinematic = true;
+
+                if (!CanBePickedUp)
+                    pickup.IsLocked = true;
+                
+                if (Weight != -1)
+                    pickup.Weight = Weight;
+                
+                if (pickup is FirearmPickup firearmPickup)
+                {
+                    Timing.CallDelayed(0.01f, () =>
+                    {
+                        firearmPickup.Base.OnDistributed();
+                        firearmPickup.Attachments = uint.TryParse(AttachmentsCode, out uint attachmentsCode)
+                            ? attachmentsCode : AttachmentsUtils.GetRandomAttachmentsCode(firearmPickup.Type);
+
+                        if (firearmPickup.Base.Template.TryGetModule(out MagazineModule magazineModule))
+                            magazineModule.ServerResyncData();
+                    });
+                }
+            }
+        }
+        else
+            Log.Error($"Failed to parse item {ItemType} at {room?.Type ?? RoomType.Unknown}");
+        
         return itemSpawnPoint.gameObject;
     }
 

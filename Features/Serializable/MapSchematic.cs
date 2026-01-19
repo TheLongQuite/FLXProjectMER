@@ -1,6 +1,8 @@
+using System.ComponentModel;
 using Exiled.API.Features;
 using Exiled.API.Features.Doors;
 using NorthwoodLib.Pools;
+using PlayerRoles;
 using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Objects;
 using ProjectMER.Features.Serializable.Lockers;
@@ -22,18 +24,27 @@ public class MapSchematic
 
     public bool IsDirty;
 
+    public Dictionary<string, SerializableDoor> Doors { get; set; } = [];
+    
+    public Dictionary<string, SerializableWorkstation> WorkStations { get; set; } = [];
+    
+    public Dictionary<string, SerializableItemSpawnpoint> ItemSpawnPoints { get; set; } = [];
+
+    public Dictionary<string, SerializablePlayerSpawnpoint> PlayerSpawnPoints { get; set; } = [];
+    
+    //TODO: Вставить RagdollSpawnPoints конкретно сюда
+    public Dictionary<string, SerializableShootingTarget> ShootingTargets { get; set; } = [];
+    
     public Dictionary<string, SerializablePrimitive> Primitives { get; set; } = [];
 
-    public Dictionary<string, SerializableLight> Lights { get; set; } = [];
+    public Dictionary<string, SerializableLight> LightSources { get; set; } = [];
 
-    public Dictionary<string, SerializableDoor> Doors { get; set; } = [];
-
-    public Dictionary<string, SerializableWorkstation> Workstations { get; set; } = [];
-
-    public Dictionary<string, SerializableItemSpawnpoint> ItemSpawnpoints { get; set; } = [];
-
-    public Dictionary<string, SerializablePlayerSpawnpoint> PlayerSpawnpoints { get; set; } = [];
-
+    // TODO: Вставить RoomLights конкретно сюда
+    public Dictionary<string, SerializableTeleport> Teleports { get; set; } = [];
+    
+    public Dictionary<string, SerializableLocker> Lockers { get; set; } = [];
+    
+    public Dictionary<string, SerializableSchematic> Schematics { get; set; } = [];
     public Dictionary<string, SerializableCapybara> Capybaras { get; set; } = [];
 
     public Dictionary<string, SerializableText> Texts { get; set; } = [];
@@ -42,14 +53,6 @@ public class MapSchematic
 
     public Dictionary<string, SerializableScp079Camera> Scp079Cameras { get; set; } = [];
 
-    public Dictionary<string, SerializableShootingTarget> ShootingTargets { get; set; } = [];
-
-    public Dictionary<string, SerializableSchematic> Schematics { get; set; } = [];
-
-    public Dictionary<string, SerializableTeleport> Teleports { get; set; } = [];
-
-    public Dictionary<string, SerializableLocker> Lockers { get; set; } = [];
-
     public Dictionary<string, SerializableWaypoint> Waypoints { get; set; } = [];
 
     public List<MapEditorObject> SpawnedObjects = [];
@@ -57,11 +60,11 @@ public class MapSchematic
     public MapSchematic Merge(MapSchematic other)
     {
         Primitives.AddRange(other.Primitives);
-        Lights.AddRange(other.Lights);
+        LightSources.AddRange(other.LightSources);
         Doors.AddRange(other.Doors);
-        Workstations.AddRange(other.Workstations);
-        ItemSpawnpoints.AddRange(other.ItemSpawnpoints);
-        PlayerSpawnpoints.AddRange(other.PlayerSpawnpoints);
+        WorkStations.AddRange(other.WorkStations);
+        ItemSpawnPoints.AddRange(other.ItemSpawnPoints);
+        PlayerSpawnPoints.AddRange(other.PlayerSpawnPoints);
         Capybaras.AddRange(other.Capybaras);
         Texts.AddRange(other.Texts);
         Interactables.AddRange(other.Interactables);
@@ -83,7 +86,7 @@ public class MapSchematic
         SpawnedObjects.Clear();
 
         Primitives.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
-        Lights.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
+        LightSources.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
         Doors.ForEach(kVP =>
         {
             Door? vanillaDoor = Door.Get(kVP.Key);
@@ -96,9 +99,9 @@ public class MapSchematic
             SpawnObject(kVP.Key, kVP.Value);
         });
 
-        Workstations.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
-        ItemSpawnpoints.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
-        PlayerSpawnpoints.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
+        WorkStations.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
+        ItemSpawnPoints.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
+        PlayerSpawnPoints.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
         Capybaras.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
         Texts.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
         Interactables.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
@@ -156,19 +159,19 @@ public class MapSchematic
         if (Primitives.TryAdd(id, serializableObject))
             return true;
 
-        if (Lights.TryAdd(id, serializableObject))
+        if (LightSources.TryAdd(id, serializableObject))
             return true;
 
         if (Doors.TryAdd(id, serializableObject))
             return true;
 
-        if (Workstations.TryAdd(id, serializableObject))
+        if (WorkStations.TryAdd(id, serializableObject))
             return true;
 
-        if (ItemSpawnpoints.TryAdd(id, serializableObject))
+        if (ItemSpawnPoints.TryAdd(id, serializableObject))
             return true;
 
-        if (PlayerSpawnpoints.TryAdd(id, serializableObject))
+        if (PlayerSpawnPoints.TryAdd(id, serializableObject))
             return true;
 
         if (Capybaras.TryAdd(id, serializableObject))
@@ -210,19 +213,19 @@ public class MapSchematic
         if (Primitives.Remove(id))
             return true;
 
-        if (Lights.Remove(id))
+        if (LightSources.Remove(id))
             return true;
 
         if (Doors.Remove(id))
             return true;
 
-        if (Workstations.Remove(id))
+        if (WorkStations.Remove(id))
             return true;
 
-        if (ItemSpawnpoints.Remove(id))
+        if (ItemSpawnPoints.Remove(id))
             return true;
 
-        if (PlayerSpawnpoints.Remove(id))
+        if (PlayerSpawnPoints.Remove(id))
             return true;
 
         if (Capybaras.Remove(id))
