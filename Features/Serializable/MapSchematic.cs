@@ -1,3 +1,4 @@
+using System.Collections;
 using System.ComponentModel;
 using Exiled.API.Features;
 using Exiled.API.Features.Doors;
@@ -23,36 +24,59 @@ public class MapSchematic
     public string Name;
 
     public bool IsDirty;
+    
+    private readonly record struct ListAccessor(Func<IList> GetList, Type ElementType);
 
-    public Dictionary<string, SerializableDoor> Doors { get; set; } = [];
+    private ListAccessor[]? _listAccessors;
     
-    public Dictionary<string, SerializableWorkstation> WorkStations { get; set; } = [];
+    private ListAccessor[] ListAccessors => _listAccessors ??=
+    [
+        new(() => Primitives, typeof(SerializablePrimitive)),
+        new(() => LightSources, typeof(SerializableLight)),
+        new(() => Doors, typeof(SerializableDoor)),
+        new(() => WorkStations, typeof(SerializableWorkstation)),
+        new(() => ItemSpawnPoints, typeof(SerializableItemSpawnpoint)),
+        new(() => PlayerSpawnPoints, typeof(SerializablePlayerSpawnpoint)),
+        new(() => Capybaras, typeof(SerializableCapybara)),
+        new(() => Texts, typeof(SerializableText)),
+        new(() => Interactables, typeof(SerializableInteractable)),
+        new(() => Schematics, typeof(SerializableSchematic)),
+        new(() => Scp079Cameras, typeof(SerializableScp079Camera)),
+        new(() => ShootingTargets, typeof(SerializableShootingTarget)),
+        new(() => Teleports, typeof(SerializableTeleport)),
+        new(() => Lockers, typeof(SerializableLocker)),
+        new(() => Waypoints, typeof(SerializableWaypoint)),
+    ];
+
+    public List<SerializableDoor> Doors { get; set; } = [];
     
-    public Dictionary<string, SerializableItemSpawnpoint> ItemSpawnPoints { get; set; } = [];
+    public List<SerializableWorkstation> WorkStations { get; set; } = [];
+    
+    public List<SerializableItemSpawnpoint> ItemSpawnPoints { get; set; } = [];
 
     public Dictionary<string, SerializablePlayerSpawnpoint> PlayerSpawnPoints { get; set; } = [];
     public Dictionary<string, SerializableRagdollSpawnPoint> RagdollSpawnPoints { get; set; } = [];
     public Dictionary<string, SerializableShootingTarget> ShootingTargets { get; set; } = [];
     
-    public Dictionary<string, SerializablePrimitive> Primitives { get; set; } = [];
+    public List<SerializablePrimitive> Primitives { get; set; } = [];
 
-    public Dictionary<string, SerializableLight> LightSources { get; set; } = [];
+    public List<SerializableLight> LightSources { get; set; } = [];
 
     public Dictionary<string, SerializableRoomLight> RoomLights { get; set; } = [];
     public Dictionary<string, SerializableTeleport> Teleports { get; set; } = [];
     
-    public Dictionary<string, SerializableLocker> Lockers { get; set; } = [];
+    public List<SerializableLocker> Lockers { get; set; } = [];
     
-    public Dictionary<string, SerializableSchematic> Schematics { get; set; } = [];
-    public Dictionary<string, SerializableCapybara> Capybaras { get; set; } = [];
+    public List<SerializableSchematic> Schematics { get; set; } = [];
+    public List<SerializableCapybara> Capybaras { get; set; } = [];
 
-    public Dictionary<string, SerializableText> Texts { get; set; } = [];
+    public List<SerializableText> Texts { get; set; } = [];
 
-    public Dictionary<string, SerializableInteractable> Interactables { get; set; } = [];
+    public List<SerializableInteractable> Interactables { get; set; } = [];
 
-    public Dictionary<string, SerializableScp079Camera> Scp079Cameras { get; set; } = [];
+    public List<SerializableScp079Camera> Scp079Cameras { get; set; } = [];
 
-    public Dictionary<string, SerializableWaypoint> Waypoints { get; set; } = [];
+    public List<SerializableWaypoint> Waypoints { get; set; } = [];
 
     public List<MapEditorObject> SpawnedObjects = [];
 
@@ -86,56 +110,56 @@ public class MapSchematic
 
         SpawnedObjects.Clear();
 
-        Primitives.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
-        LightSources.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
-        Doors.ForEach(kVP =>
+        Primitives.ForEach(SpawnObject);
+        LightSources.ForEach(SpawnObject);
+        Doors.ForEach(obj =>
         {
-            Door? vanillaDoor = Door.Get(kVP.Key);
+            Door? vanillaDoor = Door.Get(obj.Id);
             if (vanillaDoor != null)
             {
-                kVP.Value.SetupDoor(vanillaDoor.Base);
+                obj.SetupDoor(vanillaDoor.Base);
                 return;
             }
 
-            SpawnObject(kVP.Key, kVP.Value);
+            SpawnObject(obj);
         });
 
-        WorkStations.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
-        ItemSpawnPoints.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
-        PlayerSpawnPoints.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
-        Capybaras.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
-        Texts.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
-        Interactables.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
-        Schematics.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
-        Scp079Cameras.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
-        ShootingTargets.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
-        Teleports.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
-        Lockers.ForEach(kVP =>
+        WorkStations.ForEach(SpawnObject);
+        ItemSpawnPoints.ForEach(SpawnObject);
+        PlayerSpawnPoints.ForEach(SpawnObject);
+        Capybaras.ForEach(SpawnObject);
+        Texts.ForEach(SpawnObject);
+        Interactables.ForEach(SpawnObject);
+        Schematics.ForEach(SpawnObject);
+        Scp079Cameras.ForEach(SpawnObject);
+        ShootingTargets.ForEach(SpawnObject);
+        Teleports.ForEach(SpawnObject);
+        Lockers.ForEach(obj =>
         {
-            kVP.Value._prevType = kVP.Value.LockerType;
-            SpawnObject(kVP.Key, kVP.Value);
+            obj._prevType = obj.LockerType;
+            SpawnObject(obj);
         });
         RoomLights.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
         Waypoints.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
         RagdollSpawnPoints.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
     }
 
-    public void SpawnObject<T>(string id, T serializableObject) where T : SerializableObject
+    public void SpawnObject<T>(T serializableObject) where T : SerializableObject
     {
         List<Room> rooms = serializableObject.GetRooms();
         foreach (Room room in rooms)
         {
-            if (serializableObject.Index < 0 || serializableObject.Index == room.GetRoomIndex())
-            {
-                GameObject? gameObject = serializableObject.SpawnOrUpdateObject(room);
-                if (gameObject == null)
-                    continue;
+            if (serializableObject.Index >= 0 && serializableObject.Index != room.GetRoomIndex())
+                continue;
 
-                MapEditorObject mapEditorObject =
-                    gameObject.AddComponent<MapEditorObject>().Init(serializableObject, Name, id, room);
+            GameObject? gameObject = serializableObject.SpawnOrUpdateObject(room);
+            if (gameObject == null)
+                continue;
 
-                SpawnedObjects.Add(mapEditorObject);
-            }
+            MapEditorObject mapEditorObject =
+                gameObject.AddComponent<MapEditorObject>().Init(serializableObject, Name, serializableObject.Id, room);
+
+            SpawnedObjects.Add(mapEditorObject);
         }
 
         ListPool<Room>.Shared.Return(rooms);
@@ -153,54 +177,23 @@ public class MapSchematic
         }
     }
 
-    public bool TryAddElement<T>(string id, T serializableObject) where T : SerializableObject
+    public bool TryAddElement(SerializableObject obj)
     {
-        bool dirtyPrevValue = IsDirty;
-        IsDirty = true;
+        Type objType = obj.GetType();
+        foreach (ListAccessor accessor in ListAccessors)
+        {
+            if (!accessor.ElementType.IsAssignableFrom(objType))
+                continue;
 
-        if (Primitives.TryAdd(id, serializableObject))
-            return true;
+            IList? list = accessor.GetList();
+            foreach (SerializableObject existing in list)
+            {
+                if (existing.Id == obj.Id)
+                    return false;
+            }
 
-        if (LightSources.TryAdd(id, serializableObject))
-            return true;
-
-        if (Doors.TryAdd(id, serializableObject))
-            return true;
-
-        if (WorkStations.TryAdd(id, serializableObject))
-            return true;
-
-        if (ItemSpawnPoints.TryAdd(id, serializableObject))
-            return true;
-
-        if (PlayerSpawnPoints.TryAdd(id, serializableObject))
-            return true;
-
-        if (Capybaras.TryAdd(id, serializableObject))
-            return true;
-
-        if (Texts.TryAdd(id, serializableObject))
-            return true;
-
-        if (Interactables.TryAdd(id, serializableObject))
-            return true;
-
-        if (Schematics.TryAdd(id, serializableObject))
-            return true;
-
-        if (Scp079Cameras.TryAdd(id, serializableObject))
-            return true;
-
-        if (ShootingTargets.TryAdd(id, serializableObject))
-            return true;
-
-        if (Teleports.TryAdd(id, serializableObject))
-            return true;
-
-        if (Lockers.TryAdd(id, serializableObject))
-            return true;
-
-        if (Waypoints.TryAdd(id, serializableObject))
+            list.Add(obj);
+            IsDirty = true;
             return true;
         
         if(RoomLights.TryAdd(id, serializableObject))
@@ -212,56 +205,16 @@ public class MapSchematic
         IsDirty = dirtyPrevValue;
         return false;
     }
-
+    
     public bool TryRemoveElement(string id)
     {
-        bool dirtyPrevValue = IsDirty;
-        IsDirty = true;
-
-        if (Primitives.Remove(id))
-            return true;
-
-        if (LightSources.Remove(id))
-            return true;
-
-        if (Doors.Remove(id))
-            return true;
-
-        if (WorkStations.Remove(id))
-            return true;
-
-        if (ItemSpawnPoints.Remove(id))
-            return true;
-
-        if (PlayerSpawnPoints.Remove(id))
-            return true;
-
-        if (Capybaras.Remove(id))
-            return true;
-
-        if (Texts.Remove(id))
-            return true;
-
-        if (Interactables.Remove(id))
-            return true;
-
-        if (Schematics.Remove(id))
-            return true;
-
-        if (Scp079Cameras.Remove(id))
-            return true;
-
-        if (ShootingTargets.Remove(id))
-            return true;
-
-        if (Teleports.Remove(id))
-            return true;
-
-        if (Lockers.Remove(id))
-            return true;
-
-        if (Waypoints.Remove(id))
-            return true;
+        foreach (ListAccessor accessor in ListAccessors)
+        {
+            IList? list = accessor.GetList();
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i] is not SerializableObject obj || obj.Id != id)
+                    continue;
 
         if(RoomLights.Remove(id))
             return true;

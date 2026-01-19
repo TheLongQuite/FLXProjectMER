@@ -139,7 +139,7 @@ public class Modify : ICommand
 
 
             oldMap.TryRemoveElement(mapEditorObject.Id);
-            newMap.TryAddElement(mapEditorObject.Id, mapEditorObject.Base);
+            newMap.TryAddElement(mapEditorObject.Base);
 
             oldMap.Reload();
             newMap.Reload();
@@ -162,9 +162,8 @@ public class Modify : ICommand
                 response = $"This ID is already used by an other object!";
                 return false;
             }
-
-            mapEditorObject.Map.TryAddElement(newId, mapEditorObject.Base);
-            mapEditorObject.Map.TryRemoveElement(mapEditorObject.Id);
+            
+            mapEditorObject.Base.Id = newId;
             mapEditorObject.Map.Reload();
             response = "You've successfully modified the object's ID!";
             return true;

@@ -66,8 +66,8 @@ public static class ToolGunHandler
                 break;
         }
 
-        if (map.TryAddElement(id, serializableObject))
-            map.SpawnObject(id, serializableObject);
+        if (map.TryAddElement(serializableObject))
+            map.SpawnObject(serializableObject);
 
         foreach (MapEditorObject mapEditorObject in map.SpawnedObjects)
         {

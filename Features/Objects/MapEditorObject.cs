@@ -42,7 +42,7 @@ public class MapEditorObject : MonoBehaviour
 
             Timing.CallDelayed(0.1f, () =>
             {
-                map.SpawnObject(Id, Base);
+                map.SpawnObject(Base);
 
                 if (player is not null)
                     ToolGunHandler.SelectObject(player, Map.SpawnedObjects.Find(x => x.Id == Id));

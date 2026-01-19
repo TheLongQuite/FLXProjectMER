@@ -30,12 +30,12 @@ public partial class EventHandlers
         List<MapEditorObject> list = [];
         foreach (MapSchematic map in MapUtils.LoadedMaps.Values)
         {
-            foreach (KeyValuePair<string, SerializablePlayerSpawnpoint> spawnpoint in map.PlayerSpawnPoints)
+            foreach (SerializablePlayerSpawnpoint spawnpoint in map.PlayerSpawnPoints)
             {
-                if (!spawnpoint.Value.Roles.Contains(RoleExtensions.GetCustomOrBasicRole(ev.Player)))
+                if (!spawnpoint.Roles.Contains(RoleExtensions.GetCustomOrBasicRole(ev.Player)))
                     continue;
 
-                list.AddRange(map.SpawnedObjects.Where(x => x.Id == spawnpoint.Key));
+                list.AddRange(map.SpawnedObjects.Where(x => x.Id == spawnpoint.Id));
             }
         }
 

@@ -7,6 +7,11 @@ namespace ProjectMER.Features.Serializable;
 public abstract class SerializableObject
 {
     /// <summary>
+    /// Gets or sets the unique Id of future MapEditorObject.
+    /// </summary>
+    public string Id { get; set; } = "Id";
+    
+    /// <summary>
     /// Gets or sets the objects's position.
     /// </summary>
     public virtual Vector3 Position { get; set; } = Vector3.zero;
