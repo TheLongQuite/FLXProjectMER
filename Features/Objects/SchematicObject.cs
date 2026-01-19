@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using AdminToys;
 using Exiled.API.Features;
 using Mirror;
@@ -59,7 +60,7 @@ public class SchematicObject : MonoBehaviour
         set => transform.localScale = value;
     }
 
-    public IReadOnlyList<GameObject> AttachedBlocks
+    public ObservableCollection<GameObject> AttachedBlocks
     {
         get
         {
@@ -256,7 +257,7 @@ public class SchematicObject : MonoBehaviour
 
     internal Dictionary<int, Transform> ObjectFromId = [];
 
-    private readonly List<GameObject> _attachedBlocks = [];
+    private readonly ObservableCollection<GameObject> _attachedBlocks = [];
     private readonly List<NetworkIdentity> _networkIdentities = [];
     private readonly List<AdminToyBase> _adminToyBases = [];
     private readonly Dictionary<GameObject, RuntimeAnimatorController> _animators = [];
