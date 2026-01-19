@@ -1,6 +1,9 @@
-﻿using PlayerRoles;
+﻿using AdminToys;
+using PlayerRoles;
 using PlayerRoles.Ragdolls;
 using PlayerStatsSystem;
+using ProjectMER.Features.Extensions;
+using ProjectMER.Features.Interfaces;
 using RelativePositioning;
 using UnityEngine;
 using YamlDotNet.Serialization;
@@ -12,8 +15,7 @@ using Server = Exiled.API.Features.Server;
 
 namespace ProjectMER.Features.Serializable;
 
-// TODO: Впихнуть реализацию в остальные методы PMER ака SpawnObject
-public class SerializableRagdollSpawnPoint : SerializableObject
+public class SerializableRagdollSpawnPoint : SerializableObject, IIndicatorDefinition
 {
     /// <summary>
     /// Gets or sets the name of the ragdoll to spawned.
@@ -57,5 +59,28 @@ public class SerializableRagdollSpawnPoint : SerializableObject
             return null;
 
         return ragdoll.GameObject;
+    }
+
+    public GameObject SpawnOrUpdateIndicator(Room room, GameObject? instance = null)
+    {
+        PrimitiveObjectToy cube;
+
+        Vector3 position = room.GetAbsolutePosition(Position);
+        Quaternion rotation = room.GetAbsoluteRotation(Rotation);
+
+        if (instance == null)
+        {
+            cube = Object.Instantiate(PrefabManager.PrimitiveObject);
+            cube.NetworkPrimitiveType = PrimitiveType.Cube;
+            cube.NetworkPrimitiveFlags = PrimitiveFlags.Visible;
+            cube.NetworkMaterialColor = new(0f, 1f, 0.5f, 0.9f);
+            cube.transform.localScale = Vector3.one * 0.25f;
+        }
+        else
+            cube = instance.GetComponent<PrimitiveObjectToy>();
+
+        cube.transform.SetPositionAndRotation(position, rotation);
+
+        return cube.gameObject;
     }
 }

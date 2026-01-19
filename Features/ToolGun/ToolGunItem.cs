@@ -34,7 +34,9 @@ public class ToolGunItem
         { ToolGunObjectType.Locker, typeof(SerializableLocker) },
         { ToolGunObjectType.Teleport, typeof(SerializableTeleport) },
         { ToolGunObjectType.Interactable, typeof(SerializableInteractable) },
-        { ToolGunObjectType.Waypoint, typeof(SerializableWaypoint) }
+        { ToolGunObjectType.Waypoint, typeof(SerializableWaypoint) },
+        { ToolGunObjectType.RagdollSpawnpoint, typeof(SerializableRagdollSpawnPoint)},
+        { ToolGunObjectType.Locker }
     };
 
     private ToolGunObjectType _selectedObjectToSpawn;

@@ -31,16 +31,14 @@ public class MapSchematic
     public Dictionary<string, SerializableItemSpawnpoint> ItemSpawnPoints { get; set; } = [];
 
     public Dictionary<string, SerializablePlayerSpawnpoint> PlayerSpawnPoints { get; set; } = [];
-    
-    public Dictionary<string, SerializableRoomLight> RoomLights { get; set; } = [];
-
+    public Dictionary<string, SerializableRagdollSpawnPoint> RagdollSpawnPoints { get; set; } = [];
     public Dictionary<string, SerializableShootingTarget> ShootingTargets { get; set; } = [];
     
     public Dictionary<string, SerializablePrimitive> Primitives { get; set; } = [];
 
     public Dictionary<string, SerializableLight> LightSources { get; set; } = [];
 
-    // TODO: Вставить RoomLights конкретно сюда
+    public Dictionary<string, SerializableRoomLight> RoomLights { get; set; } = [];
     public Dictionary<string, SerializableTeleport> Teleports { get; set; } = [];
     
     public Dictionary<string, SerializableLocker> Lockers { get; set; } = [];
@@ -76,6 +74,7 @@ public class MapSchematic
         Lockers.AddRange(other.Lockers);
         Waypoints.AddRange(other.Waypoints);
         RoomLights.AddRange(other.RoomLights);
+        RagdollSpawnPoints.AddRange(other.RagdollSpawnPoints);
         
         return this;
     }
@@ -118,6 +117,7 @@ public class MapSchematic
         });
         RoomLights.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
         Waypoints.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
+        RagdollSpawnPoints.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
     }
 
     public void SpawnObject<T>(string id, T serializableObject) where T : SerializableObject
@@ -205,6 +205,9 @@ public class MapSchematic
         
         if(RoomLights.TryAdd(id, serializableObject))
             return true;
+        
+        if(RagdollSpawnPoints.TryAdd(id, serializableObject))
+            return true;
 
         IsDirty = dirtyPrevValue;
         return false;
@@ -261,6 +264,9 @@ public class MapSchematic
             return true;
 
         if(RoomLights.Remove(id))
+            return true;
+        
+        if(RagdollSpawnPoints.Remove(id))
             return true;
         
         IsDirty = dirtyPrevValue;
