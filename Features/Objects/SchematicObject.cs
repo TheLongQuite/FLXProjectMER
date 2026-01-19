@@ -42,7 +42,9 @@ public class SchematicObject : MonoBehaviour
         set => transform.rotation = value;
     }
 
-    /// <summary>
+    public bool IsStatic { get; set; }
+
+/// <summary>
     /// Gets or sets the global euler angles of the object.
     /// </summary>
     public Vector3 EulerAngles
@@ -130,7 +132,6 @@ public class SchematicObject : MonoBehaviour
 
         AddRigidbodies();
         AddAnimators();
-
         Schematic.OnSchematicSpawned(new(this, Name));
 
         return this;
