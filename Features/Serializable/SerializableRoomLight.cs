@@ -1,13 +1,11 @@
 ﻿using Exiled.API.Enums;
 using Exiled.API.Features;
 using ProjectMER.Features.Extensions;
-using ProjectMER.Features.Interfaces;
 using UnityEngine;
 using YamlDotNet.Serialization;
 
 namespace ProjectMER.Features.Serializable;
 
-// TODO: Впихнуть реализацию в остальные методы PMER ака SpawnObject, повторить способы реализации други сериалазайбл
 public class SerializableRoomLight : SerializableObject
 {
     /// <summary>
@@ -35,7 +33,8 @@ public class SerializableRoomLight : SerializableObject
 
     [YamlIgnore]
     public override Vector3 Scale { get; set; }
-    public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null)
+
+    public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null, bool isForced = false)
     {
         Color color = Color.GetColorFromString();
         if (room is null)
@@ -55,8 +54,6 @@ public class SerializableRoomLight : SerializableObject
         
         room.Color = color;
        
-        return base.SpawnOrUpdateObject(room, instance);
+        return base.SpawnOrUpdateObject(room, instance, isForced);
     }
-    
-    
 }

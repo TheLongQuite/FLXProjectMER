@@ -32,7 +32,8 @@ public class MapSchematic
 
     public Dictionary<string, SerializablePlayerSpawnpoint> PlayerSpawnPoints { get; set; } = [];
     
-    //TODO: Вставить RagdollSpawnPoints конкретно сюда
+    public Dictionary<string, SerializableRoomLight> RoomLights { get; set; } = [];
+
     public Dictionary<string, SerializableShootingTarget> ShootingTargets { get; set; } = [];
     
     public Dictionary<string, SerializablePrimitive> Primitives { get; set; } = [];
@@ -54,7 +55,6 @@ public class MapSchematic
     public Dictionary<string, SerializableScp079Camera> Scp079Cameras { get; set; } = [];
 
     public Dictionary<string, SerializableWaypoint> Waypoints { get; set; } = [];
-    public Dictionary<string, SerializableRoomLight> RoomLights { get; set; } = [];
 
     public List<MapEditorObject> SpawnedObjects = [];
 
@@ -75,7 +75,8 @@ public class MapSchematic
         Teleports.AddRange(other.Teleports);
         Lockers.AddRange(other.Lockers);
         Waypoints.AddRange(other.Waypoints);
-
+        RoomLights.AddRange(other.RoomLights);
+        
         return this;
     }
 
@@ -115,7 +116,7 @@ public class MapSchematic
             kVP.Value._prevType = kVP.Value.LockerType;
             SpawnObject(kVP.Key, kVP.Value);
         });
-
+        RoomLights.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
         Waypoints.ForEach(kVP => SpawnObject(kVP.Key, kVP.Value));
     }
 
@@ -201,6 +202,9 @@ public class MapSchematic
 
         if (Waypoints.TryAdd(id, serializableObject))
             return true;
+        
+        if(RoomLights.TryAdd(id, serializableObject))
+            return true;
 
         IsDirty = dirtyPrevValue;
         return false;
@@ -256,6 +260,9 @@ public class MapSchematic
         if (Waypoints.Remove(id))
             return true;
 
+        if(RoomLights.Remove(id))
+            return true;
+        
         IsDirty = dirtyPrevValue;
         return false;
     }
