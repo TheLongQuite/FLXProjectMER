@@ -3,6 +3,7 @@ using Exiled.API.Enums;
 using Exiled.API.Features;
 using Exiled.Loader;
 using PlayerRoles;
+using ProjectMER.Features.Converters;
 using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Objects;
 using ProjectMER.Features.Serializable;
@@ -58,6 +59,45 @@ public static class MapUtils
     public static Vector3 GetRelativePosition(Vector3 position, Room room)
         => room.Type == RoomType.Surface ? position : room.Transform.TransformPoint(position);
 
+    public static void ValidateMap(string mapName)
+    {
+        string? foundPath = null;
+        foreach (string mapFile in FileExtensions.GetAllMaps())
+        {
+            string name = Path.GetFileName(mapFile);
+            if (name != $"{mapName}.yml")
+                continue;
+
+            foundPath = mapFile;
+            break;
+        }
+
+        if (foundPath == null)
+            throw new FileNotFoundException($"Failed to validate map: File {mapName}.yml does not exist!");
+
+        string content = File.ReadAllText(foundPath);
+        bool needsLockerConversion = content.Contains("chambers:") && content.Contains("allowed_role_types:");
+    
+        MapSchematic map;
+        if (needsLockerConversion)
+            map = MapValidator.ValidateAndConvert(content, mapName);
+        else
+        {
+            try
+            {
+                map = Loader.Deserializer.Deserialize<MapSchematic>(content);
+                map.Name = mapName;
+            }
+            catch (YamlException e)
+            {
+                throw new YamlException($"Failed to validate map: File {mapName}.yml has YAML errors!\n{e.Message}");
+            }
+        }
+        
+        File.WriteAllText(foundPath, Loader.Serializer.Serialize(map));
+        Log.Info($"Map {mapName} has been validated and saved.");
+    }
+    
     public static void LoadMap(string mapName)
     {
         MapSchematic map = GetMapData(mapName);
