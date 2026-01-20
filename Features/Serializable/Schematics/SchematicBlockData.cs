@@ -249,7 +249,7 @@ public class SchematicBlockData
         pickup.Position = Vector3.zero;
 
         if (Properties.TryGetValue("Locked", out object? lockedProperty))
-            pickup.IsLocked = Convert.ToBoolean(lockedProperty);
+            pickup.IsLocked = bool.TryParse(lockedProperty?.ToString(), out bool locked) && locked;
 
         string buttonId = Convert.ToString(Properties["ButtonId"]);
         if (buttonId != DefaultButtonKey)
