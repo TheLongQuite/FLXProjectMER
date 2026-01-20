@@ -31,7 +31,7 @@ public static class ToolGunHandler
         position = room.Type == RoomType.Surface ? position : room.Transform.InverseTransformPoint(position);
 
         MapSchematic map = MapUtils.UntitledMap;
-        string id = Guid.NewGuid().ToString("N").Substring(0, 8);
+        string id = Guid.NewGuid().ToString("N").Substring(0, 9);
 
         SerializableObject serializableObject =
             (SerializableObject)Activator.CreateInstance(ToolGunItem.TypesDictionary[objectType]);
@@ -65,6 +65,7 @@ public static class ToolGunHandler
                 break;
         }
 
+        serializableObject.ObjectId = id;
         if (map.TryAddElement(serializableObject))
             map.SpawnObject(serializableObject);
 
