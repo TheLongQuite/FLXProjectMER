@@ -3,6 +3,7 @@ using Exiled.Loader;
 using Exiled.Permissions.Extensions;
 using NorthwoodLib.Pools;
 using ProjectMER.Features;
+using ProjectMER.Features.Converters;
 using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Serializable;
 
@@ -77,7 +78,7 @@ public class Merge : ICommand
             throw new FileNotFoundException(error);
         }
 
-        File.WriteAllText(foundPath, Loader.Serializer.Serialize(outputMap));
+        File.WriteAllText(foundPath, YamlParser.Serializer.Serialize(outputMap));
 
         response = $"You've successfully merged {arguments.Count - 1} maps into one!";
         return true;

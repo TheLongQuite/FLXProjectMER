@@ -1,5 +1,4 @@
-﻿using Exiled.API.Features;
-using ProjectMER.Features.Objects;
+﻿using ProjectMER.Features.Objects;
 using UnityEngine;
 
 namespace ProjectMER.Events.Arguments;
@@ -9,12 +8,11 @@ public class TeleportingEventArgs
     /// <summary>
     /// Initializes a new instance of the <see cref="TeleportingEventArgs"/> class.
     /// </summary>
-    public TeleportingEventArgs(TeleportObject entranceTeleport, TeleportObject exitTeleport, Player player,
+    public TeleportingEventArgs(TeleportObject entranceTeleport, TeleportObject exitTeleport,
         GameObject gameObject, Vector3 destination, Quaternion playerRotation, int teleportSoundId)
     {
         EntranceTeleport = entranceTeleport;
         ExitTeleport = exitTeleport;
-        Player = player;
         GameObject = gameObject;
         Destination = destination;
         PlayerRotation = playerRotation;
@@ -30,11 +28,6 @@ public class TeleportingEventArgs
     /// Gets the exit teleport.
     /// </summary>
     public TeleportObject ExitTeleport { get; }
-
-    /// <summary>
-    /// Gets or sets the player that is being teleported. May be null.
-    /// </summary>
-    public Player Player { get; set; }
 
     /// <summary>
     /// Gets or sets the game object that is being teleported. May be null.

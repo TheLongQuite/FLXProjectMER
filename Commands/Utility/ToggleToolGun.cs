@@ -3,7 +3,7 @@ using Exiled.API.Features;
 using Exiled.Permissions.Extensions;
 using ProjectMER.Features.ToolGun;
 
-namespace ProjectMER.Commands;
+namespace ProjectMER.Commands.Utility;
 
 public class ToggleToolGun : ICommand
 {

@@ -4,7 +4,6 @@ using InventorySystem.Items.Pickups;
 using MapGeneration.Distributors;
 using MEC;
 using Mirror;
-using ProjectMER.Features.Enums;
 using ProjectMER.Features.Extensions;
 using UnityEngine;
 using LockerChamber = LabApi.Features.Wrappers.LockerChamber;

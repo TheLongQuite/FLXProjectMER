@@ -1,7 +1,9 @@
 ﻿using Exiled.API.Features;
+using Exiled.Loader;
 using Interactables.Interobjects.DoorUtils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using ProjectMER.Features.Extensions;
 
 namespace ProjectMER.Features.Converters;
 
@@ -9,30 +11,27 @@ public static class SchematicValidator
 {
     private const int LockerBlockType = 7;
 
-    public static bool ValidateSchematicByName(string schematicName, out string? response)
+    public static bool ValidateSchematicByName(string schematicName)
     {
-        response = null;
         string? schematicPath = FindSchematicPath(schematicName);
 
         if (schematicPath == null)
-        {
-            response = $"Schematic '{schematicName}' not found";
             return false;
-        }
-
-        return ValidateAndConvert(schematicPath, out response);
+        
+        return ValidateAndConvert(schematicPath, out _);
     }
 
     public static string? FindSchematicPath(string schematicName)
     {
-        foreach (string schematicDirectory in Directory.GetDirectories(ProjectMER.SchematicsDir)
-                     .SelectMany(Directory.GetDirectories))
+        foreach (string schematicDir in FileExtensions.GetAllSchematicDirectories())
         {
-            string dirName = Path.GetFileName(schematicDirectory);
-            if (dirName != schematicName)
+            string dirName = Path.GetFileName(schematicDir);
+
+            if (!string.Equals(dirName, schematicName, StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            string jsonPath = Path.Combine(schematicDirectory, $"{schematicName}.json");
+            string jsonPath = Path.Combine(schematicDir, $"{schematicName}.json");
+
             if (File.Exists(jsonPath))
                 return jsonPath;
         }
@@ -181,14 +180,20 @@ public static class SchematicValidator
             return result;
         }
 
-        foreach (string jsonFile in Directory.GetFiles(ProjectMER.SchematicsDir, "*.json", SearchOption.AllDirectories))
+        // Используем новый метод для получения всех JSON файлов
+        foreach (string jsonFile in FileExtensions.GetAllSchematicJsonFiles())
         {
             string fileName = Path.GetFileNameWithoutExtension(jsonFile);
+
+            // Пропускаем служебные файлы (например compiled-xxx.json)
             if (fileName.Contains('-'))
                 continue;
 
             if (ValidateAndConvert(jsonFile, out string? error))
+            {
                 result.SuccessCount++;
+                result.ConvertedSchematics.Add(fileName);
+            }
             else
             {
                 result.FailedCount++;

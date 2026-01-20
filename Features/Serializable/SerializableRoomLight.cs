@@ -1,5 +1,4 @@
-﻿using Exiled.API.Enums;
-using Exiled.API.Features;
+﻿using Exiled.API.Features;
 using ProjectMER.Features.Extensions;
 using UnityEngine;
 using YamlDotNet.Serialization;

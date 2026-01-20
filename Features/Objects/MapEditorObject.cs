@@ -1,4 +1,3 @@
-using Exiled.API.Enums;
 using Exiled.API.Features;
 using MEC;
 using ProjectMER.Features.Serializable;

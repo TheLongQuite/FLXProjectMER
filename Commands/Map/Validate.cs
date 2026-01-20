@@ -1,107 +1,77 @@
 ﻿using CommandSystem;
+using Exiled.API.Features;
 using Exiled.Permissions.Extensions;
-using ProjectMER.Features.Converters;
-using ProjectMER.Features.Extensions;
 
 namespace ProjectMER.Commands.Map;
 
 public class Validate : ICommand
 {
     public string Command => "validate";
-
-    public string[] Aliases => ["v"];
-
-    public string Description => "Validates maps and/or schematics, converting old formats";
+    public string[] Aliases => ["v", "val"];
+    public string Description => "Валидирует карты и схематики без лагов сервера";
 
     public bool Execute(ArraySegment<string> arguments, ICommandSender sender, out string response)
     {
         if (!sender.CheckPermission("mpr.validate"))
         {
-            response = "You don't have permission to execute this command.";
+            response = "Нет прав.";
             return false;
         }
 
         if (arguments.Count == 0)
         {
-            response = "Usage:\n" +
-                       "  validate <map_name> - Validate map + its schematics\n" +
-                       "  validate --all - Validate everything";
+            response = "Использование:\n" +
+                       ".validate all\n" +
+                       ".validate map [name]\n" +
+                       ".validate status";
 
             return false;
         }
 
-        string arg = arguments.At(0);
+        string mode = arguments.At(0).ToLower();
 
-        try
+        Task.Run(() =>
         {
-            return arg switch
+            try
             {
-                "--all" or "-a" => ValidateAll(out response),
-                _ => ValidateSingleMap(arg, out response)
-            };
-        }
-        catch (Exception e)
-        {
-            response = $"Validation failed: {e.Message}";
-            return false;
-        }
-    }
+                switch (mode)
+                {
+                    case "all":
+                        ValidationManager.ValidateEverything();
+                        sender.Respond("Валидация завершена, подробности в консоли.");
+                        break;
 
-    private bool ValidateSingleMap(string mapName, out string response)
-    {
-        string? foundPath = null;
-        foreach (string mapFile in FileExtensions.GetAllMaps())
-        {
-            if (Path.GetFileName(mapFile) == $"{mapName}.yml")
-            {
-                foundPath = mapFile;
-                break;
+                    case "map":
+                        if (arguments.Count < 2)
+                        {
+                            sender.Respond("Укажи название, .mp validate map <name>");
+                            return;
+                        }
+
+                        string mapName = arguments.At(1);
+                        ValidationManager.ValidateSpecificMap(mapName, out string mapResponse);
+                        sender.Respond(mapResponse);
+                        break;
+
+                    case "status":
+                        sender.Respond(ValidationManager.GetStatus());
+                        return;
+
+                    default:
+                        sender.Respond("Неизвестный режим. Доступно: all, map <name>, status");
+                        return;
+                }
+
+                Log.Info($"[VALIDATE] Завершено: {mode}");
             }
-        }
+            catch (Exception e)
+            {
+                Log.Error($"[VALIDATE] Ошибка: {e}");
+                sender.Respond("Ошибка при валидации.");
+            }
+        });
 
-        if (foundPath == null)
-        {
-            response = $"Map '{mapName}' not found";
-            return false;
-        }
-
-        ValidationResult result = MapValidator.ValidateMap(mapName, foundPath);
-        if (result.IsSuccess)
-        {
-            response = $"Map '{mapName}' validated successfully!\n" +
-                       $"Schematics processed: {result.ConvertedSchematics.Count}";
-
-            if (result.ConvertedSchematics.Count > 0)
-                response += $"\n- {string.Join("\n- ", result.ConvertedSchematics)}";
-
-            return true;
-        }
-
-        response = $"Map '{mapName}' validation completed with errors:\n" +
-                   string.Join("\n", result.Errors);
-
-        return false;
-    }
-
-    private bool ValidateAll(out string response)
-    {
-        ValidationResult mapsResult = MapValidator.ValidateAllMaps();
-        ValidationResult schematicsResult = SchematicValidator.ValidateAllSchematics();
-
-        int totalMaps = mapsResult.SuccessCount + mapsResult.FailedCount;
-        int totalSchematics = schematicsResult.SuccessCount + schematicsResult.FailedCount;
-
-        response = $"Full validation complete:\n" +
-                   $"Maps: {mapsResult.SuccessCount}/{totalMaps} success\n" +
-                   $"Schematics: {schematicsResult.SuccessCount}/{totalSchematics} success\n" +
-                   $"Schematics from maps: {mapsResult.ConvertedSchematics.Count}";
-
-        List<string> allErrors = mapsResult.Errors.Concat(schematicsResult.Errors).ToList();
-        if (allErrors.Count <= 0)
-            return mapsResult.IsSuccess && schematicsResult.IsSuccess;
-
-        response += "\n\nErrors:";
-        response += allErrors.Aggregate(response, (current, error) => current + $"\n- {error}");
-        return mapsResult.IsSuccess && schematicsResult.IsSuccess;
+        response = "Используй .validate status для проверки.";
+        return true;
     }
 }

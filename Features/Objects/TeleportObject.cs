@@ -1,8 +1,9 @@
 using Exiled.API.Extensions;
 using Exiled.API.Features;
-using Exiled.Events.EventArgs.Scp106;
+using Exiled.API.Features.Pickups;
+using Exiled.API.Features.Pickups.Projectiles;
 using FLXLib.Extensions;
-using Mirror;
+using InventorySystem.Items.Pickups;
 using ProjectMER.Events.Handlers;
 using ProjectMER.Features.Enums;
 using ProjectMER.Features.Serializable;
@@ -56,19 +57,9 @@ public class TeleportObject : MonoBehaviour
 
     public void OnTriggerEnter(Collider other)
     {
-        if (other == null)
-            return;
-
-        Player? player = Player.Get(other.gameObject);
-        if (player is null)
-            return;
-
+        GameObject targetObject = other.gameObject;
 
         if (ObjectAndNextUseTime.TryGetValue(other.gameObject, out DateTime time) && time > DateTime.Now)
-            return;
-
-        if (player.IsConnected && !Base.AllowedRoles.Contains(player.GetCustomOrBasicRole())
-                               && !Base.AllowedRoles.Contains("all", StringComparison.OrdinalIgnoreCase))
             return;
 
         bool flag =
@@ -78,47 +69,85 @@ public class TeleportObject : MonoBehaviour
         if (!flag)
             return;
 
-        string? objectTag = other.GetComponentInParent<NetworkIdentity>()?.gameObject?.tag;
-        if (objectTag == null)
-            return;
-
-
-        if (objectTag == "Player" && !Base.TeleportFlags.HasFlagFast(TeleportFlags.Player))
-            return;
-
-        if (objectTag == "Projectile" && !Base.TeleportFlags.HasFlagFast(TeleportFlags.ActiveGrenade))
-            return;
-
-        if (objectTag == "Pickup" && !Base.TeleportFlags.HasFlagFast(TeleportFlags.Pickup))
-            return;
-
         TeleportObject? target = GetRandomTarget();
         if (target == null)
             return;
 
-        if (target.ObjectAndNextUseTime == null)
+        if (targetObject.TryGetComponent(out ReferenceHub hub) && Base.TeleportFlags.HasFlagFast(TeleportFlags.Player))
+        {
+            Player? player = Player.Get(hub);
+            if (player.IsConnected && !Base.AllowedRoles.Contains(player.GetCustomOrBasicRole())
+                                   && !Base.AllowedRoles.Contains("all", StringComparison.OrdinalIgnoreCase))
+                return;
+
+            Vector3 localOffset = transform.InverseTransformPoint(player.Position);
+            localOffset.z = -localOffset.z;
+            Vector3 newPosition = target.transform.TransformPoint(localOffset);
+
+            float relativeYaw = player.Rotation.eulerAngles.y - transform.eulerAngles.y;
+            float newYaw = target.transform.eulerAngles.y + 180f + relativeYaw;
+
+            player.Position = newPosition;
+            player.Rotation = Quaternion.Euler(0f, newYaw, 0f);
+
+            int teleportSoundId = Base.TeleportSoundId;
+            if (teleportSoundId != -1)
+            {
+                Log.Assert(teleportSoundId >= 0 && teleportSoundId <= 31,
+                    $"The teleport sound id must be between 0 and 31. It is currently {teleportSoundId}");
+
+                MirrorExtensions.SendFakeTargetRpc(player, ReferenceHub._hostHub.networkIdentity,
+                    typeof(AmbientSoundPlayer), "RpcPlaySound", teleportSoundId);
+            }
+        }
+        else if (targetObject.TryGetComponent(out ItemPickupBase projectilePickupBase))
+        {
+            Pickup pickup = Pickup.Get(projectilePickupBase);
+            if (pickup is not Projectile && !Base.TeleportFlags.HasFlagFast(TeleportFlags.Pickup) ||
+                pickup is Projectile && !Base.TeleportFlags.HasFlagFast(TeleportFlags.ActiveGrenade))
+                return;
+
+            TeleportRigidbody(pickup.Rigidbody, target);
+        }
+        else
             return;
 
         DateTime dateTime = DateTime.Now.AddSeconds(Base.Cooldown);
         ObjectAndNextUseTime[other.gameObject] = dateTime;
         target.ObjectAndNextUseTime[other.gameObject] = dateTime;
 
-        player.Position = target.gameObject.transform.position;
-        player.Rotation = Quaternion.Euler(target.gameObject.transform.eulerAngles);
-
-        TeleportingEventArgs ev = new(this, target, player, gameObject, player.Position, player.Rotation,
+        TeleportingEventArgs ev = new(this, target, targetObject,
+            targetObject.transform.position, targetObject.transform.rotation,
             Base.TeleportSoundId);
 
         Teleport.OnTeleporting(ev);
+    }
 
-        int teleportSoundId = Base.TeleportSoundId;
-        if (teleportSoundId != -1)
-        {
-            Log.Assert(teleportSoundId >= 0 && teleportSoundId <= 31,
-                $"The teleport sound id must be between 0 and 31. It is currently {teleportSoundId}");
+    private void TeleportRigidbody(Rigidbody rb, TeleportObject target)
+    {
+        (Vector3 newPosition, Vector3 newVelocity, Vector3 newAngularVelocity) = CalculateTransformedPhysics(rb,
+            transform, target.transform);
 
-            MirrorExtensions.SendFakeTargetRpc(player, ReferenceHub._hostHub.networkIdentity,
-                typeof(AmbientSoundPlayer), "RpcPlaySound", teleportSoundId);
-        }
+        rb.position = newPosition;
+        rb.velocity = newVelocity;
+        rb.angularVelocity = newAngularVelocity;
+    }
+
+    private (Vector3 position, Vector3 velocity, Vector3 angularVelocity) CalculateTransformedPhysics(Rigidbody rb,
+        Transform sourcePortal, Transform targetPortal)
+    {
+        Vector3 localVelocity = sourcePortal.InverseTransformDirection(rb.velocity);
+        localVelocity.z = -localVelocity.z;
+        Vector3 newVelocity = targetPortal.TransformDirection(localVelocity);
+
+        Vector3 localAngularVelocity = sourcePortal.InverseTransformDirection(rb.angularVelocity);
+        localAngularVelocity.z = -localAngularVelocity.z;
+        Vector3 newAngularVelocity = targetPortal.TransformDirection(localAngularVelocity);
+
+        Vector3 localOffset = sourcePortal.InverseTransformPoint(rb.position);
+        localOffset.z = -localOffset.z;
+        Vector3 newPosition = targetPortal.TransformPoint(localOffset);
+
+        return (newPosition, newVelocity, newAngularVelocity);
     }
 }

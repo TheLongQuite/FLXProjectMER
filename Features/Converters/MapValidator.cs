@@ -1,13 +1,11 @@
 ﻿using Exiled.API.Enums;
 using Exiled.Loader;
 using Interactables.Interobjects.DoorUtils;
-using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Serializable;
 using ProjectMER.Features.Serializable.Lockers;
 using ProjectMER.Features.Serializable.Schematics;
 using UnityEngine;
 using YamlDotNet.Core;
-using YamlDotNet.Serialization;
 
 namespace ProjectMER.Features.Converters;
 
@@ -18,7 +16,6 @@ public static class MapValidator
         ValidationResult result = new();
 
         string content = File.ReadAllText(mapPath);
-
         bool needsLockerConversion = content.Contains("chambers:") &&
                                      (content.Contains("allowed_role_types:") ||
                                       content.Contains("keycard_permissions:"));
@@ -27,7 +24,7 @@ public static class MapValidator
         try
         {
             map = needsLockerConversion ?
-                ConvertOldMapFormat(content, mapName) : Loader.Deserializer.Deserialize<MapSchematic>(content);
+                ConvertOldMapFormat(content, mapName) : YamlParser.Deserializer.Deserialize<MapSchematic>(content);
 
             map.Name = mapName;
         }
@@ -40,6 +37,9 @@ public static class MapValidator
 
         HashSet<string> processedSchematics = new();
 
+        foreach (SerializableTeleport teleport in map.Teleports)
+            teleport.AllowedRoles = ["all"];
+
         foreach (SerializableSchematic schematic in map.Schematics)
         {
             string schematicName = schematic.SchematicName;
@@ -47,21 +47,16 @@ public static class MapValidator
             if (!processedSchematics.Add(schematicName))
                 continue;
 
-            if (SchematicValidator.ValidateSchematicByName(schematicName, out string? error))
-            {
-                result.SuccessCount++;
-                result.ConvertedSchematics.Add(schematicName);
-            }
-            else
-            {
-                result.FailedCount++;
-                result.Errors.Add($"Schematic '{schematicName}': {error}");
-            }
+            if (!SchematicValidator.ValidateSchematicByName(schematicName))
+                continue;
+
+            result.SuccessCount++;
+            result.ConvertedSchematics.Add(schematicName);
         }
 
         try
         {
-            string serialized = Loader.Serializer.Serialize(map);
+            string serialized = YamlParser.Serializer.Serialize(map);
             File.WriteAllText(mapPath, serialized);
             result.SuccessCount++;
         }
@@ -74,51 +69,22 @@ public static class MapValidator
         return result;
     }
 
-    public static ValidationResult ValidateAllMaps()
-    {
-        ValidationResult result = new();
-        HashSet<string> allProcessedSchematics = new();
-
-        foreach (string mapFile in FileExtensions.GetAllMaps())
-        {
-            string mapName = Path.GetFileNameWithoutExtension(mapFile);
-
-            ValidationResult mapResult = ValidateMap(mapName, mapFile);
-
-            foreach (string schematic in mapResult.ConvertedSchematics)
-            {
-                if (allProcessedSchematics.Add(schematic))
-                    result.ConvertedSchematics.Add(schematic);
-            }
-
-            if (mapResult.IsSuccess)
-                result.SuccessCount++;
-            else
-            {
-                result.FailedCount++;
-                result.Errors.AddRange(mapResult.Errors.Select(e => $"[{mapName}] {e}"));
-            }
-        }
-
-        return result;
-    }
-
     private static MapSchematic ConvertOldMapFormat(string content, string mapName)
     {
-        MapSchematicWithOldLockers oldMap = Loader.Deserializer.Deserialize<MapSchematicWithOldLockers>(content);
+        OldMapSchematic oldOldMap = YamlParser.Deserializer.Deserialize<OldMapSchematic>(content);
 
         MapSchematic newMap = new(mapName)
         {
-            Doors = oldMap.Doors, WorkStations = oldMap.WorkStations, ItemSpawnPoints = oldMap.ItemSpawnPoints,
-            PlayerSpawnPoints = oldMap.PlayerSpawnPoints, RagdollSpawnPoints = oldMap.RagdollSpawnPoints,
-            ShootingTargets = oldMap.ShootingTargets, Primitives = oldMap.Primitives,
-            LightSources = oldMap.LightSources, RoomLights = oldMap.RoomLights, Teleports = oldMap.Teleports,
-            Schematics = oldMap.Schematics, Capybaras = oldMap.Capybaras, Texts = oldMap.Texts,
-            Interactables = oldMap.Interactables, Scp079Cameras = oldMap.Scp079Cameras,
-            Waypoints = oldMap.Waypoints, Lockers = []
+            Doors = oldOldMap.Doors, WorkStations = oldOldMap.WorkStations, ItemSpawnPoints = oldOldMap.ItemSpawnPoints,
+            PlayerSpawnPoints = oldOldMap.PlayerSpawnPoints, RagdollSpawnPoints = oldOldMap.RagdollSpawnPoints,
+            ShootingTargets = oldOldMap.ShootingTargets, Primitives = oldOldMap.Primitives,
+            LightSources = oldOldMap.LightSources, RoomLights = oldOldMap.RoomLights, Teleports = oldOldMap.Teleports,
+            Schematics = oldOldMap.Schematics, Capybaras = oldOldMap.Capybaras, Texts = oldOldMap.Texts,
+            Interactables = oldOldMap.Interactables, Scp079Cameras = oldOldMap.Scp079Cameras,
+            Waypoints = oldOldMap.Waypoints, Lockers = []
         };
 
-        foreach (OldLockerFormat oldLocker in oldMap.Lockers)
+        foreach (OldLockerFormat oldLocker in oldOldMap.Lockers)
         {
             SerializableLocker converted = ConvertLocker(oldLocker);
             newMap.Lockers.Add(converted);
@@ -185,7 +151,7 @@ public static class MapValidator
     }
 }
 
-public class MapSchematicWithOldLockers
+public class OldMapSchematic
 {
     public List<SerializableDoor> Doors { get; set; } = [];
     public List<SerializableWorkstation> WorkStations { get; set; } = [];

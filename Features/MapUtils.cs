@@ -1,8 +1,6 @@
-using System.Drawing.Drawing2D;
 using Exiled.API.Enums;
 using Exiled.API.Features;
 using Exiled.Loader;
-using PlayerRoles;
 using ProjectMER.Features.Converters;
 using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Objects;
@@ -47,7 +45,7 @@ public static class MapUtils
 
         path = Path.Combine(path, $"{map.Name}.yml");
 
-        string serialized = Loader.Serializer.Serialize(map);
+        string serialized = YamlParser.Serializer.Serialize(map);
 
         File.WriteAllText(path, serialized);
         map.IsDirty = false;
@@ -117,7 +115,7 @@ public static class MapUtils
 
         try
         {
-            map = Loader.Deserializer.Deserialize<MapSchematic>(File.ReadAllText(foundPath));
+            map = YamlParser.Deserializer.Deserialize<MapSchematic>(File.ReadAllText(foundPath));
             map.Name = mapName;
         }
         catch (YamlException e)
