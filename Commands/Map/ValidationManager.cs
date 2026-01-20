@@ -50,12 +50,12 @@ public static class ValidationManager
             }
 
             // Добавляем путь в ответ
-            response = $"Карта '{mapName}' провалидирована с ошибками:\nПуть: {mapPath}\n" + 
+            response = $"Карта '{mapName}' провалидирована с ошибками:\nПуть: {mapPath}\n" +
                        string.Join("\n", result.Errors);
-            
+
             foreach (string error in result.Errors)
                 Log.Error($"[VALIDATE] {mapName}: {error}");
-            
+
             // Логируем путь отдельной строкой для удобства
             Log.Error($"[VALIDATE] {mapName}: Путь к файлу: {mapPath}");
 
@@ -101,14 +101,12 @@ public static class ValidationManager
                 ValidationResult result = MapValidator.ValidateMap(mapName, mapPath);
 
                 if (result.IsSuccess)
-                {
                     Log.Info($"[VALIDATE] Карта {mapName} успешно обработана");
-                }
                 else
                 {
                     foreach (string error in result.Errors)
                         Log.Error($"[VALIDATE] {mapName}: {error}");
-                    
+
                     // Добавляем путь к файлу при ошибке
                     Log.Error($"[VALIDATE] {mapName}: Путь к файлу: {mapPath}");
                 }

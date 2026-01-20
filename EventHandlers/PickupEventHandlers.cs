@@ -13,16 +13,17 @@ namespace ProjectMER.EventHandlers;
 
 public partial class EventHandlers
 {
-    internal static readonly Dictionary<ushort, SchematicObject> ButtonPickups = [];
+    public static readonly Dictionary<ushort, string> ButtonPickups = [];
     internal static readonly Dictionary<ushort, int> PickupUsesLeft = [];
 
     public void OnPlayerSearchingPickup(SearchingPickupEventArgs ev)
     {
-        if (!ButtonPickups.TryGetValue(ev.Pickup.Serial, out SchematicObject schematic))
+        if (!ButtonPickups.TryGetValue(ev.Pickup.Serial, out string schematic))
             return;
 
         ev.IsAllowed = false;
-        Schematic.OnButtonInteracted(new(ev.Pickup, ev.Player, schematic));
+        Schematic.OnButtonInteracted(new(ev.Pickup, ev.Player, ev.Pickup.Base.GetComponentInParent<SchematicObject>(),
+            schematic));
     }
 
     public void OnPlayerPickingUpItem(PickingUpItemEventArgs ev)

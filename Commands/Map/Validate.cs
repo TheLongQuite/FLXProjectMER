@@ -22,6 +22,7 @@ public class Validate : ICommand
         {
             response = "Использование:\n" +
                        ".validate all\n" +
+                       ".validate schems\n" +
                        ".validate map [name]\n" +
                        ".validate status";
 
@@ -38,6 +39,11 @@ public class Validate : ICommand
                 {
                     case "all":
                         ValidationManager.ValidateEverything();
+                        sender.Respond("Валидация завершена, подробности в консоли.");
+                        break;
+
+                    case "schems":
+                        ValidationManager.ValidateAllSchematics();
                         sender.Respond("Валидация завершена, подробности в консоли.");
                         break;
 

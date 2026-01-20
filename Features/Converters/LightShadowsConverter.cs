@@ -13,10 +13,10 @@ public class LightShadowsConverter : IYamlTypeConverter
     {
         Scalar scalar = parser.Consume<Scalar>();
         string value = scalar.Value;
-        
+
         if (bool.TryParse(value, out bool boolValue))
             return boolValue ? LightShadows.Soft : LightShadows.None;
-        
+
         if (Enum.TryParse(value, true, out LightShadows result))
             return result;
 

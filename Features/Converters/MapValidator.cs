@@ -75,13 +75,13 @@ public static class MapValidator
 
         MapSchematic newMap = new(mapName)
         {
-            Doors = oldOldMap.Doors, WorkStations = oldOldMap.WorkStations, ItemSpawnPoints = oldOldMap.ItemSpawnPoints,
-            PlayerSpawnPoints = oldOldMap.PlayerSpawnPoints, RagdollSpawnPoints = oldOldMap.RagdollSpawnPoints,
-            ShootingTargets = oldOldMap.ShootingTargets, Primitives = oldOldMap.Primitives,
-            LightSources = oldOldMap.LightSources, RoomLights = oldOldMap.RoomLights, Teleports = oldOldMap.Teleports,
-            Schematics = oldOldMap.Schematics, Capybaras = oldOldMap.Capybaras, Texts = oldOldMap.Texts,
-            Interactables = oldOldMap.Interactables, Scp079Cameras = oldOldMap.Scp079Cameras,
-            Waypoints = oldOldMap.Waypoints, Lockers = []
+            Doors = oldOldMap.Doors, WorkStations = oldOldMap.WorkStations,
+            ItemSpawnPoints = oldOldMap.ItemSpawnPoints, PlayerSpawnPoints = oldOldMap.PlayerSpawnPoints,
+            RagdollSpawnPoints = oldOldMap.RagdollSpawnPoints, ShootingTargets = oldOldMap.ShootingTargets,
+            Primitives = oldOldMap.Primitives, LightSources = oldOldMap.LightSources,
+            RoomLights = oldOldMap.RoomLights, Teleports = oldOldMap.Teleports, Schematics = oldOldMap.Schematics,
+            Capybaras = oldOldMap.Capybaras, Texts = oldOldMap.Texts, Interactables = oldOldMap.Interactables,
+            Scp079Cameras = oldOldMap.Scp079Cameras, Waypoints = oldOldMap.Waypoints, Lockers = []
         };
 
         foreach (OldLockerFormat oldLocker in oldOldMap.Lockers)

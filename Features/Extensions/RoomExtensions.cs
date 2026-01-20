@@ -2,11 +2,50 @@ using Exiled.API.Enums;
 using Exiled.API.Features;
 using NorthwoodLib.Pools;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace ProjectMER.Features.Extensions;
 
 public static class RoomExtensions
 {
+    /// <summary>
+    /// Умно уничтожает комнату с камерами 079 или без
+    /// </summary>
+    /// <param name="room">Комната, которую удаляем</param>
+    public static void DestroyRoom(this Room room)
+    {
+        foreach (Component? component in room.gameObject.GetComponentsInChildren<Component>())
+        {
+            try
+            {
+                if (component.name.Contains("SCP-079") || component.name.Contains("CCTV"))
+                {
+                    Log.Debug($"Prevent from destroying: {component.name} {component.tag} {component.GetType().FullName
+                    }");
+
+                    continue;
+                }
+
+                if (component.GetComponentsInParent<Component>()
+                    .Any(c => c.name.Contains("SCP-079") || c.name.Contains("CCTV")))
+                {
+                    Log.Debug($"Prevent from destroying: {component.name} {component.tag} {component.GetType().FullName
+                    }");
+
+                    continue;
+                }
+
+                Log.Debug($"Destroying component: {component.name} {component.tag} {component.GetType().FullName}");
+
+                Object.Destroy(component);
+            }
+            catch (Exception e)
+            {
+                Log.Debug($"catch error: {e}");
+            }
+        }
+    }
+
     public static Room GetRoomAtPosition(Vector3 position)
     {
         Room room = Room.Get(position);

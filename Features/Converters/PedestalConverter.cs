@@ -13,7 +13,7 @@ public class PedestalConverter : IYamlTypeConverter
     {
         Scalar scalar = parser.Consume<Scalar>();
         string value = scalar.Value;
-        
+
         if (string.Equals(value, "Pedestal", StringComparison.OrdinalIgnoreCase))
             return LockerType.ScpPedestal;
 

@@ -12,7 +12,7 @@ public static class FileExtensions
 
         return mapsPaths;
     }
-    
+
     public static List<string> GetAllSchematicDirectories()
     {
         List<string> schematicPaths = new();
@@ -40,7 +40,7 @@ public static class FileExtensions
             SearchSchematicDirectories(dir, results);
         }
     }
-    
+
     public static List<string> GetAllSchematicJsonFiles()
     {
         List<string> jsonFiles = new();

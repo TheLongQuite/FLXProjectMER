@@ -2,6 +2,7 @@ using AdminToys;
 using Exiled.API.Enums;
 using Exiled.API.Features;
 using Exiled.API.Features.Pickups;
+using Exiled.CustomItems.API.Features;
 using Interactables.Interobjects.DoorUtils;
 using InventorySystem.Items.Firearms.Attachments;
 using MapGeneration.Distributors;
@@ -20,6 +21,8 @@ namespace ProjectMER.Features.Serializable.Schematics;
 
 public class SchematicBlockData
 {
+    private const string DefaultButtonKey = "default";
+
     public virtual string Name { get; set; }
 
     public virtual int ObjectId { get; set; }
@@ -46,7 +49,7 @@ public class SchematicBlockData
             BlockType.Locker => CreateLocker(),
             BlockType.Primitive => CreatePrimitive(),
             BlockType.Light => CreateLight(),
-            BlockType.Pickup => CreatePickup(schematicObject),
+            BlockType.Pickup => CreatePickup(),
             BlockType.Workstation => CreateWorkstation(),
             BlockType.Text => CreateText(),
             BlockType.Interactable => CreateInteractable(),
@@ -225,16 +228,37 @@ public class SchematicBlockData
         return light.gameObject;
     }
 
-    private GameObject CreatePickup(SchematicObject schematicObject)
+    private GameObject CreatePickup()
     {
-        if (Properties.TryGetValue("Chance", out object property) &&
-            UnityEngine.Random.Range(0, 101) > Convert.ToSingle(property))
+        if (Properties.TryGetValue("Chance", out object? chanceProperty) &&
+            UnityEngine.Random.Range(0, 101) > Convert.ToSingle(chanceProperty))
             return new("Empty Pickup");
 
-        Pickup pickup = Pickup.Create((ItemType)Convert.ToInt32(Properties["ItemType"]));
+        string itemTypeStr = Convert.ToString(Properties["ItemType"]);
+        Pickup pickup;
+        if (uint.TryParse(itemTypeStr, out uint customId) && !CustomItem.TryGet(customId, out CustomItem customItem))
+            pickup = customItem.Spawn(Vector3.zero)!;
+        else if (Enum.TryParse(itemTypeStr, out ItemType itemType))
+            pickup = Pickup.Create(itemType);
+        else
+        {
+            Log.Error($"Предмета с айди [{itemTypeStr}] не существует");
+            return new("Empty Pickup");
+        }
+
         pickup.Position = Vector3.zero;
-        if (Properties.ContainsKey("Locked"))
-            EventHandlers.EventHandlers.ButtonPickups.Add(pickup.Serial, schematicObject);
+
+        if (Properties.TryGetValue("Locked", out object? lockedProperty))
+            pickup.IsLocked = Convert.ToBoolean(lockedProperty);
+
+        string buttonId = Convert.ToString(Properties["ButtonId"]);
+        if (buttonId != DefaultButtonKey)
+        {
+            if (pickup.IsLocked)
+                Log.Error($"Pickup with button '{buttonId}' is locked. Buttons won't work on locked pickups.");
+
+            EventHandlers.EventHandlers.ButtonPickups.Add(pickup.Serial, buttonId);
+        }
 
         return pickup.GameObject;
     }

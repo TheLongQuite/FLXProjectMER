@@ -8,11 +8,12 @@ namespace ProjectMER.Events.Arguments;
 
 public class ButtonInteractedEventArgs : EventArgs, IPickupEvent, IPlayerEvent, ISchematicEvent
 {
-    public ButtonInteractedEventArgs(Pickup button, Player player, SchematicObject schematic)
+    public ButtonInteractedEventArgs(Pickup button, Player player, SchematicObject schematic, string buttonKey)
     {
         Button = button;
         Player = player;
         Schematic = schematic;
+        ButtonKey = buttonKey;
     }
 
     public Pickup Button { get; }
@@ -22,4 +23,8 @@ public class ButtonInteractedEventArgs : EventArgs, IPickupEvent, IPlayerEvent, 
     public Player Player { get; }
 
     public SchematicObject Schematic { get; }
+
+    public string ButtonKey { get; }
+
+    public bool CheckButton(string key) => ButtonKey.ToLower().Contains(key.ToLower());
 }

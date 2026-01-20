@@ -13,7 +13,7 @@ public class RoomTypeConverter : IYamlTypeConverter
     {
         Scalar scalar = parser.Consume<Scalar>();
         string value = scalar.Value;
-        
+
         return Enum.TryParse(value, true, out RoomType result) ? result : RoomType.Unknown;
     }
 

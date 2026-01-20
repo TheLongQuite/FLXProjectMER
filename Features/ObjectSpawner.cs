@@ -2,10 +2,16 @@ using AdminToys;
 using Exiled.API.Enums;
 using Exiled.API.Features;
 using Exiled.API.Features.Doors;
+using Exiled.API.Features.Lockers;
+using Exiled.API.Features.Toys;
+using InventorySystem.Items.Firearms.Attachments;
 using ProjectMER.Features.Objects;
 using ProjectMER.Features.Serializable;
+using ProjectMER.Features.Serializable.Lockers;
 using ProjectMER.Features.Serializable.Schematics;
 using UnityEngine;
+using Light = Exiled.API.Features.Toys.Light;
+using Object = UnityEngine.Object;
 
 namespace ProjectMER.Features;
 
@@ -39,6 +45,128 @@ public static class ObjectSpawner
             return null;
 
         return Room.Get(type);
+    }
+
+    /// <summary>
+    /// Spawns a workstation.
+    /// </summary>
+    /// <param name="workStation">The <see cref="SerializableWorkstation"/> to spawn.</param>
+    /// <param name="forcedPosition">Used to force exact object position.</param>
+    /// <param name="forcedRotation">Used to force exact object rotation.</param>
+    /// <param name="forcedScale">Used to force exact object scale.</param>
+    /// <returns>The spawned <see cref="Workstation"/>.</returns>
+    public static Workstation? SpawnWorkstation(SerializableWorkstation workStation,
+        Vector3? forcedPosition = null, Quaternion? forcedRotation = null, Vector3? forcedScale = null)
+    {
+        Room room = GetRandomRoom(workStation.RoomType);
+        return room == null ? null
+            : Workstation.Get(workStation.SpawnOrUpdateObject().GetComponent<WorkstationController>());
+    }
+
+    /// <summary>
+    /// Spawns a ItemSpawnPoint.
+    /// </summary>
+    /// <param name="itemSpawnPoint">The <see cref="SerializableItemSpawnpoint"/> to spawn.</param>
+    /// <param name="forcedPosition">Used to force exact object position.</param>
+    /// <param name="forcedRotation">Used to force exact object rotation.</param>
+    /// <param name="forcedScale">Used to force exact object scale.</param>
+    /// <returns>The spawned <see cref="GameObject"/>.</returns>
+    public static GameObject? SpawnItemSpawnPoint(SerializableItemSpawnpoint itemSpawnPoint,
+        Vector3? forcedPosition = null, Quaternion? forcedRotation = null, Vector3? forcedScale = null)
+    {
+        Room room = GetRandomRoom(itemSpawnPoint.RoomType);
+        return room == null ? null : itemSpawnPoint.SpawnOrUpdateObject();
+    }
+
+    /// <summary>
+    /// Spawns a PlayerSpawnPoint.
+    /// </summary>
+    /// <param name="playerSpawnPoint">The <see cref="SerializablePlayerSpawnpoint"/> to spawn.</param>
+    /// <param name="forcedPosition">Used to force exact object position.</param>
+    /// <returns>The spawned <see cref="playerSpawnPoint"/>.</returns>
+    public static GameObject? SpawnPlayerSpawnPoint(SerializablePlayerSpawnpoint playerSpawnPoint,
+        Vector3? forcedPosition = null)
+    {
+        Room room = GetRandomRoom(playerSpawnPoint.RoomType);
+        return room == null ? null : playerSpawnPoint.SpawnOrUpdateObject();
+    }
+
+    /// <summary>
+    /// Spawns a RagdollSpawnPoint.
+    /// </summary>
+    /// <param name="ragdollSpawnPoint">The <see cref="SerializableRagdollSpawnPoint"/> to spawn.</param>
+    /// <param name="forcedPosition">Used to force exact object position.</param>
+    /// <param name="forcedRotation">Used to force exact object rotation.</param>
+    /// <returns>The spawned <see cref="GameObject"/>.</returns>
+    public static GameObject? SpawnRagdollSpawnPoint(SerializableRagdollSpawnPoint ragdollSpawnPoint,
+        Vector3? forcedPosition = null, Quaternion? forcedRotation = null)
+    {
+        Room room = GetRandomRoom(ragdollSpawnPoint.RoomType);
+        return room == null ? null : ragdollSpawnPoint.SpawnOrUpdateObject();
+    }
+
+    /// <summary>
+    /// Spawns a ShootingTarget.
+    /// </summary>
+    /// <param name="shootingTarget">The <see cref="SerializableShootingTarget"/> to spawn.</param>
+    /// <param name="forcedPosition">Used to force exact object position.</param>
+    /// <param name="forcedRotation">Used to force exact object rotation.</param>
+    /// <param name="forcedScale">Used to force exact object scale.</param>
+    /// <returns>The spawned <see cref="ShootingTargetToy"/>.</returns>
+    public static ShootingTargetToy? SpawnShootingTarget(SerializableShootingTarget shootingTarget,
+        Vector3? forcedPosition = null, Quaternion? forcedRotation = null, Vector3? forcedScale = null)
+    {
+        Room room = GetRandomRoom(shootingTarget.RoomType);
+        return room == null ? null
+            : AdminToy.Get<ShootingTargetToy>(shootingTarget.SpawnOrUpdateObject().GetComponent<ShootingTarget>());
+    }
+
+    /// <summary>
+    /// Spawns a <see cref="SerializablePrimitive"/>.
+    /// </summary>
+    /// <param name="primitiveObject">The <see cref="SerializablePrimitive"/> to spawn.</param>
+    /// <param name="forcedPosition">Used to force exact object position.</param>
+    /// <param name="forcedRotation">Used to force exact object rotation.</param>
+    /// <param name="forcedScale">Used to force exact object scale.</param>
+    /// <returns>The spawned <see cref="Primitive"/>.</returns>
+    public static Primitive? SpawnPrimitive(SerializablePrimitive primitiveObject, Vector3? forcedPosition = null,
+        Quaternion? forcedRotation = null, Vector3? forcedScale = null)
+    {
+        Room room = GetRandomRoom(primitiveObject.RoomType);
+        return room == null ? null
+            : AdminToy.Get<Primitive>(primitiveObject.SpawnOrUpdateObject().GetComponent<PrimitiveObjectToy>());
+    }
+
+    /// <summary>
+    /// Spawns a <see cref="SerializableLight"/>.
+    /// </summary>
+    /// <param name="lightSourceObject">The <see cref="SerializableLight"/> to spawn.</param>
+    /// <param name="forcedPosition">The specified position.</param>
+    /// <returns>The spawned <see cref="Light"/>.</returns>
+    public static Light? SpawnLightSource(SerializableLight lightSourceObject, Vector3? forcedPosition = null)
+    {
+        Room room = GetRandomRoom(lightSourceObject.RoomType);
+        return room == null ? null
+            : AdminToy.Get<Light>(lightSourceObject.SpawnOrUpdateObject().GetComponent<LightSourceToy>());
+    }
+
+    /// <summary>
+    /// Spawns a Teleporter.
+    /// </summary>
+    /// <param name="teleport">The <see cref="SerializableTeleport"/> to spawn.</param>
+    /// <returns>The spawned <see cref="MapEditorObject"/>.</returns>
+    public static TeleportObject? SpawnTeleport(SerializableTeleport teleport)
+    {
+        Room room = GetRandomRoom(teleport.RoomType);
+        return room == null ? null : teleport.SpawnOrUpdateObject()?.GetComponent<TeleportObject>();
+    }
+
+    public static Locker? SpawnLocker(SerializableLocker locker, Vector3? forcedPosition = null,
+        Quaternion? forcedRotation = null, Vector3? forcedScale = null)
+    {
+        Room room = GetRandomRoom(locker.RoomType);
+        return room == null ? null
+            : Locker.Get(locker.SpawnOrUpdateObject()?.GetComponent<MapGeneration.Distributors.Locker>());
     }
 
     public static SchematicObject SpawnSchematic(SerializableSchematic serializableSchematic, bool isOptimized = false,
