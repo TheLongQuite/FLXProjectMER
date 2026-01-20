@@ -5,6 +5,7 @@ using MEC;
 using NorthwoodLib.Pools;
 using ProjectMER.Configs;
 using ProjectMER.Features;
+using ProjectMER.Features.Extensions;
 
 namespace ProjectMER.EventHandlers;
 
@@ -34,7 +35,7 @@ public partial class EventHandlers
                 case "load":
                 case "l":
                 {
-                    List<string> allMaps = ListPool<string>.Shared.Rent(Directory.GetFiles(ProjectMER.MapsDir)
+                    List<string> allMaps = ListPool<string>.Shared.Rent(FileExtensions.GetAllMaps()
                         .Select(Path.GetFileNameWithoutExtension));
 
                     HandleMapLoading(argument, allMaps);
