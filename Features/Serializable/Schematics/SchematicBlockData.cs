@@ -76,6 +76,12 @@ public class SchematicBlockData
                 adminToyBase.NetworkMovementSmoothing = 60;
         }
 
+        if (gameObject.TryGetComponent(out StructurePositionSync structurePositionSync))
+        {
+            structurePositionSync.Network_position = transform.position;
+            structurePositionSync.Network_rotationY = (sbyte)Mathf.RoundToInt(transform.eulerAngles.y / 5.625f);
+        }
+
         return gameObject;
     }
 

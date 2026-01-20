@@ -75,6 +75,9 @@ public class SerializableLocker : SerializableObject
             int i = 0;
             foreach (LockerChamber chamber in labApiLocker.Chambers)
             {
+                if (i > ChambersSettings.Count - 1)
+                    break;
+
                 chamber.IsOpen = ChambersSettings[i].IsOpen;
                 i++;
             }

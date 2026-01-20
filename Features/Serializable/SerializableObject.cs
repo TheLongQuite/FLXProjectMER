@@ -10,7 +10,7 @@ public abstract class SerializableObject
     /// <summary>
     /// Gets or sets the unique Id of future MapEditorObject.
     /// </summary>
-    public string ObjectId { get; set; } = "Id";
+    public string ObjectId { get; set; } = Guid.NewGuid().ToString("N").Substring(0, 9);
 
     /// <summary>
     /// Gets or sets the objects's position.

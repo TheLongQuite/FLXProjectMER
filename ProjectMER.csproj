@@ -39,10 +39,13 @@
         <Reference Include="LabApi">
             <HintPath>$(EXILED_REFERENCES)\LabApi.dll</HintPath>
         </Reference>
+        <Reference Include="Newtonsoft.Json">
+            <HintPath>$(EXILED_REFERENCES)\Newtonsoft.Json.dll</HintPath>
+        </Reference>
         <Reference Include="UnityEngine" HintPath="$(EXILED_REFERENCES)\UnityEngine.dll"/>
         <Reference Include="UnityEngine.AnimationModule" HintPath="$(EXILED_REFERENCES)\UnityEngine.AnimationModule.dll"/>
         <Reference Include="UnityEngine.AudioModule">
-            <HintPath>..\References\UnityEngine.AudioModule.dll</HintPath>
+            <HintPath>$(EXILED_REFERENCES)\UnityEngine.AudioModule.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.CoreModule" HintPath="$(EXILED_REFERENCES)\UnityEngine.CoreModule.dll"/>
         <Reference Include="UnityEngine.AssetBundleModule" HintPath="$(EXILED_REFERENCES)\UnityEngine.AssetBundleModule.dll"/>
