@@ -36,15 +36,19 @@ public class TeleportObject : MonoBehaviour
         if (Teleports.IsEmpty())
         {
             foreach (TargetTeleporter teleport in Base.TargetTeleporters)
+            {
+                if (teleport.Chance <= 0)
+                {
+                    Log.Error($"Телепорт с ID объекта {teleport.Id} имеет шанс меньше или равен нулю. Устанавливаю 1 как дефолтное значение");
+                    teleport.Chance = 1;
+                }
+                
                 Teleports.Add(teleport.Id, teleport.Chance);
+            }
         }
 
         string teleporterId = Teleports.NextWithReplacement();
-
-        TeleportObject[]? allTeleports =
-            FindObjectsByType<TeleportObject>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-
-        foreach (TeleportObject teleportObject in allTeleports)
+        foreach (TeleportObject teleportObject in FindObjectsByType<TeleportObject>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
         {
             if (teleportObject._mapEditorObject.Id != teleporterId)
                 continue;
@@ -91,11 +95,8 @@ public class TeleportObject : MonoBehaviour
             player.Rotation = Quaternion.Euler(0f, newYaw, 0f);
 
             int teleportSoundId = Base.TeleportSoundId;
-            if (teleportSoundId != -1)
+            if (teleportSoundId is >= 0 and <= 31)
             {
-                Log.Assert(teleportSoundId >= 0 && teleportSoundId <= 31,
-                    $"The teleport sound id must be between 0 and 31. It is currently {teleportSoundId}");
-
                 MirrorExtensions.SendFakeTargetRpc(player, ReferenceHub._hostHub.networkIdentity,
                     typeof(AmbientSoundPlayer), "RpcPlaySound", teleportSoundId);
             }

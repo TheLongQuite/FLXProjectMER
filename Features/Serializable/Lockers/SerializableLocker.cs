@@ -129,5 +129,5 @@ public class SerializableLocker : SerializableObject
 
     public override bool RequiresReloading => true;
 
-    internal LockerType _prevType = LockerType.Unknown;
+    public LockerType _prevType = LockerType.Unknown;
 }
