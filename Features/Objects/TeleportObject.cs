@@ -16,6 +16,11 @@ namespace ProjectMER.Features.Objects;
 
 public class TeleportObject : MonoBehaviour
 {
+    private const float WallOffset = 0.3f;
+    private const float RaycastMargin = 0.1f;
+    
+    private static readonly int CollisionMask = LayerMask.GetMask("Glass", "Door", "Fence", "Default");
+
     private void Start()
     {
         _mapEditorObject = GetComponent<MapEditorObject>();
@@ -86,7 +91,9 @@ public class TeleportObject : MonoBehaviour
 
             Vector3 localOffset = transform.InverseTransformPoint(player.Position);
             localOffset.z = -localOffset.z;
-            Vector3 newPosition = target.transform.TransformPoint(localOffset);
+            Vector3 rawPosition = target.transform.TransformPoint(localOffset);
+            
+            Vector3 newPosition = GetSafePosition(target.transform.position, rawPosition);
 
             float relativeYaw = player.Rotation.eulerAngles.y - transform.eulerAngles.y;
             float newYaw = target.transform.eulerAngles.y + 180f + relativeYaw;
@@ -123,13 +130,56 @@ public class TeleportObject : MonoBehaviour
 
         Teleport.OnTeleporting(ev);
     }
+    
+    private Vector3 GetSafePosition(Vector3 portalCenter, Vector3 targetPosition)
+    {
+        Vector3 direction = targetPosition - portalCenter;
+        float distance = direction.magnitude;
+        
+        if (distance < 0.01f)
+            return portalCenter;
+
+        Vector3 normalizedDirection = direction.normalized;
+        
+        if (Physics.Raycast(portalCenter, normalizedDirection, out RaycastHit hit, distance + RaycastMargin, CollisionMask))
+        {
+            Vector3 safePosition = hit.point - normalizedDirection * WallOffset;
+            return safePosition;
+        }
+        
+        return targetPosition;
+    }
+    
+    private Vector3 GetSafePosition(Vector3 portalCenter, Vector3 targetPosition, float objectRadius)
+    {
+        Vector3 direction = targetPosition - portalCenter;
+        float distance = direction.magnitude;
+        
+        if (distance < 0.01f)
+            return portalCenter;
+
+        Vector3 normalizedDirection = direction.normalized;
+        
+        if (Physics.SphereCast(portalCenter, objectRadius, normalizedDirection, out RaycastHit hit, distance + RaycastMargin, CollisionMask))
+            return hit.point - normalizedDirection * (WallOffset + objectRadius);
+
+        return targetPosition;
+    }
 
     private void TeleportRigidbody(Rigidbody rb, TeleportObject target)
     {
-        (Vector3 newPosition, Vector3 newVelocity, Vector3 newAngularVelocity) = CalculateTransformedPhysics(rb,
+        (Vector3 rawPosition, Vector3 newVelocity, Vector3 newAngularVelocity) = CalculateTransformedPhysics(rb,
             transform, target.transform);
+        
+        float objectRadius = 0.1f;
+        if (rb.TryGetComponent(out Collider col))
+        {
+            objectRadius = Mathf.Max(col.bounds.extents.x, col.bounds.extents.z);
+        }
 
-        rb.position = newPosition;
+        Vector3 safePosition = GetSafePosition(target.transform.position, rawPosition, objectRadius);
+
+        rb.position = safePosition;
         rb.velocity = newVelocity;
         rb.angularVelocity = newAngularVelocity;
     }
