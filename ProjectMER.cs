@@ -1,4 +1,5 @@
 using Exiled.API.Features;
+using Exiled.API.Features.Core.UserSettings;
 using HarmonyLib;
 using MEC;
 using ProjectMER.Configs;
@@ -71,7 +72,6 @@ public class ProjectMER : Plugin<Config>
 
         Exiled.Events.Handlers.Server.WaitingForPlayers += _ev.OnServerWaitingForPlayersAction;
         Exiled.Events.Handlers.Server.WaitingForPlayers += _ev.OnServerWaitingForPlayersGeneric;
-
 
         _harmony = new($"michal78900.mapEditorReborn-{DateTime.Now.Ticks}");
         _harmony.PatchAll();

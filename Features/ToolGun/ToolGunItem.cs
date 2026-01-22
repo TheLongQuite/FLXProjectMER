@@ -85,17 +85,6 @@ public class ToolGunItem
         player.AddAmmo(AmmoType.Nato9, 1);
 
         ItemDictionary.Add(toolgun.ItemSerial, new(toolgun));
-        
-        DropdownSetting toolgunBind = new DropdownSetting.DropdownConfig()
-        {
-            IsServerOnly = true, Options = MapUtils.GetAvailableSchematicNames(), Label = "Schematic Name", 
-            HeaderName = "MapEditorReborn", HeaderDescription = "Позволяет управлять функционалом мапэдитора",
-            HeaderPaddling = true, HintDescription = "Позволяет выбрать какой схематик будет заспавнен тулганом",
-            DefaultOptionIndex = 0,
-            
-        }.Create();
-        
-        SettingBase.Register([toolgunBind]);
         return true;
     }
 

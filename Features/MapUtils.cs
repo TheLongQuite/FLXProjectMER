@@ -220,8 +220,7 @@ public static class MapUtils
         return data;
     }
 
-    public static string[] GetAvailableSchematicNames() => Directory
-        .GetFiles(ProjectMER.SchematicsDir, "*.json", SearchOption.AllDirectories)
+    public static string[] GetAvailableSchematicNames() => FileExtensions.GetAllSchematicJsonFiles()
         .Select(Path.GetFileNameWithoutExtension).Where(x => !x.Contains('-')).ToArray();
 
     public static string GetColoredMapName(string mapName)
