@@ -86,21 +86,16 @@ public class ToolGunItem
 
         ItemDictionary.Add(toolgun.ItemSerial, new(toolgun));
         
-        ServerSpecificSettingsSync.DefinedSettings =
-        [
-            new SSGroupHeader("MapEditorReborn"),
-            new SSDropdownSetting(0, "Schematic Name", MapUtils.GetAvailableSchematicNames(), isServerOnly: true)
-        ];
-        
         DropdownSetting toolgunBind = new DropdownSetting.DropdownConfig()
         {
             IsServerOnly = true, Options = MapUtils.GetAvailableSchematicNames(), Label = "Schematic Name", 
             HeaderName = "MapEditorReborn", HeaderDescription = "Позволяет управлять функционалом мапэдитора",
-            HeaderPaddling = true, HintDescription = "Позволяет выбрать какой схематик будет заспавнен тулганом"
+            HeaderPaddling = true, HintDescription = "Позволяет выбрать какой схематик будет заспавнен тулганом",
+            DefaultOptionIndex = 0,
+            
         }.Create();
         
         SettingBase.Register([toolgunBind]);
-
         return true;
     }
 
