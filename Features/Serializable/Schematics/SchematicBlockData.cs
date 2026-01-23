@@ -236,9 +236,9 @@ public class SchematicBlockData
 
         string itemTypeStr = Convert.ToString(Properties["ItemType"]);
         Pickup pickup;
-        if (uint.TryParse(itemTypeStr, out uint customId) && !CustomItem.TryGet(customId, out CustomItem customItem))
+        if (uint.TryParse(itemTypeStr, out uint customId) && CustomItem.TryGet(customId, out CustomItem customItem))
             pickup = customItem.Spawn(Vector3.zero)!;
-        else if (Enum.TryParse(itemTypeStr, out ItemType itemType))
+        else if (Enum.TryParse(itemTypeStr, out ItemType itemType) && Enum.IsDefined(typeof(ItemType), itemType))
             pickup = Pickup.Create(itemType);
         else
         {

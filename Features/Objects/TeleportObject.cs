@@ -39,19 +39,19 @@ public class TeleportObject : MonoBehaviour
     public TeleportObject? GetRandomTarget()
     {
         if (Teleports.IsEmpty())
-        {
-            foreach (TargetTeleporter teleport in Base.TargetTeleporters)
-            {
-                if (teleport.Chance <= 0)
-                {
-                    Log.Error($"Телепорт с ID объекта {teleport.Id} имеет шанс меньше или равен нулю. Устанавливаю 1 как дефолтное значение");
-                    teleport.Chance = 1;
-                }
-                
-                Teleports.Add(teleport.Id, teleport.Chance);
-            }
-        }
+            return null;
 
+        foreach (TargetTeleporter teleport in Base.TargetTeleporters)
+        {
+            if (teleport.Chance <= 0)
+            {
+                Log.Error($"Телепорт с ID объекта {teleport.Id} имеет шанс меньше или равен нулю. Устанавливаю 1 как дефолтное значение");
+                teleport.Chance = 1;
+            }
+                
+            Teleports.Add(teleport.Id, teleport.Chance);
+        }
+        
         string teleporterId = Teleports.NextWithReplacement();
         foreach (TeleportObject teleportObject in FindObjectsByType<TeleportObject>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
         {
