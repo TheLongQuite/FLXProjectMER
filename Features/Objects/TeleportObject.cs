@@ -38,7 +38,7 @@ public class TeleportObject : MonoBehaviour
 
     public TeleportObject? GetRandomTarget()
     {
-        if (Teleports.IsEmpty())
+        if (Base.TargetTeleporters.IsEmpty())
             return null;
 
         foreach (TargetTeleporter teleport in Base.TargetTeleporters)
