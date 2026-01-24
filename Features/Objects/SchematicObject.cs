@@ -14,28 +14,16 @@ namespace ProjectMER.Features.Objects;
 
 public class SchematicObject : MonoBehaviour
 {
-    /// <summary>
-    /// Gets the schematic name.
-    /// </summary>
     public string Name { get; private set; }
 
-    /// <summary>
-    /// Gets a schematic directory path.
-    /// </summary>
     public string DirectoryPath { get; private set; }
 
-    /// <summary>
-    /// Gets or sets the global position of the object.
-    /// </summary>
     public Vector3 Position
     {
         get => transform.position;
         set => transform.position = value;
     }
 
-    /// <summary>
-    /// Gets or sets the global rotation of the object.
-    /// </summary>
     public Quaternion Rotation
     {
         get => transform.rotation;
@@ -44,18 +32,12 @@ public class SchematicObject : MonoBehaviour
 
     public bool IsStatic { get; set; }
 
-    /// <summary>
-    /// Gets or sets the global euler angles of the object.
-    /// </summary>
     public Vector3 EulerAngles
     {
         get => Rotation.eulerAngles;
         set => Rotation = Quaternion.Euler(value);
     }
 
-    /// <summary>
-    /// Gets or sets the scale of the object.
-    /// </summary>
     public Vector3 Scale
     {
         get => transform.localScale;
@@ -126,12 +108,39 @@ public class SchematicObject : MonoBehaviour
         Name = Path.GetFileNameWithoutExtension(data.Path);
         DirectoryPath = data.Path;
 
+        Log.Debug($"[SchematicObject.Init] Инициализация схематика: {Name}, путь: {DirectoryPath}");
+        Log.Debug($"[SchematicObject.Init] Блоков: {data.Blocks.Count}, RootObjectId: {data.RootObjectId}");
+
         ObjectFromId = new(data.Blocks.Count + 1) { { data.RootObjectId, transform } };
 
-        CreateRecursiveFromID(data.RootObjectId, data.Blocks, transform);
+        try
+        {
+            CreateRecursiveFromID(data.RootObjectId, data.Blocks, transform);
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"[SchematicObject.Init] Ошибка при создании блоков схематика {Name}: {ex.Message}");
+            Log.Debug($"[SchematicObject.Init] Stack trace: {ex.StackTrace}");
+        }
 
-        AddRigidbodies();
-        AddAnimators();
+        try
+        {
+            AddRigidbodies();
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"[SchematicObject.Init] Ошибка при добавлении Rigidbody для {Name}: {ex.Message}");
+        }
+
+        try
+        {
+            AddAnimators();
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"[SchematicObject.Init] Ошибка при добавлении аниматоров для {Name}: {ex.Message}");
+        }
+
         Schematic.OnSchematicSpawned(new(this, Name));
 
         return this;
@@ -139,37 +148,49 @@ public class SchematicObject : MonoBehaviour
 
     private void CreateRecursiveFromID(int id, List<SchematicBlockData> blocks, Transform parentGameObject)
     {
-        Transform childGameObjectTransform =
-            CreateObject(blocks.Find(c => c.ObjectId == id), parentGameObject) ??
-            transform; // Create the object first before creating children.
+        SchematicBlockData? blockData = blocks.Find(c => c.ObjectId == id);
+        
+        Transform childGameObjectTransform = CreateObject(blockData, parentGameObject) ?? transform;
 
         int[] parentSchematics =
             blocks.Where(bl => bl.BlockType == BlockType.Schematic).Select(bl => bl.ObjectId).ToArray();
 
-        // Gets all the ObjectIds of all the schematic blocks inside "blocks" argument.
         foreach (SchematicBlockData block in blocks.FindAll(c => c.ParentId == id))
         {
-            if (parentSchematics.Contains(block
-                    .ParentId)) // The block is a child of some schematic inside "parentSchematics" array, therefore it will be skipped to avoid spawning it and its children twice.
+            if (parentSchematics.Contains(block.ParentId))
                 continue;
 
-            CreateRecursiveFromID(block.ObjectId, blocks, childGameObjectTransform); // The child now becomes the parent
+            CreateRecursiveFromID(block.ObjectId, blocks, childGameObjectTransform);
         }
     }
 
-    private Transform? CreateObject(SchematicBlockData block, Transform parentTransform)
+    private Transform? CreateObject(SchematicBlockData? block, Transform parentTransform)
     {
         if (block == null)
             return null;
 
-        GameObject gameObject = block.Create(this, parentTransform);
-        NetworkServer.Spawn(gameObject);
+        GameObject gameObject;
+        try
+        {
+            gameObject = block.Create(this, parentTransform);
+            NetworkServer.Spawn(gameObject);
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"[SchematicObject.CreateObject] Ошибка создания блока '{block.Name}' (ID: {block.ObjectId}): {ex.Message}");
+            return null;
+        }
 
         ObjectFromId.Add(block.ObjectId, gameObject.transform);
 
-        if (block.BlockType != BlockType.Light &&
-            TryGetAnimatorController(block.AnimatorName, out RuntimeAnimatorController animatorController))
-            _animators.Add(gameObject, animatorController);
+        // Пропускаем Light и пустые AnimatorName
+        if (block.BlockType != BlockType.Light && !string.IsNullOrEmpty(block.AnimatorName))
+        {
+            if (TryGetAnimatorController(block.AnimatorName, out RuntimeAnimatorController animatorController))
+            {
+                _animators.Add(gameObject, animatorController);
+            }
+        }
 
         return gameObject.transform;
     }
@@ -181,27 +202,64 @@ public class SchematicObject : MonoBehaviour
         if (string.IsNullOrEmpty(animatorName))
             return false;
 
-        Object? animatorObject = AssetBundle.GetAllLoadedAssetBundles()
-            .FirstOrDefault(x => x.mainAsset.name == animatorName)?.LoadAllAssets()
-            .First(x => x is RuntimeAnimatorController);
+        Log.Debug($"[TryGetAnimatorController] Поиск аниматора: '{animatorName}' для схематика: {Name}");
 
-        if (animatorObject is null)
+        try
         {
-            string path = Path.Combine(DirectoryPath, animatorName);
+            AssetBundle? matchingBundle = AssetBundle.GetAllLoadedAssetBundles()
+                .FirstOrDefault(x => x.mainAsset != null && x.mainAsset.name == animatorName);
 
-            if (!File.Exists(path))
+            Object? animatorObject = null;
+
+            if (matchingBundle != null)
             {
-                Log.Warn($"{gameObject.name} block of schematic should have a {animatorName
-                } animator attached, but the file does not exist!");
-
-                return false;
+                animatorObject = matchingBundle.LoadAllAssets()
+                    .FirstOrDefault(x => x is RuntimeAnimatorController);
+                
+                if (animatorObject != null)
+                {
+                    Log.Debug($"[TryGetAnimatorController] Аниматор найден в загруженном бандле: {animatorName}");
+                }
             }
 
-            animatorObject = AssetBundle.LoadFromFile(path).LoadAllAssets().First(x => x is RuntimeAnimatorController);
-        }
+            if (animatorObject == null)
+            {
+                string path = Path.Combine(DirectoryPath, animatorName);
 
-        animatorController = (RuntimeAnimatorController)animatorObject;
-        return true;
+                if (!File.Exists(path))
+                {
+                    Log.Debug($"[TryGetAnimatorController] Файл аниматора не найден: {path}");
+                    return false;
+                }
+
+                AssetBundle? bundle = AssetBundle.LoadFromFile(path);
+                if (bundle == null)
+                {
+                    Log.Warn($"[TryGetAnimatorController] Не удалось загрузить AssetBundle: {path}");
+                    return false;
+                }
+
+                animatorObject = bundle.LoadAllAssets()
+                    .FirstOrDefault(x => x is RuntimeAnimatorController);
+
+                if (animatorObject == null)
+                {
+                    Log.Warn($"[TryGetAnimatorController] RuntimeAnimatorController не найден в бандле: {path}");
+                    return false;
+                }
+
+                Log.Debug($"[TryGetAnimatorController] Аниматор загружен из файла: {path}");
+            }
+
+            animatorController = (RuntimeAnimatorController)animatorObject;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"[TryGetAnimatorController] Ошибка при поиске аниматора '{animatorName}': {ex.Message}");
+            Log.Debug($"[TryGetAnimatorController] Stack trace: {ex.StackTrace}");
+            return false;
+        }
     }
 
     private bool AddAnimators()
@@ -211,41 +269,68 @@ public class SchematicObject : MonoBehaviour
         {
             isAnimated = true;
             foreach (KeyValuePair<GameObject, RuntimeAnimatorController> pair in _animators)
-                pair.Key.AddComponent<Animator>().runtimeAnimatorController = pair.Value;
+            {
+                try
+                {
+                    pair.Key.AddComponent<Animator>().runtimeAnimatorController = pair.Value;
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"[AddAnimators] Ошибка добавления аниматора к объекту: {ex.Message}");
+                }
+            }
         }
 
         _animators.Clear();
-        AssetBundle.UnloadAllAssetBundles(false);
+        
+        try
+        {
+            AssetBundle.UnloadAllAssetBundles(false);
+        }
+        catch (Exception ex)
+        {
+            Log.Debug($"[AddAnimators] Ошибка выгрузки бандлов: {ex.Message}");
+        }
+        
         return isAnimated;
     }
 
     private bool AddRigidbodies()
     {
-        bool hasRigidbodies = false;
         string rigidbodyPath = Path.Combine(DirectoryPath, $"{Name}-Rigidbodies.json");
         if (!File.Exists(rigidbodyPath))
             return false;
 
-        foreach (KeyValuePair<int, SerializableRigidbody> dict in JsonSerializer
-                     .Deserialize<Dictionary<int, SerializableRigidbody>>(File.ReadAllText(rigidbodyPath)))
+        bool hasRigidbodies = false;
+
+        try
         {
-            if (!ObjectFromId.TryGetValue(dict.Key, out Transform transform))
-                continue;
+            Dictionary<int, SerializableRigidbody> rigidbodies = JsonSerializer
+                .Deserialize<Dictionary<int, SerializableRigidbody>>(File.ReadAllText(rigidbodyPath));
 
-            if (!transform.gameObject.TryGetComponent(out Rigidbody rigidbody))
-                rigidbody = transform.gameObject.AddComponent<Rigidbody>();
+            foreach (KeyValuePair<int, SerializableRigidbody> dict in rigidbodies)
+            {
+                if (!ObjectFromId.TryGetValue(dict.Key, out Transform objTransform))
+                    continue;
 
-            rigidbody.isKinematic = dict.Value.IsKinematic;
-            rigidbody.useGravity = dict.Value.UseGravity;
-            rigidbody.constraints = dict.Value.Constraints;
-            rigidbody.mass = dict.Value.Mass;
+                if (!objTransform.gameObject.TryGetComponent(out Rigidbody rigidbody))
+                    rigidbody = objTransform.gameObject.AddComponent<Rigidbody>();
 
-            hasRigidbodies = true;
+                rigidbody.isKinematic = dict.Value.IsKinematic;
+                rigidbody.useGravity = dict.Value.UseGravity;
+                rigidbody.constraints = dict.Value.Constraints;
+                rigidbody.mass = dict.Value.Mass;
+
+                hasRigidbodies = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"[AddRigidbodies] Ошибка загрузки Rigidbodies для {Name}: {ex.Message}");
         }
 
         return hasRigidbodies;
     }
-
 
     public void Destroy() => Destroy(gameObject);
 

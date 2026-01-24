@@ -43,19 +43,30 @@ public class SchematicBlockData
 
     public GameObject Create(SchematicObject schematicObject, Transform parentTransform)
     {
-        GameObject gameObject = BlockType switch
+        GameObject gameObject;
+        
+        try
         {
-            BlockType.Empty => CreateEmpty(),
-            BlockType.Locker => CreateLocker(),
-            BlockType.Primitive => CreatePrimitive(),
-            BlockType.Light => CreateLight(),
-            BlockType.Pickup => CreatePickup(),
-            BlockType.Workstation => CreateWorkstation(),
-            BlockType.Text => CreateText(),
-            BlockType.Interactable => CreateInteractable(),
-            BlockType.Waypoint => CreateWaypoint(),
-            _ => CreateEmpty(true)
-        };
+            gameObject = BlockType switch
+            {
+                BlockType.Empty => CreateEmpty(),
+                BlockType.Locker => CreateLocker(),
+                BlockType.Primitive => CreatePrimitive(),
+                BlockType.Light => CreateLight(),
+                BlockType.Pickup => CreatePickup(),
+                BlockType.Workstation => CreateWorkstation(),
+                BlockType.Text => CreateText(),
+                BlockType.Interactable => CreateInteractable(),
+                BlockType.Waypoint => CreateWaypoint(),
+                _ => CreateEmpty(true)
+            };
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"[SchematicBlockData.Create] Ошибка создания блока '{Name}' типа {BlockType}: {ex.Message}");
+            Log.Debug($"[SchematicBlockData.Create] Stack trace: {ex.StackTrace}");
+            gameObject = CreateEmpty(true);
+        }
 
         gameObject.name = Name;
 
@@ -90,18 +101,64 @@ public class SchematicBlockData
 
     private GameObject CreateLocker()
     {
-        LockerType lockerType = Properties.TryGetValue("LockerType", out object lockerTypeProperty)
-            ? (LockerType)Convert.ToInt32(lockerTypeProperty)
-            : LockerType.Unknown;
+        LockerType lockerType = LockerType.Unknown;
+    
+        if (Properties != null && Properties.TryGetValue("LockerType", out object lockerTypeProperty))
+        {
+            try
+            {
+                lockerType = (LockerType)Convert.ToInt32(lockerTypeProperty);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[CreateLocker] Ошибка парсинга LockerType '{lockerTypeProperty}': {ex.Message}");
+            }
+        }
 
-        Locker locker = Object.Instantiate(SerializableLocker.GetLockerObjectByType(lockerType));
+        if (lockerType == LockerType.Unknown)
+        {
+            Log.Warn($"[CreateLocker] LockerType не указан или Unknown для блока '{Name}'. Использую Misc.");
+            lockerType = LockerType.Misc;
+        }
 
-        if (Properties.TryGetValue("ChambersSettings", out object chambersProperty) &&
-            chambersProperty is List<object> chambersList)
-            ApplyChambersSettings(locker, chambersList);
+        Locker locker;
+        try
+        {
+            locker = Object.Instantiate(SerializableLocker.GetLockerObjectByType(lockerType));
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"[CreateLocker] Ошибка создания локера типа {lockerType}: {ex.Message}");
+            locker = Object.Instantiate(PrefabManager.LockerMisc);
+        }
 
-        if (Properties.TryGetValue("Loot", out object lootProperty) && lootProperty is List<object> lootList)
-            ApplyLootSettings(locker, lootList);
+        if (Properties != null)
+        {
+            if (Properties.TryGetValue("ChambersSettings", out object chambersProperty) &&
+                chambersProperty is List<object> chambersList)
+            {
+                try
+                {
+                    ApplyChambersSettings(locker, chambersList);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"[CreateLocker] Ошибка применения ChambersSettings: {ex.Message}");
+                }
+            }
+
+            if (Properties.TryGetValue("Loot", out object lootProperty) && lootProperty is List<object> lootList)
+            {
+                try
+                {
+                    ApplyLootSettings(locker, lootList);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"[CreateLocker] Ошибка применения Loot: {ex.Message}");
+                }
+            }
+        }
 
         return locker.gameObject;
     }

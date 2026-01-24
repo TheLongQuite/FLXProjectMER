@@ -37,9 +37,7 @@ public static class MapUtils
         string path = Path.Combine(ProjectMER.MapsDir, "UNSORTED");
         if (!Directory.Exists(path))
         {
-            Log.Warn(
-                $"Map saving is not enabled. To enable it, create directory named 'UNSORTED' in your maps directory");
-
+            Log.Warn($"Map saving is not enabled. To enable it, create directory named 'UNSORTED' in your maps directory");
             return;
         }
 
@@ -59,11 +57,35 @@ public static class MapUtils
 
     public static void LoadMap(string mapName)
     {
-        MapSchematic map = GetMapData(mapName);
-        UnloadMap(mapName);
-        map.Reload();
+        Log.Info($"[LoadMap] Начинаю загрузку карты: {mapName}");
+        
+        try
+        {
+            MapSchematic map = GetMapData(mapName);
+            Log.Debug($"[LoadMap] Данные карты получены: {mapName}");
+            
+            UnloadMap(mapName);
+            Log.Debug($"[LoadMap] Предыдущая версия выгружена: {mapName}");
+            
+            map.Reload();
+            Log.Debug($"[LoadMap] Карта перезагружена: {mapName}");
 
-        LoadedMaps.Add(mapName, map);
+            LoadedMaps.Add(mapName, map);
+            Log.Info($"[LoadMap] Карта успешно загружена: {mapName}, объектов: {map.SpawnedObjects.Count}");
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("Sequence contains no matching element"))
+        {
+            Log.Error($"[LoadMap] Ошибка 'Sequence contains no matching element' при загрузке карты '{mapName}'");
+            Log.Error($"[LoadMap] Stack trace: {ex.StackTrace}");
+            Log.Error($"[LoadMap] Room.List.Count = {Room.List.Count()}");
+            throw new InvalidOperationException($"Не удалось загрузить карту '{mapName}': возможно, раунд ещё не начался или комнаты не инициализированы.", ex);
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"[LoadMap] Неожиданная ошибка при загрузке карты '{mapName}': {ex.GetType().Name}: {ex.Message}");
+            Log.Error($"[LoadMap] Stack trace: {ex.StackTrace}");
+            throw;
+        }
     }
 
     public static bool UnloadMap(string mapName)
@@ -85,8 +107,9 @@ public static class MapUtils
             mapSchematic = GetMapData(mapName);
             return true;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Log.Debug($"[TryGetMapData] Не удалось получить данные карты '{mapName}': {ex.Message}");
             mapSchematic = null!;
             return false;
         }
@@ -97,7 +120,11 @@ public static class MapUtils
         MapSchematic map;
 
         string? foundPath = null;
-        foreach (string? mapFile in FileExtensions.GetAllMaps())
+        List<string> allMaps = FileExtensions.GetAllMaps();
+        
+        Log.Debug($"[GetMapData] Поиск карты '{mapName}' среди {allMaps.Count} файлов");
+        
+        foreach (string? mapFile in allMaps)
         {
             string name = Path.GetFileName(mapFile);
             if (name != $"{mapName}.yml")
@@ -110,19 +137,23 @@ public static class MapUtils
         if (foundPath == null)
         {
             string error = $"Failed to load map data: File {mapName}.yml does not exist!";
+            Log.Error($"[GetMapData] {error}");
+            Log.Debug($"[GetMapData] Доступные карты: {string.Join(", ", allMaps.Select(Path.GetFileNameWithoutExtension))}");
             throw new FileNotFoundException(error);
         }
+
+        Log.Debug($"[GetMapData] Найден файл: {foundPath}");
 
         try
         {
             map = YamlParser.Deserializer.Deserialize<MapSchematic>(File.ReadAllText(foundPath));
             map.Name = mapName;
+            Log.Debug($"[GetMapData] Карта десериализована успешно");
         }
         catch (YamlException e)
         {
-            string error = $"Failed to load map data: File {mapName}.yml has YAML errors!\n{e.ToString().Split('\n')[0]
-            }";
-
+            string error = $"Failed to load map data: File {mapName}.yml has YAML errors!\n{e.ToString().Split('\n')[0]}";
+            Log.Error($"[GetMapData] {error}");
             throw new YamlException(error);
         }
 
@@ -136,8 +167,9 @@ public static class MapUtils
             data = GetSchematicDataByName(schematicName);
             return true;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Log.Debug($"[TryGetSchematicDataByName] Не удалось получить схематик '{schematicName}': {ex.Message}");
             data = null!;
             return false;
         }
@@ -147,6 +179,8 @@ public static class MapUtils
     {
         SchematicObjectDataList data;
         string? schematicDirPath = null;
+
+        Log.Debug($"[GetSchematicDataByName] Поиск схематика: {schematicName}");
 
         foreach (string ownerDirectory in Directory.GetDirectories(ProjectMER.SchematicsDir))
         {
@@ -167,7 +201,7 @@ public static class MapUtils
         if (schematicDirPath == null)
         {
             string error = $"Failed to load schematic data: Directory {schematicName} does not exist!";
-            Log.Error(error);
+            Log.Error($"[GetSchematicDataByName] {error}");
             throw new DirectoryNotFoundException(error);
         }
 
@@ -176,7 +210,6 @@ public static class MapUtils
 
         if (!Directory.Exists(schematicDirPath))
         {
-            // Some users may throw a single JSON file into Schematics folder, this automatically creates and moved the file to the correct schematic directory.
             if (File.Exists(misplacedSchematicJsonPath))
             {
                 Directory.CreateDirectory(schematicDirPath);
@@ -185,13 +218,12 @@ public static class MapUtils
             }
 
             string error = $"Failed to load schematic data: Directory {schematicName} does not exist!";
-            Log.Error(error);
+            Log.Error($"[GetSchematicDataByName] {error}");
             throw new DirectoryNotFoundException(error);
         }
 
         if (!File.Exists(schematicJsonPath))
         {
-            // Same as above but with the folder existing and file not being there for some reason.
             if (File.Exists(misplacedSchematicJsonPath))
             {
                 File.Move(misplacedSchematicJsonPath, schematicJsonPath);
@@ -199,7 +231,7 @@ public static class MapUtils
             }
 
             string error = $"Failed to load schematic data: File {schematicName}.json does not exist!";
-            Log.Error(error);
+            Log.Error($"[GetSchematicDataByName] {error}");
             throw new FileNotFoundException(error);
         }
 
@@ -207,13 +239,12 @@ public static class MapUtils
         {
             data = JsonSerializer.Deserialize<SchematicObjectDataList>(File.ReadAllText(schematicJsonPath));
             data.Path = schematicDirPath;
+            Log.Debug($"[GetSchematicDataByName] Схематик загружен: {schematicName}");
         }
         catch (JsonParsingException e)
         {
-            string error = $"Failed to load schematic data: File {schematicName}.json has JSON errors!\n{
-                e.ToString().Split('\n')[0]}";
-
-            Log.Error(error);
+            string error = $"Failed to load schematic data: File {schematicName}.json has JSON errors!\n{e.ToString().Split('\n')[0]}";
+            Log.Error($"[GetSchematicDataByName] {error}");
             throw new JsonParsingException(error);
         }
 

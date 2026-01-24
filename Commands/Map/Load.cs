@@ -1,4 +1,5 @@
 using CommandSystem;
+using Exiled.API.Features;
 using Exiled.Permissions.Extensions;
 using ProjectMER.Features;
 
@@ -32,9 +33,24 @@ public class Load : ICommand
         {
             MapUtils.LoadMap(mapName);
         }
+        catch (InvalidOperationException e) when (e.Message.Contains("Sequence contains no matching element"))
+        {
+            response = $"Ошибка загрузки карты: не найден необходимый элемент.\n" +
+                       $"Подробности в консоли сервера.\n" +
+                       $"Возможные причины:\n" +
+                       $"- Карта использует комнату, которой нет на текущей карте\n" +
+                       $"- Раунд не полностью инициализирован";
+            return false;
+        }
+        catch (FileNotFoundException)
+        {
+            response = $"Карта '{mapName}' не найдена!";
+            return false;
+        }
         catch (Exception e)
         {
-            response = e.Message;
+            Log.Error($"[Load] Ошибка при загрузке карты '{mapName}': {e}");
+            response = $"Ошибка при загрузке карты: {e.Message}";
             return false;
         }
 

@@ -102,7 +102,7 @@ public class SerializableLocker : SerializableObject
 
     public static Locker GetLockerObjectByType(LockerType lockerType)
     {
-        Locker prefab = lockerType switch
+        Locker? prefab = lockerType switch
         {
             LockerType.Scp500Pedestal => PrefabManager.PedestalScp500,
             LockerType.LargeGun => PrefabManager.LockerLargeGun,
@@ -121,8 +121,15 @@ public class SerializableLocker : SerializableObject
             LockerType.Scp1344Pedestal => PrefabManager.PedestalScp1344,
             LockerType.ScpPedestal => PrefabManager.PedestalScp500,
             LockerType.ExperimentalWeapon => PrefabManager.LockerExperimentalWeapon,
-            _ => throw new InvalidOperationException()
+            LockerType.Unknown => null,
+            _ => null
         };
+
+        if (prefab == null)
+        {
+            Log.Error($"[GetLockerObjectByType] Неизвестный тип локера: {lockerType}. Использую Scp500Pedestal как fallback.");
+            return PrefabManager.PedestalScp500;
+        }
 
         return prefab;
     }

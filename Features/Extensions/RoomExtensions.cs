@@ -8,10 +8,6 @@ namespace ProjectMER.Features.Extensions;
 
 public static class RoomExtensions
 {
-    /// <summary>
-    /// Умно уничтожает комнату с камерами 079 или без
-    /// </summary>
-    /// <param name="room">Комната, которую удаляем</param>
     public static void DestroyRoom(this Room room)
     {
         foreach (Component? component in room.gameObject.GetComponentsInChildren<Component>())
@@ -20,23 +16,18 @@ public static class RoomExtensions
             {
                 if (component.name.Contains("SCP-079") || component.name.Contains("CCTV"))
                 {
-                    Log.Debug($"Prevent from destroying: {component.name} {component.tag} {component.GetType().FullName
-                    }");
-
+                    Log.Debug($"Prevent from destroying: {component.name} {component.tag} {component.GetType().FullName}");
                     continue;
                 }
 
                 if (component.GetComponentsInParent<Component>()
                     .Any(c => c.name.Contains("SCP-079") || c.name.Contains("CCTV")))
                 {
-                    Log.Debug($"Prevent from destroying: {component.name} {component.tag} {component.GetType().FullName
-                    }");
-
+                    Log.Debug($"Prevent from destroying: {component.name} {component.tag} {component.GetType().FullName}");
                     continue;
                 }
 
                 Log.Debug($"Destroying component: {component.name} {component.tag} {component.GetType().FullName}");
-
                 Object.Destroy(component);
             }
             catch (Exception e)
@@ -49,7 +40,23 @@ public static class RoomExtensions
     public static Room GetRoomAtPosition(Vector3 position)
     {
         Room room = Room.Get(position);
-        return room ?? Room.List.First(x => x != null && x.Type == RoomType.Surface);
+        
+        if (room != null)
+            return room;
+
+        Room? surfaceRoom = Room.List.FirstOrDefault(x => x != null && x.Type == RoomType.Surface);
+        
+        if (surfaceRoom == null)
+        {
+            Log.Error($"[GetRoomAtPosition] Не найдена комната для позиции {position} и нет Surface комнаты! " +
+                      $"Room.List.Count = {Room.List.Count()}");
+            
+            surfaceRoom = Room.List.FirstOrDefault(x => x != null);
+            if (surfaceRoom == null)
+                throw new InvalidOperationException($"Нет доступных комнат в Room.List! Позиция: {position}");
+        }
+        
+        return surfaceRoom;
     }
 
     public static string GetRoomStringId(this Room room) => $"{room.Zone}_{room.RoomShape}_{room.Type}";

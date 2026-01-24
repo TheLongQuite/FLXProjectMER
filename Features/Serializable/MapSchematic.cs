@@ -96,85 +96,136 @@ public class MapSchematic
         return this;
     }
 
-    public void Reload()
+   public void Reload()
     {
+        Log.Debug($"[MapSchematic.Reload] Начинаю перезагрузку карты: {Name}");
+        
         foreach (MapEditorObject mapEditorObject in SpawnedObjects)
             mapEditorObject.Destroy();
 
         SpawnedObjects.Clear();
 
-        LightSources.ForEach(SpawnObject);
-        Primitives.ForEach(SpawnObject);
+        Log.Debug($"[MapSchematic.Reload] Спавню объекты...");
+        
+        SafeSpawnObjects("LightSources", LightSources);
+        SafeSpawnObjects("Primitives", Primitives);
 
         Doors.ForEach(obj =>
         {
-            Door? vanillaDoor = Door.Get(obj.ObjectId);
-            if (vanillaDoor != null)
+            try
             {
-                obj.SetupDoor(vanillaDoor.Base);
-                return;
-            }
+                Door? vanillaDoor = Door.Get(obj.ObjectId);
+                if (vanillaDoor != null)
+                {
+                    obj.SetupDoor(vanillaDoor.Base);
+                    return;
+                }
 
-            SpawnObject(obj);
+                SpawnObject(obj);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[MapSchematic.Reload] Ошибка при спавне двери {obj.ObjectId}: {ex.Message}");
+            }
         });
 
-        WorkStations.ForEach(SpawnObject);
-        PlayerSpawnPoints.ForEach(SpawnObject);
-        ItemSpawnPoints.ForEach(SpawnObject);
-
-        Capybaras.ForEach(SpawnObject);
-        Texts.ForEach(SpawnObject);
-        Interactables.ForEach(SpawnObject);
-
-        Schematics.ForEach(SpawnObject);
-        Scp079Cameras.ForEach(SpawnObject);
-        ShootingTargets.ForEach(SpawnObject);
-        Teleports.ForEach(SpawnObject);
+        SafeSpawnObjects("WorkStations", WorkStations);
+        SafeSpawnObjects("PlayerSpawnPoints", PlayerSpawnPoints);
+        SafeSpawnObjects("ItemSpawnPoints", ItemSpawnPoints);
+        SafeSpawnObjects("Capybaras", Capybaras);
+        SafeSpawnObjects("Texts", Texts);
+        SafeSpawnObjects("Interactables", Interactables);
+        SafeSpawnObjects("Schematics", Schematics);
+        SafeSpawnObjects("Scp079Cameras", Scp079Cameras);
+        SafeSpawnObjects("ShootingTargets", ShootingTargets);
+        SafeSpawnObjects("Teleports", Teleports);
 
         Lockers.ForEach(obj =>
         {
-            obj._prevType = obj.LockerType;
-            SpawnObject(obj);
+            try
+            {
+                obj._prevType = obj.LockerType;
+                SpawnObject(obj);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[MapSchematic.Reload] Ошибка при спавне локера {obj.ObjectId}: {ex.Message}");
+            }
         });
 
-        RoomLights.ForEach(SpawnObject);
-        Waypoints.ForEach(SpawnObject);
-        RagdollSpawnPoints.ForEach(SpawnObject);
+        SafeSpawnObjects("RoomLights", RoomLights);
+        SafeSpawnObjects("Waypoints", Waypoints);
+        SafeSpawnObjects("RagdollSpawnPoints", RagdollSpawnPoints);
+        
+        Log.Debug($"[MapSchematic.Reload] Перезагрузка завершена, объектов: {SpawnedObjects.Count}");
+    }
+
+    private void SafeSpawnObjects<T>(string listName, List<T> objects) where T : SerializableObject
+    {
+        foreach (T obj in objects)
+        {
+            try
+            {
+                SpawnObject(obj);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[MapSchematic.Reload] Ошибка при спавне {listName} объекта {obj.ObjectId} " +
+                          $"(RoomType: {obj.RoomType}, Index: {obj.Index}): {ex.Message}");
+                Log.Debug($"[MapSchematic.Reload] Stack trace: {ex.StackTrace}");
+            }
+        }
     }
 
     public void SpawnObject<T>(T serializableObject) where T : SerializableObject
     {
         List<Room> rooms = ListPool<Room>.Shared.Rent();
-        rooms.AddRange(Room.Get(x => x.Type == serializableObject.RoomType));
-
-        if (rooms.Count == 0)
+        
+        try
         {
-            Log.Warn($"[SpawnObject] Не найдено комнат для объекта {serializableObject.ObjectId} (Room: '{
-                serializableObject.RoomType}')");
+            rooms.AddRange(Room.Get(x => x.Type == serializableObject.RoomType));
 
-            return;
-        }
-
-        foreach (Room room in rooms)
-        {
-            if (serializableObject.Index >= 0 && serializableObject.Index != room.GetRoomIndex())
-                continue;
-
-            GameObject? gameObject = serializableObject.SpawnOrUpdateObject(room);
-            if (gameObject == null)
+            if (rooms.Count == 0)
             {
-                Log.Warn($"[SpawnObject] SpawnOrUpdateObject вернул null для {serializableObject.ObjectId}");
-                continue;
+                Log.Warn($"[SpawnObject] Не найдено комнат типа '{serializableObject.RoomType}' для объекта {serializableObject.ObjectId}");
+                Log.Debug($"[SpawnObject] Доступные типы комнат: {string.Join(", ", Room.List.Select(r => r.Type).Distinct())}");
+                return;
             }
 
-            MapEditorObject mapEditorObject =
-                gameObject.AddComponent<MapEditorObject>()
-                    .Init(serializableObject, Name, serializableObject.ObjectId, room);
+            Log.Debug($"[SpawnObject] Найдено {rooms.Count} комнат типа {serializableObject.RoomType} для объекта {serializableObject.ObjectId}");
 
-            SpawnedObjects.Add(mapEditorObject);
+            foreach (Room room in rooms)
+            {
+                if (serializableObject.Index >= 0 && serializableObject.Index != room.GetRoomIndex())
+                    continue;
+
+                try
+                {
+                    GameObject? gameObject = serializableObject.SpawnOrUpdateObject(room);
+                    if (gameObject == null)
+                    {
+                        Log.Debug($"[SpawnObject] SpawnOrUpdateObject вернул null для {serializableObject.ObjectId} в комнате {room.Type}");
+                        continue;
+                    }
+
+                    MapEditorObject mapEditorObject =
+                        gameObject.AddComponent<MapEditorObject>()
+                            .Init(serializableObject, Name, serializableObject.ObjectId, room);
+
+                    SpawnedObjects.Add(mapEditorObject);
+                    Log.Debug($"[SpawnObject] Объект {serializableObject.ObjectId} успешно создан в комнате {room.Type}");
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"[SpawnObject] Ошибка при создании объекта {serializableObject.ObjectId} в комнате {room.Type}: {ex.Message}");
+                    Log.Debug($"[SpawnObject] Stack trace: {ex.StackTrace}");
+                }
+            }
         }
-
-        ListPool<Room>.Shared.Return(rooms);
+        finally
+        {
+            ListPool<Room>.Shared.Return(rooms);
+        }
     }
 
     public void DestroyObject(string id)

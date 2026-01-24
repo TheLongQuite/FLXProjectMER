@@ -12,7 +12,7 @@ public class MapEditorObject : MonoBehaviour
 
     public string MapName { get; protected set; }
 
-    public string Id { get; protected set; }
+    public string Id { get; set; }
 
     public Room CurrentRoom { get; protected set; }
 

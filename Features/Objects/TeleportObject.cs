@@ -92,7 +92,9 @@ public class TeleportObject : MonoBehaviour
 
             Vector3 localOffset = transform.InverseTransformPoint(player.Position);
             localOffset.z = -localOffset.z;
+            localOffset.y = 0f;
             Vector3 rawPosition = target.transform.TransformPoint(localOffset);
+            rawPosition.y = target.transform.position.y;
             
             Vector3 newPosition = GetSafePosition(target.transform.position, rawPosition);
 
