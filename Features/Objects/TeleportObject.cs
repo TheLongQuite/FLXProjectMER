@@ -38,6 +38,7 @@ public class TeleportObject : MonoBehaviour
 
     public TeleportObject? GetRandomTarget()
     {
+        Teleports.Clear();
         if (Base.TargetTeleporters.IsEmpty())
             return null;
 
