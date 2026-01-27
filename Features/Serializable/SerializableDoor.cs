@@ -45,6 +45,8 @@ public class SerializableDoor : SerializableObject
         NetworkServer.UnSpawn(doorVariant.gameObject);
         NetworkServer.Spawn(doorVariant.gameObject);
 
+        doorVariant.RegisterRooms();
+        
         return doorVariant.gameObject;
     }
 
