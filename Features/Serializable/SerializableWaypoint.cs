@@ -24,7 +24,7 @@ public class SerializableWaypoint : SerializableObject, IIndicatorDefinition
         _prevIndex = Index;
 
         waypoint.transform.SetPositionAndRotation(position, rotation);
-        waypoint.transform.localScale = Scale * ScaleMultiplier;
+        waypoint.NetworkBoundsSize = Scale;
         waypoint.NetworkMovementSmoothing = 60;
         waypoint.NetworkVisualizeBounds = true;
 
