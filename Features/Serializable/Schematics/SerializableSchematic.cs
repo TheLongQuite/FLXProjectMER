@@ -16,7 +16,7 @@ public class SerializableSchematic : SerializableObject
     public bool IsStatic { get; set; } = false;
 
     public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null,
-        bool isForced = false)
+        bool isForced = false, bool manuallySpawned = false)
     {
         PrimitiveObjectToy schematic = instance == null ? UnityEngine.Object.Instantiate(PrefabManager.PrimitiveObject)
             : instance.GetComponent<PrimitiveObjectToy>();
@@ -42,7 +42,7 @@ public class SerializableSchematic : SerializableObject
                 return null;
             }
 
-            SchematicSpawningEventArgs ev = new(data, SchematicName);
+            SchematicSpawningEventArgs ev = new(data, SchematicName, !manuallySpawned);
             Schematic.OnSchematicSpawning(ev);
             data = ev.Data;
 
@@ -53,7 +53,7 @@ public class SerializableSchematic : SerializableObject
             }
 
             NetworkServer.Spawn(schematic.gameObject);
-            schematic.gameObject.AddComponent<SchematicObject>().Init(data);
+            schematic.gameObject.AddComponent<SchematicObject>().Init(data, manuallySpawned);
         }
 
         return schematic.gameObject;

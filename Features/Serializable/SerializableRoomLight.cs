@@ -34,7 +34,7 @@ public class SerializableRoomLight : SerializableObject
     public override Vector3 Scale { get; set; }
 
     public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null,
-        bool isForced = false)
+        bool isForced = false, bool manuallySpawned = false)
     {
         Color color = Color.GetColorFromString();
         room ??= Room.Get(RoomType);

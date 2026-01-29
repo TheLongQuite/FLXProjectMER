@@ -26,7 +26,7 @@ public class SerializableItemSpawnpoint : SerializableObject, IIndicatorDefiniti
     public float Weight { get; set; } = -1;
 
     public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null,
-        bool isForced = false)
+        bool isForced = false, bool manuallySpawned = false)
     {
         if (!isForced && Random.Range(0, 101) > SpawnChance)
             return null;

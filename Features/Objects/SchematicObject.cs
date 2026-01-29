@@ -103,7 +103,7 @@ public class SchematicObject : MonoBehaviour
     public AnimationController AnimationController => AnimationController.Get(this);
     public bool ShouldBeOptimized { get; set; }
 
-    public SchematicObject Init(SchematicObjectDataList data)
+    public SchematicObject Init(SchematicObjectDataList data, bool manuallySpawned = false)
     {
         Name = Path.GetFileNameWithoutExtension(data.Path);
         DirectoryPath = data.Path;
@@ -141,7 +141,7 @@ public class SchematicObject : MonoBehaviour
             Log.Error($"[SchematicObject.Init] Ошибка при добавлении аниматоров для {Name}: {ex.Message}");
         }
 
-        Schematic.OnSchematicSpawned(new(this, Name));
+        Schematic.OnSchematicSpawned(new(this, Name, !manuallySpawned));
 
         return this;
     }

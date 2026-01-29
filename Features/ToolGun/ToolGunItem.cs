@@ -111,12 +111,7 @@ public class ToolGunItem
     {
         if (CreateMode)
         {
-            ServerSpecificSettingsSync.TryGetSettingOfUser(player.ReferenceHub, 0,
-                out SSDropdownSetting dropdownSetting);
-
-            dropdownSetting.TryGetSyncSelectionText(out string schematicName);
-
-            ToolGunHandler.CreateObject(player, SelectedObjectToSpawn, schematicName);
+            ToolGunHandler.CreateObject(player, SelectedObjectToSpawn);
             return;
         }
 

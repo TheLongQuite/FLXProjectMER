@@ -177,7 +177,7 @@ public class MapSchematic
         }
     }
 
-    public void SpawnObject<T>(T serializableObject) where T : SerializableObject
+    public void SpawnObject<T>(T serializableObject, bool manuallySpawned = false) where T : SerializableObject
     {
         List<Room> rooms = ListPool<Room>.Shared.Rent();
         
@@ -201,7 +201,7 @@ public class MapSchematic
 
                 try
                 {
-                    GameObject? gameObject = serializableObject.SpawnOrUpdateObject(room);
+                    GameObject? gameObject = serializableObject.SpawnOrUpdateObject(room, manuallySpawned: manuallySpawned);
                     if (gameObject == null)
                     {
                         Log.Debug($"[SpawnObject] SpawnOrUpdateObject вернул null для {serializableObject.ObjectId} в комнате {room.Type}");

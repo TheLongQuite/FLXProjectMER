@@ -20,7 +20,7 @@ public class SerializableDoor : SerializableObject
     public LockOnEvent LockOnEvent { get; set; } = LockOnEvent.None;
 
     public override GameObject SpawnOrUpdateObject(Room? room = null, GameObject? instance = null,
-        bool isForced = false)
+        bool isForced = false, bool manuallySpawned = false)
     {
         DoorVariant doorVariant;
         Vector3 position = room.GetAbsolutePosition(Position);
