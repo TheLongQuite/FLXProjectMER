@@ -213,7 +213,7 @@ public static class SchematicValidator
 
         if (properties["LightType"] == null)
         {
-            properties["LightType"] = 0;
+            properties["LightType"] = 2;
             modified = true;
         }
 
