@@ -26,7 +26,7 @@ public class SerializableWaypoint : SerializableObject, IIndicatorDefinition
         waypoint.transform.SetPositionAndRotation(position, rotation);
         waypoint.NetworkBoundsSize = Scale;
         waypoint.NetworkMovementSmoothing = 60;
-        waypoint.NetworkVisualizeBounds = true;
+        waypoint.NetworkVisualizeBounds = false;
 
         if (instance == null)
             NetworkServer.Spawn(waypoint.gameObject);
