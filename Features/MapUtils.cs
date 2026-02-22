@@ -169,7 +169,7 @@ public static class MapUtils
         }
         catch (Exception ex)
         {
-            Log.Debug($"[TryGetSchematicDataByName] Не удалось получить схематик '{schematicName}': {ex.Message}");
+            Log.Error($"[TryGetSchematicDataByName] Не удалось получить схематик '{schematicName}': {ex.Message}\n{ex.StackTrace}");
             data = null!;
             return false;
         }

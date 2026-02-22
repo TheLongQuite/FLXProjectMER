@@ -100,6 +100,7 @@ public class Create : ICommand
         catch (Exception e)
         {
             response = e.Message.ToString();
+            Log.Error(response + $"\n{e.StackTrace}");
             return false;
         }
 
