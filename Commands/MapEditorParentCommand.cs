@@ -36,6 +36,9 @@ public class MapEditorParentCommand : ParentCommand
         RegisterCommand(new List());
         RegisterCommand(new Indicators());
         RegisterCommand(new Merge());
+        RegisterCommand(new AnimationPlay());
+        RegisterCommand(new AnimationList());
+        RegisterCommand(new AnimationStop());
 
         RegisterCommand(new Position());
         RegisterCommand(new Rotation());

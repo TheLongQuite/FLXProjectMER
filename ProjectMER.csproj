@@ -7,7 +7,12 @@
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
-
+    <PropertyGroup>
+        <PostBuildEvent>
+            copy /Y "$(AssemblyName).dll" "$(EXILED)\Plugins"
+            copy /Y "$(AssemblyName).dll" "$(EXILED_REFERENCES)"
+        </PostBuildEvent>
+    </PropertyGroup>
     <ItemGroup>
         <Reference Include="Exiled.API">
             <HintPath>$(EXILED_REFERENCES)\Exiled.API.dll</HintPath>
