@@ -15,7 +15,6 @@ public class AnimationPlay : ICommand
     public string[] Aliases => [ "pl" ];
 
     public string Description => "Play a animation of the selected schematic.";
-    public string Des = "Animation_name, Index of the Animator (optional)";
     public SchematicObject SchematicObject;
 
     public bool Execute(ArraySegment<string> arguments, ICommandSender sender, out string response)
@@ -26,9 +25,9 @@ public class AnimationPlay : ICommand
             return false;
         }
         
-        if (arguments.Count < 1)
+        if (arguments.Count != 1)
         {
-            response = Des;
+            response = Description;
             return false;
         }
         
@@ -43,22 +42,26 @@ public class AnimationPlay : ICommand
         
         
         AnimationController anim = AnimationController.Get(SchematicObject);
-        
-        if (arguments.Count == 2)
+        int animatorCount = anim.Animators.Count;
+        bool animationFound = false;
+        for (int i = 0; i != animatorCount; i++)
         {
-            if (!int.TryParse(arguments.At(1), out var animatorIndex))
+            int animCount = anim.Animators[i].runtimeAnimatorController.animationClips.Length;
+            for (int y = 0; y != animCount; y++)
             {
-                response = $"Incorrect index of the animator: {animatorIndex}";
-                return false;
+                if (anim.Animators[i].runtimeAnimatorController.animationClips[y].name == arguments.At(0))
+                {
+                    animationFound = true;
+                    anim.Play(arguments.At(0), i);
+                }
             }
-            anim.Play(arguments.At(0), animatorIndex);
-            response = "All animation's have been played!";
-            return true;
         }
-        
-        
-        anim.Play(arguments.At(0));
-        
+
+        if (!animationFound)
+        {
+            response = $"An animation with the specified name: [{arguments.At(0)}] does not exist.";
+            return false;
+        }
         response = "Animation have been played!";
         return true;
     }
