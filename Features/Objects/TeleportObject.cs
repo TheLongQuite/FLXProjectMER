@@ -83,6 +83,8 @@ public class TeleportObject : MonoBehaviour
         if (target == null)
             return;
 
+        float cooldownToApply = Base.Cooldown;
+
         if (targetObject.TryGetComponent(out ReferenceHub hub) && Base.TeleportFlags.HasFlagFast(TeleportFlags.Player))
         {
             Player? player = Player.Get(hub);
@@ -114,16 +116,24 @@ public class TeleportObject : MonoBehaviour
         else if (targetObject.TryGetComponent(out ItemPickupBase projectilePickupBase))
         {
             Pickup pickup = Pickup.Get(projectilePickupBase);
-            if (pickup is not Projectile && !Base.TeleportFlags.HasFlagFast(TeleportFlags.Pickup) ||
-                pickup is Projectile && !Base.TeleportFlags.HasFlagFast(TeleportFlags.ActiveGrenade))
+            bool isProjectile = pickup is Projectile;
+            if (!isProjectile && !Base.TeleportFlags.HasFlagFast(TeleportFlags.Pickup))
                 return;
+            
+            if (isProjectile && !Base.TeleportFlags.HasFlagFast(TeleportFlags.ActiveGrenade))
+                return;
+            
+            if (pickup.Rigidbody.IsSleeping())
+                pickup.Rigidbody.WakeUp();
 
             TeleportRigidbody(pickup.Rigidbody, target);
+            
+            cooldownToApply = 5f;
         }
         else
             return;
 
-        DateTime dateTime = DateTime.Now.AddSeconds(Base.Cooldown);
+        DateTime dateTime = DateTime.Now.AddSeconds(cooldownToApply);
         ObjectAndNextUseTime[other.gameObject] = dateTime;
         target.ObjectAndNextUseTime[other.gameObject] = dateTime;
 
@@ -176,19 +186,17 @@ public class TeleportObject : MonoBehaviour
         
         float objectRadius = 0.1f;
         if (rb.TryGetComponent(out Collider col))
-        {
             objectRadius = Mathf.Max(col.bounds.extents.x, col.bounds.extents.z);
-        }
 
         Vector3 safePosition = GetSafePosition(target.transform.position, rawPosition, objectRadius);
 
         rb.position = safePosition;
-        rb.velocity = newVelocity;
+        rb.linearVelocity = newVelocity;
         rb.angularVelocity = newAngularVelocity;
     }
 
-    private (Vector3 position, Vector3 velocity, Vector3 angularVelocity) CalculateTransformedPhysics(Rigidbody rb,
-        Transform sourcePortal, Transform targetPortal)
+    private (Vector3 position, Vector3 velocity, Vector3 angularVelocity) CalculateTransformedPhysics(
+        Rigidbody rb, Transform sourcePortal, Transform targetPortal)
     {
         Vector3 localVelocity = sourcePortal.InverseTransformDirection(rb.velocity);
         localVelocity.z = -localVelocity.z;
@@ -200,7 +208,9 @@ public class TeleportObject : MonoBehaviour
 
         Vector3 localOffset = sourcePortal.InverseTransformPoint(rb.position);
         localOffset.z = -localOffset.z;
+        localOffset.y = 0f;
         Vector3 newPosition = targetPortal.TransformPoint(localOffset);
+        newPosition.y = targetPortal.position.y;
 
         return (newPosition, newVelocity, newAngularVelocity);
     }
