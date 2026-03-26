@@ -30,8 +30,6 @@ public class ProjectMER : Plugin<Config>
     {
         _ev = new();
         Singleton = this;
-        _harmony = new($"michal78900.mapEditorReborn-{DateTime.Now.Ticks}");
-        _harmony.PatchAll();
 
         MapsDir = Path.Combine(Config.PluginFilesDir, "Maps");
         SchematicsDir = Path.Combine(Config.PluginFilesDir, "Schematics");

@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using Interactables.Interobjects;
 using MapGeneration;
+using MapGeneration.StaticHelpers;
 using ProjectMER.Features.Objects;
 using UnityEngine;
 using Object = System.Object;
@@ -16,6 +17,13 @@ public class TryRaycastRoomFix
                 15f, (int) RoomUtils.RoomDetectionMask) && hitInfo.collider != (Object) null)
         {
             Transform transform = hitInfo.collider.transform;
+            
+            if (transform.TryGetComponentInParent(out IRoomObject comp1))
+            {
+                room = comp1.OriginalRoom;
+                return true;
+            }
+            
             if (transform.TryGetComponentInParent(out room))
             {
                 __result = true;
