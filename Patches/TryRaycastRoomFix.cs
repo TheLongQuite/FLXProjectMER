@@ -21,7 +21,15 @@ public class TryRaycastRoomFix
             if (transform.TryGetComponentInParent(out IRoomObject comp1))
             {
                 room = comp1.OriginalRoom;
-                return true;
+                if (room != null)
+                    return true;
+
+                if (!transform.TryGetComponentInParent(out room))
+                    return true;
+
+                __result = true;
+                return false;
+
             }
             
             if (transform.TryGetComponentInParent(out room))
