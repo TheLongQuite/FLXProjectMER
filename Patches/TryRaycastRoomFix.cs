@@ -4,7 +4,7 @@ using MapGeneration;
 using MapGeneration.StaticHelpers;
 using ProjectMER.Features.Objects;
 using UnityEngine;
-using Object = System.Object;
+using Object = UnityEngine.Object;
 
 namespace ProjectMER.Patches;
 
@@ -13,48 +13,41 @@ public class TryRaycastRoomFix
 {
     public static bool Prefix(Vector3 pos, Vector3 dir, ref bool __result, out RoomIdentifier room)
     {
-        if (Physics.Raycast(new Ray(pos, dir), out RaycastHit hitInfo, 
-                15f, (int) RoomUtils.RoomDetectionMask) && hitInfo.collider != (Object) null)
+        if (Physics.Raycast(new Ray(pos, dir), out RaycastHit hitInfo,
+                15f, (int)RoomUtils.RoomDetectionMask) && (Object)hitInfo.collider != (Object)null)
         {
             Transform transform = hitInfo.collider.transform;
-            
-            if (transform.TryGetComponentInParent(out IRoomObject comp1))
+
+            if (transform.TryGetComponentInParent(out IRoomObject comp1) && comp1.OriginalRoom != null)
             {
                 room = comp1.OriginalRoom;
-                if (room != null)
-                    return true;
-
-                if (!transform.TryGetComponentInParent(out room))
-                    return true;
-
                 __result = true;
                 return false;
-
             }
-            
+
             if (transform.TryGetComponentInParent(out room))
             {
                 __result = true;
-                return false;   
+                return false;
             }
 
             if (transform.TryGetComponentInParent(out MapEditorObject mapEditorObject) && mapEditorObject.CurrentRoom)
             {
                 room = mapEditorObject.CurrentRoom.Identifier;
                 __result = true;
-                return false;    
+                return false;
             }
 
-            if (transform.TryGetComponentInParent(out ElevatorChamber comp))
+            if (transform.TryGetComponentInParent(out ElevatorChamber comp2))
             {
-                room = comp.CurrentRoom;
-                __result = room != (Object) null;
+                room = comp2.CurrentRoom;
+                __result = (Object)room != (Object)null;
                 return false;
             }
         }
-        
+
         room = null;
         __result = false;
-        return false;    
+        return false;
     }
 }
