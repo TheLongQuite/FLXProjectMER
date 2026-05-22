@@ -1,5 +1,4 @@
 using Exiled.API.Features;
-using Exiled.API.Features.Core.UserSettings;
 using HarmonyLib;
 using MEC;
 using ProjectMER.Configs;
@@ -58,6 +57,7 @@ public class ProjectMER : Plugin<Config>
         LabApi.Events.Handlers.ServerEvents.LczDecontaminationStarted += _ev.OnServerLczDecontaminationStarted;
         LabApi.Events.Handlers.PlayerEvents.Spawned += _ev.OnPlayerSpawning;
         LabApi.Events.Handlers.PlayerEvents.InteractingShootingTarget += _ev.OnPlayerInteractingShootingTarget;
+        LabApi.Events.Handlers.Scp079Events.ChangingCamera += _ev.OnChangingCamera;
 
         Exiled.Events.Handlers.Player.SearchingPickup += _ev.OnPlayerSearchingPickup;
         Exiled.Events.Handlers.Player.PickingUpItem += _ev.OnPlayerPickingUpItem;

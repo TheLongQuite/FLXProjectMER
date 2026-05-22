@@ -1,7 +1,6 @@
 ﻿using Exiled.Loader.Features.Configs;
 using Exiled.Loader.Features.Configs.CustomConverters;
 using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 using UnderscoredNamingConvention = Exiled.Loader.Features.Configs.UnderscoredNamingConvention;
 
 namespace ProjectMER.Features.Converters;

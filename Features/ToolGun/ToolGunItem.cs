@@ -37,7 +37,9 @@ public class ToolGunItem
         { ToolGunObjectType.Interactable, typeof(SerializableInteractable) },
         { ToolGunObjectType.Waypoint, typeof(SerializableWaypoint) },
         { ToolGunObjectType.RagdollSpawnpoint, typeof(SerializableRagdollSpawnPoint) },
-        { ToolGunObjectType.RoomLight, typeof(SerializableRoomLight) }
+        { ToolGunObjectType.RoomLight, typeof(SerializableRoomLight) },
+        { ToolGunObjectType.Sound, typeof(SerializableSound) },
+        { ToolGunObjectType.CameraRedirect, typeof(SerializableCameraRedirect) }
     };
 
     private ToolGunObjectType _selectedObjectToSpawn;

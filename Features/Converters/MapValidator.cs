@@ -1,5 +1,4 @@
 ﻿using Exiled.API.Enums;
-using Exiled.Loader;
 using Interactables.Interobjects.DoorUtils;
 using ProjectMER.Features.Serializable;
 using ProjectMER.Features.Serializable.Lockers;

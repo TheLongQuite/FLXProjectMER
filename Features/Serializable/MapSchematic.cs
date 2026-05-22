@@ -28,17 +28,24 @@ public class MapSchematic
 
     private ListAccessor[] ListAccessors => _listAccessors ??=
     [
-        new(() => Primitives, typeof(SerializablePrimitive)), new(() => LightSources, typeof(SerializableLight)),
-        new(() => Doors, typeof(SerializableDoor)), new(() => WorkStations, typeof(SerializableWorkstation)),
+        new(() => Primitives, typeof(SerializablePrimitive)),
+        new(() => LightSources, typeof(SerializableLight)),
+        new(() => Doors, typeof(SerializableDoor)), 
+        new(() => WorkStations, typeof(SerializableWorkstation)),
         new(() => ItemSpawnPoints, typeof(SerializableItemSpawnpoint)),
         new(() => PlayerSpawnPoints, typeof(SerializablePlayerSpawnpoint)),
-        new(() => Capybaras, typeof(SerializableCapybara)), new(() => Texts, typeof(SerializableText)),
+        new(() => Capybaras, typeof(SerializableCapybara)),
+        new(() => Texts, typeof(SerializableText)),
         new(() => Interactables, typeof(SerializableInteractable)),
         new(() => Schematics, typeof(SerializableSchematic)),
         new(() => Scp079Cameras, typeof(SerializableScp079Camera)),
         new(() => ShootingTargets, typeof(SerializableShootingTarget)),
-        new(() => Teleports, typeof(SerializableTeleport)), new(() => Lockers, typeof(SerializableLocker)),
-        new(() => Waypoints, typeof(SerializableWaypoint)), new(() => RoomLights, typeof(SerializableRoomLight))
+        new(() => Teleports, typeof(SerializableTeleport)), 
+        new(() => Lockers, typeof(SerializableLocker)),
+        new(() => Waypoints, typeof(SerializableWaypoint)), 
+        new(() => RoomLights, typeof(SerializableRoomLight)),
+        new(() => Sounds, typeof(SerializableSound)),
+        new(() => CameraRedirects, typeof(SerializableCameraRedirect))
     ];
 
     public List<SerializableDoor> Doors { get; set; } = [];
@@ -71,6 +78,10 @@ public class MapSchematic
 
     public List<SerializableWaypoint> Waypoints { get; set; } = [];
 
+    public List<SerializableSound> Sounds { get; set; } = [];
+
+    public List<SerializableCameraRedirect> CameraRedirects { get; set; } = [];
+
     public List<MapEditorObject> SpawnedObjects = [];
 
     public MapSchematic Merge(MapSchematic other)
@@ -92,6 +103,8 @@ public class MapSchematic
         Waypoints.AddRange(other.Waypoints);
         RoomLights.AddRange(other.RoomLights);
         RagdollSpawnPoints.AddRange(other.RagdollSpawnPoints);
+        Sounds.AddRange(other.Sounds);
+        CameraRedirects.AddRange(other.CameraRedirects);
 
         return this;
     }
@@ -156,6 +169,8 @@ public class MapSchematic
         SafeSpawnObjects("RoomLights", RoomLights);
         SafeSpawnObjects("Waypoints", Waypoints);
         SafeSpawnObjects("RagdollSpawnPoints", RagdollSpawnPoints);
+        SafeSpawnObjects("Sounds", Sounds);
+        SafeSpawnObjects("CameraRedirects", CameraRedirects);
         
         Log.Debug($"[MapSchematic.Reload] Перезагрузка завершена, объектов: {SpawnedObjects.Count}");
     }

@@ -11,7 +11,6 @@ using ProjectMER.Features.Serializable.Lockers;
 using ProjectMER.Features.Serializable.Schematics;
 using UnityEngine;
 using Light = Exiled.API.Features.Toys.Light;
-using Object = UnityEngine.Object;
 
 namespace ProjectMER.Features;
 

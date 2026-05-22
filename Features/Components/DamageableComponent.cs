@@ -1,22 +1,22 @@
-﻿using ProjectMER.Events.Arguments;
-using ProjectMER.Events.Handlers;
-using ProjectMER.Features.Objects;
-
-namespace MapEditorReborn.API.Features.Components;
-
-using Exiled.API.Enums;
+﻿using Exiled.API.Enums;
 using Exiled.API.Extensions;
 using Exiled.API.Features;
 using Exiled.Events.EventArgs.Map;
 using Exiled.Events.EventArgs.Player;
 using FLXLib.Extensions;
 using InventorySystem.Items.Armor;
+using InventorySystem.Items.Firearms.Modules;
 using InventorySystem.Items.ThrowableProjectiles;
+using ProjectMER.Events.Arguments;
+using ProjectMER.Events.Handlers;
+using ProjectMER.Features.Objects;
 using UnityEngine;
+
+namespace ProjectMER.Features.Components;
+
 using Firearm = InventorySystem.Items.Firearms.Firearm;
 using PlayerEv = Exiled.Events.Handlers.Player;
 using MapEv = Exiled.Events.Handlers.Map;
-using InventorySystem.Items.Firearms.Modules;
 
 public class DamageableComponent : MonoBehaviour
 {

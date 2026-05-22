@@ -1,6 +1,5 @@
 using Exiled.API.Enums;
 using Exiled.API.Features;
-using Exiled.Loader;
 using ProjectMER.Features.Converters;
 using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Objects;

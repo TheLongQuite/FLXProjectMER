@@ -14,6 +14,9 @@
         </PostBuildEvent>
     </PropertyGroup>
     <ItemGroup>
+        <Reference Include="AudioSystem">
+          <HintPath>..\References\AudioSystem.dll</HintPath>
+        </Reference>
         <Reference Include="Exiled.API">
             <HintPath>$(EXILED_REFERENCES)\Exiled.API.dll</HintPath>
         </Reference>
