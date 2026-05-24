@@ -1,10 +1,13 @@
-﻿using PlayerRoles.PlayableScps.Scp079.Cameras;
+﻿using Exiled.API.Enums;
+using Exiled.API.Extensions;
+using PlayerRoles.PlayableScps.Scp079.Cameras;
 using ProjectMER.Features.Serializable;
 using ProjectMER.Features.Serializable.Utility;
 using ProjectMER.Features.ToolGun;
 using UnityEngine;
 using Weighted_Randomizer;
 using Camera = LabApi.Features.Wrappers.Camera;
+using Room = Exiled.API.Features.Room;
 
 namespace ProjectMER.Features.Objects;
 
@@ -38,11 +41,13 @@ public class CameraRedirectObject : MonoBehaviour
         }
 
         string targetId = weighted.NextWithReplacement();
-        if (!ToolGunHandler.TryGetObjectById(targetId, out MapEditorObject mapEditorObject))
-            return null;
+        if (Enum.TryParse(targetId, out RoomType type))
+            return Room.Get(type).Cameras.GetRandomValue()?.Base;
 
-        Scp079Camera camera = mapEditorObject.GetComponent<Scp079Camera>();
-        return camera;
+        if (ToolGunHandler.TryGetObjectById<SerializableCameraRedirect>(targetId, out MapEditorObject mapEditorObject))
+            return mapEditorObject.GetComponent<Scp079Camera>();
+
+        return null;
     }
 
     private void OnDestroy()

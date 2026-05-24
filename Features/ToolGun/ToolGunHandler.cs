@@ -141,6 +141,21 @@ public static class ToolGunHandler
         mapEditorObject = null!;
         return false;
     }
+    
+    public static bool TryGetObjectById<T>(string id, out MapEditorObject mapEditorObject) where T : SerializableObject
+    {
+        foreach (MapEditorObject meo in MapUtils.LoadedMaps.Values.SelectMany(x => x.SpawnedObjects))
+        {
+            if (meo.Base is not T || meo.Id != id)
+                continue;
+
+            mapEditorObject = meo;
+            return true;
+        }
+
+        mapEditorObject = null!;
+        return false;
+    }
 
     public static bool Raycast(Player player, out RaycastHit hit)
         => Raycast(player.CameraTransform.position, player.CameraTransform.forward, out hit);
