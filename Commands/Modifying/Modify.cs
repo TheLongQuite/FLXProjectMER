@@ -11,6 +11,7 @@ using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Objects;
 using ProjectMER.Features.Serializable;
 using ProjectMER.Features.ToolGun;
+using UnityEngine;
 
 namespace ProjectMER.Commands.Modifying;
 
@@ -70,8 +71,6 @@ public class Modify : ICommand
         }
 
         List<PropertyInfo> properties = instance.GetType().GetModifiableProperties().ToList();
-        Log.Debug($"[Modify] Найдено {properties.Count} модифицируемых свойств: {
-            string.Join(", ", properties.Select(p => p.Name))}");
 
         if (arguments.Count == 0)
             return ShowProperties(mapEditorObject, instance, properties, out response);
@@ -93,8 +92,6 @@ public class Modify : ICommand
             return false;
         }
 
-        Log.Debug($"[Modify] Найдено свойство {foundProperty.Name} типа {foundProperty.PropertyType.Name}");
-
         bool isReadOnlyOperation = false;
 
         if (IsComplexCollection(foundProperty.PropertyType))
@@ -108,6 +105,11 @@ public class Modify : ICommand
         else if (typeof(ICollection).IsAssignableFrom(foundProperty.PropertyType))
         {
             if (!HandleSimpleCollection(arguments, foundProperty, instance, out response))
+                return false;
+        }
+        else if (foundProperty.PropertyType == typeof(Vector3) || foundProperty.PropertyType == typeof(Vector2))
+        {
+            if (!HandleVector(arguments, foundProperty, instance, out response))
                 return false;
         }
         else if (IsComplexType(foundProperty.PropertyType))
@@ -132,7 +134,6 @@ public class Modify : ICommand
         try
         {
             mapEditorObject.UpdateObjectAndCopies();
-            Log.Debug($"[Modify] Объект {mapEditorObject.Id} успешно обновлён");
         }
         catch (Exception ex)
         {
@@ -162,6 +163,75 @@ public class Modify : ICommand
 
         response = StringBuilderPool.Shared.ToStringReturn(sb);
         return true;
+    }
+
+    private static bool HandleVector(ArraySegment<string> arguments, PropertyInfo property, object instance, out string response)
+    {
+        bool isVector3 = property.PropertyType == typeof(Vector3);
+        object currentRaw = property.GetValue(instance);
+        
+        float x = isVector3 ? ((Vector3)currentRaw).x : ((Vector2)currentRaw).x;
+        float y = isVector3 ? ((Vector3)currentRaw).y : ((Vector2)currentRaw).y;
+        float z = isVector3 ? ((Vector3)currentRaw).z : 0;
+
+        if (arguments.Count < 2)
+        {
+            response = $"Использование для {property.Name} ({property.PropertyType.Name}):\n" +
+                       $"  mod {property.Name} <x> <y> [z]\n" +
+                       $"  mod {property.Name} <x,y,z>\n" +
+                       $"  mod {property.Name} x=10 y=20\n" +
+                       $"Текущее значение: {currentRaw}";
+            return false;
+        }
+
+        // Собираем все аргументы после имени свойства в одну строку и массив
+        string[] vectorArgs = arguments.Skip(1).ToArray();
+        string fullString = string.Join(" ", vectorArgs);
+
+        try
+        {
+            // Случай 1: Формат x=10 y=20
+            if (fullString.Contains('='))
+            {
+                foreach (string arg in vectorArgs)
+                {
+                    string[] parts = arg.Split('=');
+                    if (parts.Length != 2) continue;
+                    
+                    string axis = parts[0].ToLower();
+                    float val = float.Parse(parts[1]);
+
+                    if (axis == "x") x = val;
+                    else if (axis == "y") y = val;
+                    else if (axis == "z" && isVector3) z = val;
+                }
+            }
+            // Случай 2: Формат 10,20,30
+            else if (fullString.Contains(','))
+            {
+                string[] parts = fullString.Split(',');
+                if (parts.Length >= 1) x = float.Parse(parts[0]);
+                if (parts.Length >= 2) y = float.Parse(parts[1]);
+                if (parts.Length >= 3 && isVector3) z = float.Parse(parts[2]);
+            }
+            // Случай 3: Формат 10 20 30 (пробелы)
+            else
+            {
+                if (vectorArgs.Length >= 1) x = float.Parse(vectorArgs[0]);
+                if (vectorArgs.Length >= 2) y = float.Parse(vectorArgs[1]);
+                if (vectorArgs.Length >= 3 && isVector3) z = float.Parse(vectorArgs[2]);
+            }
+
+            object result = isVector3 ? new Vector3(x, y, z) : new Vector2(x, y);
+            property.SetValue(instance, result);
+            response = $"{property.Name} установлено в {result}";
+            return true;
+        }
+        catch (Exception ex)
+        {
+            response = $"Ошибка при парсинге вектора: {ex.Message}";
+            return false;
+        }
     }
 
     private static bool HandleMap(ArraySegment<string> arguments, MapEditorObject mapEditorObject, out string response)
@@ -261,16 +331,12 @@ public class Modify : ICommand
 
         if (listInstance == null)
         {
-            Log.Error($"[Modify.HandleComplexCollection] Значение свойства {property.Name} равно null");
             response = $"Ошибка: свойство {property.Name} не инициализировано (null).";
             return false;
         }
 
         Type elementType = property.PropertyType.GetGenericArguments()[0];
         List<PropertyInfo> elementProperties = elementType.GetModifiableProperties().ToList();
-
-        Log.Debug($"[Modify.HandleComplexCollection] Обработка {property.Name}, тип элемента: {elementType.Name
-        }, свойства элемента: {string.Join(", ", elementProperties.Select(p => p.Name))}");
 
         if (arguments.Count < 2)
         {
@@ -279,7 +345,6 @@ public class Modify : ICommand
         }
 
         string action = arguments.At(1).ToLower();
-        Log.Debug($"[Modify.HandleComplexCollection] Действие: {action}");
 
         switch (action)
         {
@@ -311,13 +376,10 @@ public class Modify : ICommand
     private static bool HandleComplexCollectionAdd(ArraySegment<string> arguments, PropertyInfo property,
         object listInstance, Type elementType, List<PropertyInfo> elementProperties, out string response)
     {
-        Log.Debug($"[Modify.HandleComplexCollectionAdd] Создание элемента типа {elementType.Name}");
-
         object newElement;
         try
         {
             newElement = Activator.CreateInstance(elementType);
-            Log.Debug($"[Modify.HandleComplexCollectionAdd] Элемент создан успешно");
         }
         catch (Exception ex)
         {
@@ -329,37 +391,24 @@ public class Modify : ICommand
         for (int i = 2; i < arguments.Count; i++)
         {
             string arg = arguments.At(i);
-            Log.Debug($"[Modify.HandleComplexCollectionAdd] Обработка аргумента: {arg}");
-
             string[] parts = arg.Split('=');
 
             if (parts.Length != 2)
             {
-                response = $"Неверный формат аргумента \"{arg}\"!\n" +
-                           $"Используйте формат: свойство=значение\n" +
-                           $"Пример: mod {property.Name} add Id=teleport1 Chance=50";
-
+                response = $"Неверный формат аргумента \"{arg}\"! Используйте свойство=значение";
                 return false;
             }
 
-            string propName = parts[0];
-            string propValue = parts[1];
-
             PropertyInfo? elementProp =
-                elementProperties.FirstOrDefault(p => p.Name.Equals(propName, StringComparison.OrdinalIgnoreCase));
+                elementProperties.FirstOrDefault(p => p.Name.Equals(parts[0], StringComparison.OrdinalIgnoreCase));
 
             if (elementProp == null)
             {
-                response = $"Свойство \"{propName}\" не найдено в типе {elementType.Name}!\n" +
-                           $"Доступные свойства: {string.Join(", ",
-                               elementProperties.Select(p => $"{p.Name} ({GetTypeName(p.PropertyType)})"))}";
-
+                response = $"Свойство \"{parts[0]}\" не найдено в типе {elementType.Name}!";
                 return false;
             }
 
-            Log.Debug($"[Modify.HandleComplexCollectionAdd] Установка {elementProp.Name} = {propValue}");
-
-            if (!TrySetPropertyValue(elementProp, newElement, propValue, out string error))
+            if (!TrySetPropertyValue(elementProp, newElement, parts[1], out string error))
             {
                 response = error;
                 return false;
@@ -369,27 +418,15 @@ public class Modify : ICommand
         try
         {
             MethodInfo? addMethod = property.PropertyType.GetMethod("Add");
-            if (addMethod == null)
-            {
-                Log.Error($"[Modify.HandleComplexCollectionAdd] Метод Add не найден для типа {property.PropertyType.Name
-                }");
-
-                response = "Внутренняя ошибка: метод Add не найден.";
-                return false;
-            }
-
-            addMethod.Invoke(listInstance, new[] { newElement });
+            addMethod?.Invoke(listInstance, new[] { newElement });
 
             ICollection collection = (ICollection)listInstance;
-            Log.Debug($"[Modify.HandleComplexCollectionAdd] Элемент добавлен, новый размер коллекции: {collection.Count
-            }");
-
             response = $"Элемент успешно добавлен! Всего элементов: {collection.Count}";
             return true;
         }
         catch (Exception ex)
         {
-            Log.Error($"[Modify.HandleComplexCollectionAdd] Ошибка при добавлении элемента в коллекцию: {ex}");
+            Log.Error($"[Modify.HandleComplexCollectionAdd] Ошибка при добавлении в коллекцию: {ex}");
             response = "Ошибка при добавлении элемента в коллекцию.";
             return false;
         }
@@ -400,55 +437,7 @@ public class Modify : ICommand
     {
         if (arguments.Count < 3)
         {
-            response = $"Использование: mod {property.Name} remove <индекс>\n" +
-                       $"Индекс начинается с 0. Используйте 'mod {property.Name} list' для просмотра элементов.";
-
-            return false;
-        }
-
-        if (!int.TryParse(arguments.At(2), out int index))
-        {
-            response = $"\"{arguments.At(2)}\" не является числом!\n" +
-                       $"Укажите индекс элемента для удаления (начиная с 0).";
-
-            return false;
-        }
-
-        IList list = (IList)listInstance;
-
-        if (index < 0 || index >= list.Count)
-        {
-            response = $"Индекс {index} вне диапазона!\n" +
-                       $"Допустимые индексы: 0 - {list.Count - 1} (всего элементов: {list.Count})";
-
-            return false;
-        }
-
-        try
-        {
-            list.RemoveAt(index);
-            Log.Debug($"[Modify.HandleComplexCollectionRemove] Элемент с индексом {index} удалён, осталось: {list.Count
-            }");
-
-            response = $"Элемент с индексом {index} удалён! Осталось элементов: {list.Count}";
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Log.Error($"[Modify.HandleComplexCollectionRemove] Ошибка при удалении элемента с индексом {index}: {ex}");
-            response = "Ошибка при удалении элемента.";
-            return false;
-        }
-    }
-
-    private static bool HandleComplexCollectionSet(ArraySegment<string> arguments, object listInstance,
-        Type elementType, List<PropertyInfo> elementProperties, out string response)
-    {
-        if (arguments.Count < 4)
-        {
-            response = "Использование: mod <свойство> set <индекс> <свойство_элемента>=<значение>\n" +
-                       "Пример: mod TargetTeleporters set 0 Chance=75";
-
+            response = $"Использование: mod {property.Name} remove <индекс>";
             return false;
         }
 
@@ -462,14 +451,41 @@ public class Modify : ICommand
 
         if (index < 0 || index >= list.Count)
         {
-            response = $"Индекс {index} вне диапазона! Допустимые индексы: 0 - {list.Count - 1}";
+            response = $"Индекс {index} вне диапазона (0-{list.Count - 1})!";
+            return false;
+        }
+
+        list.RemoveAt(index);
+        response = $"Элемент с индексом {index} удалён! Осталось: {list.Count}";
+        return true;
+    }
+
+    private static bool HandleComplexCollectionSet(ArraySegment<string> arguments, object listInstance,
+        Type elementType, List<PropertyInfo> elementProperties, out string response)
+    {
+        if (arguments.Count < 4)
+        {
+            response = "Использование: mod <свойство> set <индекс> <свойство_элемента>=<значение>";
+            return false;
+        }
+
+        if (!int.TryParse(arguments.At(2), out int index))
+        {
+            response = $"\"{arguments.At(2)}\" не является числом!";
+            return false;
+        }
+
+        IList list = (IList)listInstance;
+        if (index < 0 || index >= list.Count)
+        {
+            response = $"Индекс {index} вне диапазона!";
             return false;
         }
 
         object? element = list[index];
         if (element == null)
         {
-            response = $"Элемент с индексом {index} равен null!";
+            response = "Элемент равен null!";
             return false;
         }
 
@@ -478,28 +494,13 @@ public class Modify : ICommand
             string arg = arguments.At(i);
             string[] parts = arg.Split('=');
 
-            if (parts.Length != 2)
-            {
-                response = $"Неверный формат \"{arg}\"! Используйте: свойство=значение";
-                return false;
-            }
+            if (parts.Length != 2) continue;
 
             PropertyInfo? elementProp =
                 elementProperties.FirstOrDefault(p => p.Name.Equals(parts[0], StringComparison.OrdinalIgnoreCase));
 
-            if (elementProp == null)
-            {
-                response = $"Свойство \"{parts[0]}\" не найдено!\n" +
-                           $"Доступные: {string.Join(", ", elementProperties.Select(p => p.Name))}";
-
-                return false;
-            }
-
-            if (!TrySetPropertyValue(elementProp, element, parts[1], out string error))
-            {
-                response = error;
-                return false;
-            }
+            if (elementProp != null)
+                TrySetPropertyValue(elementProp, element, parts[1], out _);
         }
 
         response = $"Элемент с индексом {index} успешно изменён!";
@@ -513,7 +514,6 @@ public class Modify : ICommand
 
         if (listInstance == null)
         {
-            Log.Error($"[Modify.HandleSimpleCollection] Значение свойства {property.Name} равно null");
             response = $"Ошибка: свойство {property.Name} не инициализировано (null).";
             return false;
         }
@@ -523,36 +523,12 @@ public class Modify : ICommand
         if (arguments.Count < 2)
         {
             ICollection collection = (ICollection)listInstance;
-            StringBuilder sb = StringBuilderPool.Shared.Rent();
-            sb.AppendLine($"Использование: mod {property.Name} <add|remove> <значение1> [значение2] ...");
-            sb.AppendLine($"Тип элементов: {GetTypeName(listType)}");
-            sb.AppendLine($"Текущее количество элементов: {collection.Count}");
-
-            if (listType.IsEnum)
-            {
-                sb.AppendLine($"Допустимые значения:");
-                foreach (object val in Enum.GetValues(listType))
-                    sb.AppendLine($"  - {val}");
-            }
-
-            response = StringBuilderPool.Shared.ToStringReturn(sb);
+            response = $"Использование: mod {property.Name} <add|remove> <значение>\n" +
+                       $"Тип: {GetTypeName(listType)}, Количество: {collection.Count}";
             return false;
         }
 
         string action = arguments.At(1).ToLower();
-
-        if (action != "a" && action != "add" && action != "rm" && action != "remove")
-        {
-            response = $"Неизвестное действие \"{action}\"! Используйте: add или remove";
-            return false;
-        }
-
-        if (arguments.Count < 3)
-        {
-            response = $"Укажите хотя бы одно значение для {(action.StartsWith("a") ? "добавления" : "удаления")}!";
-            return false;
-        }
-
         bool isAdd = action == "a" || action == "add";
         int processedCount = 0;
 
@@ -571,28 +547,13 @@ public class Modify : ICommand
             }
             catch (Exception ex)
             {
-                Log.Error($"[Modify.HandleSimpleCollection] Ошибка преобразования \"{arguments.At(i)}\" в {listType.Name
-                }: {ex.Message}");
-
-                StringBuilder sb = StringBuilderPool.Shared.Rent();
-                sb.AppendLine($"\"{arguments.At(i)}\" не является допустимым значением типа {GetTypeName(listType)}!");
-
-                if (listType.IsEnum)
-                {
-                    sb.AppendLine("Допустимые значения:");
-                    foreach (object val in Enum.GetValues(listType))
-                        sb.AppendLine($"  - {val}");
-                }
-
-                response = StringBuilderPool.Shared.ToStringReturn(sb);
+                response = $"\"{arguments.At(i)}\" не является допустимым значением!";
                 return false;
             }
         }
 
         ICollection resultCollection = (ICollection)listInstance;
-        response = $"{(isAdd ? "Добавлено" : "Удалено")} элементов: {processedCount}. Всего в списке: {
-            resultCollection.Count}";
-
+        response = $"{(isAdd ? "Добавлено" : "Удалено")} элементов: {processedCount}. Всего: {resultCollection.Count}";
         return true;
     }
 
@@ -605,68 +566,31 @@ public class Modify : ICommand
 
         if (nestedInstance == null)
         {
-            try
-            {
-                nestedInstance = Activator.CreateInstance(nestedType);
-                property.SetValue(instance, nestedInstance);
-                Log.Debug($"[Modify.HandleComplexType] Создан новый экземпляр {nestedType.Name}");
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[Modify.HandleComplexType] Не удалось создать экземпляр {nestedType.Name}: {ex}");
-                response = $"Не удалось создать объект типа {nestedType.Name}.";
-                return false;
-            }
+            nestedInstance = Activator.CreateInstance(nestedType);
+            property.SetValue(instance, nestedInstance);
         }
 
         if (arguments.Count < 2)
         {
             StringBuilder sb = StringBuilderPool.Shared.Rent();
-            sb.AppendLine($"Свойство \"{property.Name}\" является вложенным объектом типа {nestedType.Name}");
-            sb.AppendLine($"Использование: mod {property.Name} <свойство>=<значение> [свойство2=значение2] ...");
-            sb.AppendLine("Доступные свойства:");
-
+            sb.AppendLine($"Вложенный объект {nestedType.Name}. Доступные свойства:");
             foreach (PropertyInfo prop in nestedProperties)
-            {
-                object? value = prop.GetValue(nestedInstance);
-                sb.AppendLine($"  - {prop.Name} ({GetTypeName(prop.PropertyType)}) = {value ?? "null"}");
-            }
+                sb.AppendLine($"  - {prop.Name} ({GetTypeName(prop.PropertyType)}) = {prop.GetValue(nestedInstance) ?? "null"}");
 
             response = StringBuilderPool.Shared.ToStringReturn(sb);
             return false;
         }
 
         int changedCount = 0;
-
         for (int i = 1; i < arguments.Count; i++)
         {
             string arg = arguments.At(i);
             string[] parts = arg.Split('=');
+            if (parts.Length != 2) continue;
 
-            if (parts.Length != 2)
-            {
-                response = $"Неверный формат \"{arg}\"! Используйте: свойство=значение";
-                return false;
-            }
-
-            PropertyInfo? nestedProp =
-                nestedProperties.FirstOrDefault(p => p.Name.Equals(parts[0], StringComparison.OrdinalIgnoreCase));
-
-            if (nestedProp == null)
-            {
-                response = $"Свойство \"{parts[0]}\" не найдено в {nestedType.Name}!\n" +
-                           $"Доступные: {string.Join(", ", nestedProperties.Select(p => p.Name))}";
-
-                return false;
-            }
-
-            if (!TrySetPropertyValue(nestedProp, nestedInstance, parts[1], out string error))
-            {
-                response = error;
-                return false;
-            }
-
-            changedCount++;
+            PropertyInfo? nestedProp = nestedProperties.FirstOrDefault(p => p.Name.Equals(parts[0], StringComparison.OrdinalIgnoreCase));
+            if (nestedProp != null && TrySetPropertyValue(nestedProp, nestedInstance, parts[1], out _))
+                changedCount++;
         }
 
         response = $"Изменено свойств вложенного объекта: {changedCount}";
@@ -676,42 +600,12 @@ public class Modify : ICommand
     private static bool HandleSimpleType(ArraySegment<string> arguments, PropertyInfo property,
         object instance, out string response)
     {
-        object? currentValue = null;
-        try
-        {
-            currentValue = property.GetValue(instance);
-        }
-        catch (Exception ex)
-        {
-            Log.Error($"[Modify.HandleSimpleType] Ошибка получения значения {property.Name}: {ex.Message}");
-        }
+        object? currentValue = property.GetValue(instance);
 
         if (arguments.Count < 2)
         {
-            StringBuilder sb = StringBuilderPool.Shared.Rent();
-            sb.AppendLine($"Использование: mod {property.Name} <значение>");
-            sb.AppendLine($"Ожидаемый тип: {GetTypeName(property.PropertyType)}");
-            sb.AppendLine($"Текущее значение: {currentValue ?? "null"}");
-            
-            if (property.PropertyType.IsEnum)
-            {
-                bool isFlags = property.PropertyType.GetCustomAttribute<FlagsAttribute>() != null;
-                
-                if (isFlags)
-                {
-                    sb.AppendLine();
-                    sb.AppendLine("Это флаговое тип - можно комбинировать значения:");
-                    sb.AppendLine("  - Указать число (сумма нужных значений)");
-                    sb.AppendLine("  - Указать имена через запятую: Value1,Value2,Value3");
-                }
-                
-                sb.AppendLine();
-                sb.AppendLine("Допустимые значения:");
-                foreach (object val in Enum.GetValues(property.PropertyType))
-                    sb.AppendLine($"  - {val} = {Convert.ToInt32(val)}");
-            }
-            
-            response = StringBuilderPool.Shared.ToStringReturn(sb);
+            response = $"Использование: mod {property.Name} <значение>\n" +
+                       $"Тип: {GetTypeName(property.PropertyType)}, Текущее: {currentValue ?? "null"}";
             return false;
         }
 
@@ -722,83 +616,20 @@ public class Modify : ICommand
             
             if (property.PropertyType.IsEnum)
             {
-                bool isFlags = property.PropertyType.GetCustomAttribute<FlagsAttribute>() != null;
-                
-                if (int.TryParse(inputValue, out int numericValue))
-                {
-                    value = Enum.ToObject(property.PropertyType, numericValue);
-                }
-                else if (isFlags && inputValue.Contains(','))
-                {
-                    string[] flagNames = inputValue.Split(',');
-                    int combinedValue = 0;
-                    
-                    foreach (string flagName in flagNames)
-                    {
-                        string trimmedName = flagName.Trim();
-                        try
-                        {
-                            object flagValue = Enum.Parse(property.PropertyType, trimmedName, true);
-                            combinedValue |= Convert.ToInt32(flagValue);
-                        }
-                        catch (ArgumentException)
-                        {
-                            response = $"Неизвестное значение флага \"{trimmedName}\"!\n" +
-                                       $"Допустимые значения: {string.Join(", ", Enum.GetNames(property.PropertyType))}";
-                            return false;
-                        }
-                    }
-                    
-                    value = Enum.ToObject(property.PropertyType, combinedValue);
-                }
-                else
-                {
-                    try
-                    {
-                        value = Enum.Parse(property.PropertyType, inputValue, ignoreCase: true);
-                    }
-                    catch (ArgumentException)
-                    {
-                        StringBuilder sb = StringBuilderPool.Shared.Rent();
-                        sb.AppendLine($"\"{inputValue}\" не является допустимым значением для {property.Name}!");
-                        sb.AppendLine();
-                        sb.AppendLine("Допустимые значения:");
-                        foreach (object val in Enum.GetValues(property.PropertyType))
-                            sb.AppendLine($"  - {val} = {Convert.ToInt32(val)}");
-                        
-                        response = StringBuilderPool.Shared.ToStringReturn(sb);
-                        return false;
-                    }
-                }
+                value = Enum.Parse(property.PropertyType, inputValue, ignoreCase: true);
             }
             else
             {
-                value = TypeDescriptor.GetConverter(property.PropertyType)
-                    .ConvertFromInvariantString(inputValue);
+                value = TypeDescriptor.GetConverter(property.PropertyType).ConvertFromInvariantString(inputValue);
             }
             
             property.SetValue(instance, value);
-            
-            Log.Debug($"[Modify.HandleSimpleType] {property.Name}: {currentValue} -> {value}");
             response = $"{property.Name} изменено: {currentValue} -> {value}";
             return true;
         }
-        catch (Exception ex)
+        catch
         {
-            Log.Error($"[Modify.HandleSimpleType] Ошибка преобразования \"{arguments.At(1)}\" в {property.PropertyType.Name}: {ex.Message}");
-            
-            StringBuilder sb = StringBuilderPool.Shared.Rent();
-            sb.AppendLine($"\"{arguments.At(1)}\" не является допустимым значением типа {GetTypeName(property.PropertyType)}!");
-
-            if (property.PropertyType.IsEnum)
-            {
-                sb.AppendLine();
-                sb.AppendLine($"Допустимые значения для {property.Name}:");
-                foreach (object val in Enum.GetValues(property.PropertyType))
-                    sb.AppendLine($"  - {val} = {Convert.ToInt32(val)}");
-            }
-
-            response = StringBuilderPool.Shared.ToStringReturn(sb);
+            response = $"\"{arguments.At(1)}\" не является допустимым значением для {property.Name}!";
             return false;
         }
     }
@@ -809,25 +640,14 @@ public class Modify : ICommand
         if (arguments.Count < 2)
         {
             response = $"Использование: mod {property.Name} <текст>\n" +
-                       $"Текущее значение: {property.GetValue(instance) ?? "(пусто)"}";
-
+                       $"Текущее: {property.GetValue(instance) ?? "(пусто)"}";
             return false;
         }
 
-        StringBuilder spacedStringBuilder = StringBuilderPool.Shared.Rent();
-        for (int i = 1; i < arguments.Count; i++)
-        {
-            if (i > 1)
-                spacedStringBuilder.Append(' ');
-
-            spacedStringBuilder.Append(arguments.At(i));
-        }
-
+        string newValue = string.Join(" ", arguments.Skip(1));
         string oldValue = property.GetValue(instance)?.ToString() ?? "(пусто)";
-        string newValue = StringBuilderPool.Shared.ToStringReturn(spacedStringBuilder);
 
         property.SetValue(instance, newValue);
-
         response = $"{property.Name} изменено: \"{oldValue}\" -> \"{newValue}\"";
         return true;
     }
@@ -836,85 +656,61 @@ public class Modify : ICommand
     {
         try
         {
-            object converted = TypeDescriptor.GetConverter(property.PropertyType)
-                .ConvertFromInvariantString(value);
+            object converted;
+
+            if (property.PropertyType == typeof(Vector3))
+            {
+                string[] parts = value.Split(',');
+                float x = float.Parse(parts[0]);
+                float y = parts.Length > 1 ? float.Parse(parts[1]) : x;
+                float z = parts.Length > 2 ? float.Parse(parts[2]) : y;
+                converted = new Vector3(x, y, z);
+            }
+            else if (property.PropertyType == typeof(Vector2))
+            {
+                string[] parts = value.Split(',');
+                float x = float.Parse(parts[0]);
+                float y = parts.Length > 1 ? float.Parse(parts[1]) : x;
+                converted = new Vector2(x, y);
+            }
+            else
+            {
+                converted = TypeDescriptor.GetConverter(property.PropertyType).ConvertFromInvariantString(value);
+            }
 
             property.SetValue(instance, converted);
-
-            Log.Debug($"[Modify.TrySetPropertyValue] Установлено {property.Name} = {converted}");
             error = string.Empty;
             return true;
         }
         catch (Exception ex)
         {
-            Log.Error($"[Modify.TrySetPropertyValue] Ошибка установки {property.Name}={value}: {ex.Message}");
-
-            StringBuilder sb = StringBuilderPool.Shared.Rent();
-            sb.AppendLine($"Не удалось установить значение \"{value}\" для свойства {property.Name}!");
-            sb.AppendLine($"Ожидаемый тип: {GetTypeName(property.PropertyType)}");
-
-            if (property.PropertyType.IsEnum)
-            {
-                sb.AppendLine("Допустимые значения:");
-                foreach (object val in Enum.GetValues(property.PropertyType))
-                    sb.AppendLine($"  - {val}");
-            }
-
-            error = StringBuilderPool.Shared.ToStringReturn(sb);
+            error = $"Не удалось установить значение \"{value}\" для {property.Name}: {ex.Message}";
             return false;
         }
     }
 
     private static bool IsComplexCollection(Type type)
     {
-        if (!typeof(ICollection).IsAssignableFrom(type))
-            return false;
-
+        if (!typeof(ICollection).IsAssignableFrom(type)) return false;
         Type[] genericArgs = type.GetGenericArguments();
-        if (genericArgs.Length == 0)
-            return false;
-
-        return IsComplexType(genericArgs[0]);
+        return genericArgs.Length > 0 && IsComplexType(genericArgs[0]);
     }
 
     private static bool IsComplexType(Type type)
     {
-        if (type.IsPrimitive || type.IsEnum || type == typeof(string) || type == typeof(decimal))
-            return false;
-
-        if (type.Namespace?.StartsWith("System") == true)
-            return false;
-
+        if (type.IsPrimitive || type.IsEnum || type == typeof(string) || type == typeof(decimal)) return false;
+        if (type.Namespace?.StartsWith("System") == true) return false;
+        if (type.Namespace?.StartsWith("UnityEngine") == true) return false; // Игнорируем Unity типы (Vector3 и т.д.)
         return type.IsClass || type.IsValueType;
     }
 
     private static string GetComplexCollectionHelp(string propertyName, Type elementType,
         List<PropertyInfo> elementProperties, object listInstance)
     {
-        StringBuilder sb = StringBuilderPool.Shared.Rent();
         ICollection collection = (ICollection)listInstance;
-
-        sb.AppendLine($"Свойство \"{propertyName}\" - это список объектов типа {elementType.Name}");
-        sb.AppendLine($"Текущее количество элементов: {collection.Count}");
-        sb.AppendLine();
-        sb.AppendLine("Доступные команды:");
-        sb.AppendLine($"  mod {propertyName} list                           - показать все элементы");
-        sb.AppendLine($"  mod {propertyName} add [свойство=значение] ...    - добавить элемент");
-        sb.AppendLine($"  mod {propertyName} remove <индекс>                - удалить элемент");
-        sb.AppendLine($"  mod {propertyName} set <индекс> свойство=значение - изменить элемент");
-        sb.AppendLine();
-        sb.AppendLine($"Свойства {elementType.Name}:");
-
-        foreach (PropertyInfo prop in elementProperties)
-            sb.AppendLine($"  - {prop.Name} ({GetTypeName(prop.PropertyType)})");
-
-        sb.AppendLine();
-        sb.AppendLine("Примеры:");
-        sb.AppendLine($"  mod {propertyName} add Id=teleport1 Chance=50");
-        sb.AppendLine($"  mod {propertyName} set 0 Chance=75");
-        sb.AppendLine($"  mod {propertyName} remove 0");
-
-        return StringBuilderPool.Shared.ToStringReturn(sb);
+        return $"Свойство \"{propertyName}\" ({elementType.Name}, элементов: {collection.Count})\n" +
+               $"Команды: add, remove, set, list\n" +
+               $"Свойства элементов: {string.Join(", ", elementProperties.Select(p => p.Name))}";
     }
 
     private static string GetComplexCollectionList(string propertyName, object listInstance,
@@ -922,54 +718,26 @@ public class Modify : ICommand
     {
         IList list = (IList)listInstance;
         StringBuilder sb = StringBuilderPool.Shared.Rent();
-
         sb.AppendLine($"Содержимое {propertyName} ({list.Count} элементов):");
-        sb.AppendLine();
 
         for (int i = 0; i < list.Count; i++)
         {
-            object? element = list[i];
             sb.AppendLine($"[{i}]:");
-
-            if (element == null)
-            {
-                sb.AppendLine("    (null)");
-                continue;
-            }
-
+            object? element = list[i];
+            if (element == null) continue;
             foreach (PropertyInfo prop in elementProperties)
-            {
-                object? value = prop.GetValue(element);
-                sb.AppendLine($"    {prop.Name}: {value ?? "null"}");
-            }
+                sb.AppendLine($"    {prop.Name}: {prop.GetValue(element) ?? "null"}");
         }
-
-        if (list.Count == 0)
-            sb.AppendLine("  (список пуст)");
 
         return StringBuilderPool.Shared.ToStringReturn(sb);
     }
 
     private static string GetTypeName(Type type)
     {
-        if (type == typeof(int))
-            return "целое число";
-
-        if (type == typeof(float))
-            return "дробное число";
-
-        if (type == typeof(double))
-            return "дробное число";
-
-        if (type == typeof(bool))
-            return "true/false";
-
-        if (type == typeof(string))
-            return "текст";
-
-        if (type.IsEnum)
-            return $"{type.Name}";
-
+        if (type == typeof(int)) return "целое число";
+        if (type == typeof(float)) return "дробное число";
+        if (type == typeof(bool)) return "true/false";
+        if (type == typeof(string)) return "текст";
         return type.Name;
     }
 }

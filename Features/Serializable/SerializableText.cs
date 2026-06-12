@@ -13,7 +13,7 @@ public class SerializableText : SerializableObject, IIndicatorDefinition
 {
     public string Text { get; set; } = "Custom Text";
 
-    public Vector3 DisplaySize { get; set; } = TextToy.DefaultDisplaySize;
+    public Vector2 DisplaySize { get; set; } = TextToy.DefaultDisplaySize;
 
     public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null,
         bool isForced = false, bool manuallySpawned = false)
