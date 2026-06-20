@@ -20,11 +20,37 @@ public class TeleportObject : MonoBehaviour
     private const float RaycastMargin = 0.1f;
     
     private static readonly int CollisionMask = LayerMask.GetMask("Glass", "Door", "Fence", "Default");
-
+    
     private void Start()
     {
         _mapEditorObject = GetComponent<MapEditorObject>();
-        Base = (SerializableTeleport)_mapEditorObject.Base;
+        if (_mapEditorObject)
+            Base = (SerializableTeleport)_mapEditorObject.Base;
+
+        Teleports = [];
+        ObjectAndNextUseTime = new();
+    }
+
+    public void Init(SerializableTeleport serializableTeleport)
+    {
+        Base = serializableTeleport;
+        Teleports = [];
+        ObjectAndNextUseTime = new();
+    }
+    
+    
+    public void InitForSchematic(List<TargetTeleporter> targets, List<string> roles, float cooldown, int soundId, TeleportFlags flags, LockOnEvent lockEvent)
+    {
+        Base = new()
+        {
+            TargetTeleporters = targets,
+            AllowedRoles = roles,
+            Cooldown = cooldown,
+            TeleportSoundId = soundId,
+            TeleportFlags = flags,
+            LockOnEvent = lockEvent
+        };
+    
         Teleports = [];
         ObjectAndNextUseTime = new();
     }
@@ -49,17 +75,15 @@ public class TeleportObject : MonoBehaviour
                 Log.Error($"Телепорт с ID объекта {teleport.Id} имеет шанс меньше или равен нулю. Устанавливаю 1 как дефолтное значение");
                 teleport.Chance = 1;
             }
-                
+
             Teleports.Add(teleport.Id, teleport.Chance);
         }
-        
+
         string teleporterId = Teleports.NextWithReplacement();
         foreach (TeleportObject teleportObject in FindObjectsByType<TeleportObject>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
         {
-            if (teleportObject._mapEditorObject.Id != teleporterId)
-                continue;
-
-            return teleportObject;
+            if (teleportObject._mapEditorObject != null && teleportObject._mapEditorObject.Id == teleporterId)
+                return teleportObject;
         }
 
         return null;

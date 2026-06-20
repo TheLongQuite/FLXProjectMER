@@ -45,9 +45,23 @@ public enum BlockType
     /// </summary>
     Locker = 7,
 
+    /// <summary>
+    /// Represents a text.
+    /// </summary>
     Text = 8,
-    Interactable = 9,
+
+    /// <summary>
+    /// Represents a Waypoint.
+    /// </summary>
     Waypoint = 10,
+
+    /// <summary>
+    /// Represents a Camera.
+    /// </summary>
     CameraRedirect = 11,
+
+    /// <summary>
+    /// Represents a Sound.
+    /// </summary>
     Sound = 12
 }

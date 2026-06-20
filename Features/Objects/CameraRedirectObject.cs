@@ -1,4 +1,5 @@
-﻿using Exiled.API.Enums;
+﻿using AdminToys;
+using Exiled.API.Enums;
 using Exiled.API.Extensions;
 using PlayerRoles.PlayableScps.Scp079.Cameras;
 using ProjectMER.Features.Serializable;
@@ -6,7 +7,7 @@ using ProjectMER.Features.Serializable.Utility;
 using ProjectMER.Features.ToolGun;
 using UnityEngine;
 using Weighted_Randomizer;
-using Camera = LabApi.Features.Wrappers.Camera;
+using Camera = Exiled.API.Features.Toys.CameraToy;
 using Room = Exiled.API.Features.Room;
 
 namespace ProjectMER.Features.Objects;
@@ -18,9 +19,9 @@ public class CameraRedirectObject : MonoBehaviour
     private Camera? _scpCamera;
     private List<TargetTeleporter> _targets;
 
-    public void Init(SerializableCameraRedirect serializable, Camera camera)
+    public void Init(List<TargetTeleporter> targets, Camera camera)
     {
-        _targets = serializable.TargetCameras;
+        _targets = targets;
         _scpCamera = camera;
         if (_scpCamera != null)
             Dictionary[_scpCamera] = this;
@@ -44,8 +45,11 @@ public class CameraRedirectObject : MonoBehaviour
         if (Enum.TryParse(targetId, out RoomType type))
             return Room.Get(type).Cameras.GetRandomValue()?.Base;
 
-        if (ToolGunHandler.TryGetObjectById<SerializableCameraRedirect>(targetId, out MapEditorObject mapEditorObject))
-            return mapEditorObject.GetComponent<Scp079Camera>();
+        foreach (MapEditorObject mapEditorObject in FindObjectsByType<MapEditorObject>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        {
+            if (mapEditorObject.Id == targetId && mapEditorObject.TryGetComponent(out Scp079Camera? cam))
+                return cam;
+        }
 
         return null;
     }

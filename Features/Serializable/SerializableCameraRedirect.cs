@@ -1,10 +1,15 @@
 ﻿using AdminToys;
-using LabApi.Features.Wrappers;
+using Exiled.API.Enums;
+using Exiled.API.Features.Toys;
+using Mirror;
 using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Interfaces;
 using ProjectMER.Features.Objects;
 using ProjectMER.Features.Serializable.Utility;
 using UnityEngine;
+using CameraToy = Exiled.API.Features.Toys.CameraToy;
+using CameraType = ProjectMER.Features.Enums.CameraType;
+using Object = UnityEngine.Object;
 using PrimitiveObjectToy = AdminToys.PrimitiveObjectToy;
 using Room = Exiled.API.Features.Room;
 
@@ -13,32 +18,61 @@ namespace ProjectMER.Features.Serializable;
 public class SerializableCameraRedirect : SerializableObject, IIndicatorDefinition
 {
     public List<TargetTeleporter> TargetCameras { get; set; } = [];
-    public string Label { get; set; } = "REDIRECT";
+    public CameraType CameraType { get; set; } = CameraType.Lcz;
+    public string Label { get; set; } = "CustomCamera";
 
-    public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null,
+    private Scp079CameraToy CameraPrefab
+    {
+        get
+        {
+            Scp079CameraToy prefab = CameraType switch
+            {
+                CameraType.Lcz => PrefabManager.CameraLcz,
+                CameraType.Hcz => PrefabManager.CameraHcz,
+                CameraType.Ez => PrefabManager.CameraEz,
+                CameraType.EzArm => PrefabManager.CameraEzArm,
+                CameraType.Sz => PrefabManager.CameraSz,
+                _ => throw new InvalidOperationException()
+            };
+
+            return prefab;
+        }
+    }
+    
+    public GameObject SpawnOrUpdateObject(Room room, GameObject? instance = null,
         bool isForced = false, bool manuallySpawned = false)
     {
+        Scp079CameraToy cameraToy;
         Vector3 position = room.GetAbsolutePosition(Position);
         Quaternion rotation = room.GetAbsoluteRotation(Rotation);
         _prevIndex = Index;
-
+        
         if (instance == null)
         {
-            CameraToy cameraToy = CameraToy.Create(position, rotation);
-            cameraToy.Label = $"{Label}_{ObjectId}";
-            cameraToy.GameObject.AddComponent<CameraRedirectObject>().Init(this, cameraToy.Camera);
-            return cameraToy.GameObject;
+            cameraToy = Object.Instantiate(CameraPrefab);
+            cameraToy.Label = Label;
+            cameraToy.gameObject.AddComponent<CameraRedirectObject>().Init(TargetCameras, 
+                AdminToy.Get<CameraToy>(cameraToy));
         }
+        else
+            cameraToy = instance.GetComponent<Scp079CameraToy>();
 
-        Scp079CameraToy baseToy = instance.GetComponent<Scp079CameraToy>();
-        if (!baseToy)
-            return instance;
-
-        baseToy.transform.SetPositionAndRotation(position, rotation);
+        cameraToy.transform.SetPositionAndRotation(position, rotation);
+        cameraToy.transform.localScale = Scale;
+        cameraToy.NetworkScale = cameraToy.transform.localScale;
+        
+        cameraToy.NetworkMovementSmoothing = 60;
+        cameraToy.NetworkLabel = Label;
+        cameraToy.NetworkRoom =
+            room == null ? Room.Get(RoomType.Surface).Identifier : room.Identifier;
+        
         if (instance.TryGetComponent(out CameraRedirectObject redirectObj))
             redirectObj.UpdateRedirect(this);
+        
+        if (instance == null)
+            NetworkServer.Spawn(cameraToy.gameObject);
 
-        return instance;
+        return cameraToy.gameObject;
     }
 
     public GameObject SpawnOrUpdateIndicator(Room room, GameObject? instance = null)
@@ -67,4 +101,8 @@ public class SerializableCameraRedirect : SerializableObject, IIndicatorDefiniti
 
         return indicator.gameObject;
     }
+    
+    public override bool RequiresReloading => CameraType != _prevType || base.RequiresReloading;
+    
+    internal CameraType _prevType;
 }

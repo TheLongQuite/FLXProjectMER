@@ -80,7 +80,7 @@ public static class MapValidator
             Primitives = oldOldMap.Primitives, LightSources = oldOldMap.LightSources,
             RoomLights = oldOldMap.RoomLights, Teleports = oldOldMap.Teleports, Schematics = oldOldMap.Schematics,
             Capybaras = oldOldMap.Capybaras, Texts = oldOldMap.Texts, Interactables = oldOldMap.Interactables,
-            Scp079Cameras = oldOldMap.Scp079Cameras, Waypoints = oldOldMap.Waypoints, Lockers = []
+            Cameras = oldOldMap.Scp079Cameras, Waypoints = oldOldMap.Waypoints, Lockers = []
         };
 
         foreach (OldLockerFormat oldLocker in oldOldMap.Lockers)
@@ -166,7 +166,7 @@ public class OldMapSchematic
     public List<SerializableCapybara> Capybaras { get; set; } = [];
     public List<SerializableText> Texts { get; set; } = [];
     public List<SerializableInteractable> Interactables { get; set; } = [];
-    public List<SerializableScp079Camera> Scp079Cameras { get; set; } = [];
+    public List<SerializableCameraRedirect> Scp079Cameras { get; set; } = [];
     public List<SerializableWaypoint> Waypoints { get; set; } = [];
     public List<OldLockerFormat> Lockers { get; set; } = [];
 }

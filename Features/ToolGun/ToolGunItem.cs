@@ -30,7 +30,6 @@ public class ToolGunItem
         { ToolGunObjectType.Capybara, typeof(SerializableCapybara) },
         { ToolGunObjectType.Text, typeof(SerializableText) },
         { ToolGunObjectType.Schematic, typeof(SerializableSchematic) },
-        { ToolGunObjectType.Scp079Camera, typeof(SerializableScp079Camera) },
         { ToolGunObjectType.ShootingTarget, typeof(SerializableShootingTarget) },
         { ToolGunObjectType.Locker, typeof(SerializableLocker) },
         { ToolGunObjectType.Teleport, typeof(SerializableTeleport) },

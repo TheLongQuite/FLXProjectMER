@@ -38,14 +38,13 @@ public class MapSchematic
         new(() => Texts, typeof(SerializableText)),
         new(() => Interactables, typeof(SerializableInteractable)),
         new(() => Schematics, typeof(SerializableSchematic)),
-        new(() => Scp079Cameras, typeof(SerializableScp079Camera)),
         new(() => ShootingTargets, typeof(SerializableShootingTarget)),
         new(() => Teleports, typeof(SerializableTeleport)), 
         new(() => Lockers, typeof(SerializableLocker)),
         new(() => Waypoints, typeof(SerializableWaypoint)), 
         new(() => RoomLights, typeof(SerializableRoomLight)),
         new(() => Sounds, typeof(SerializableSound)),
-        new(() => CameraRedirects, typeof(SerializableCameraRedirect))
+        new(() => Cameras, typeof(SerializableCameraRedirect))
     ];
 
     public List<SerializableDoor> Doors { get; set; } = [];
@@ -74,13 +73,11 @@ public class MapSchematic
 
     public List<SerializableInteractable> Interactables { get; set; } = [];
 
-    public List<SerializableScp079Camera> Scp079Cameras { get; set; } = [];
-
     public List<SerializableWaypoint> Waypoints { get; set; } = [];
 
     public List<SerializableSound> Sounds { get; set; } = [];
 
-    public List<SerializableCameraRedirect> CameraRedirects { get; set; } = [];
+    public List<SerializableCameraRedirect> Cameras { get; set; } = [];
 
     public List<MapEditorObject> SpawnedObjects = [];
 
@@ -96,7 +93,6 @@ public class MapSchematic
         Texts.AddRange(other.Texts);
         Interactables.AddRange(other.Interactables);
         Schematics.AddRange(other.Schematics);
-        Scp079Cameras.AddRange(other.Scp079Cameras);
         ShootingTargets.AddRange(other.ShootingTargets);
         Teleports.AddRange(other.Teleports);
         Lockers.AddRange(other.Lockers);
@@ -104,7 +100,7 @@ public class MapSchematic
         RoomLights.AddRange(other.RoomLights);
         RagdollSpawnPoints.AddRange(other.RagdollSpawnPoints);
         Sounds.AddRange(other.Sounds);
-        CameraRedirects.AddRange(other.CameraRedirects);
+        Cameras.AddRange(other.Cameras);
 
         return this;
     }
@@ -149,7 +145,6 @@ public class MapSchematic
         SafeSpawnObjects("Texts", Texts);
         SafeSpawnObjects("Interactables", Interactables);
         SafeSpawnObjects("Schematics", Schematics);
-        SafeSpawnObjects("Scp079Cameras", Scp079Cameras);
         SafeSpawnObjects("ShootingTargets", ShootingTargets);
         SafeSpawnObjects("Teleports", Teleports);
 
@@ -170,7 +165,7 @@ public class MapSchematic
         SafeSpawnObjects("Waypoints", Waypoints);
         SafeSpawnObjects("RagdollSpawnPoints", RagdollSpawnPoints);
         SafeSpawnObjects("Sounds", Sounds);
-        SafeSpawnObjects("CameraRedirects", CameraRedirects);
+        SafeSpawnObjects("Cameras", Cameras);
         
         Log.Debug($"[MapSchematic.Reload] Перезагрузка завершена, объектов: {SpawnedObjects.Count}");
     }

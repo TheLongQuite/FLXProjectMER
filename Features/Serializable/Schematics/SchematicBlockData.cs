@@ -2,15 +2,19 @@ using AdminToys;
 using Exiled.API.Enums;
 using Exiled.API.Features;
 using Exiled.API.Features.Pickups;
+using Exiled.API.Features.Toys;
 using Exiled.CustomItems.API.Features;
 using Interactables.Interobjects.DoorUtils;
 using InventorySystem.Items.Firearms.Attachments;
 using MapGeneration.Distributors;
+using Newtonsoft.Json.Linq;
 using ProjectMER.Features.Enums;
 using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Objects;
 using ProjectMER.Features.Serializable.Lockers;
+using ProjectMER.Features.Serializable.Utility;
 using UnityEngine;
+using CameraType = ProjectMER.Features.Enums.CameraType;
 using LightSourceToy = AdminToys.LightSourceToy;
 using Object = UnityEngine.Object;
 using PrimitiveObjectToy = AdminToys.PrimitiveObjectToy;
@@ -56,7 +60,8 @@ public class SchematicBlockData
                 BlockType.Pickup => CreatePickup(),
                 BlockType.Workstation => CreateWorkstation(),
                 BlockType.Text => CreateText(),
-                BlockType.Interactable => CreateInteractable(),
+                BlockType.Camera => CreateScp079Camera(),
+                BlockType.Teleport => CreateTeleport(),
                 BlockType.Waypoint => CreateWaypoint(),
                 _ => CreateEmpty(true)
             };
@@ -232,7 +237,7 @@ public class SchematicBlockData
         if (fallback)
             Log.Warn($"{BlockType} is not yet implemented. Object will be an empty GameObject instead.");
 
-        PrimitiveObjectToy primitive = GameObject.Instantiate(PrefabManager.PrimitiveObject);
+        PrimitiveObjectToy primitive = Object.Instantiate(PrefabManager.PrimitiveObject);
         primitive.NetworkPrimitiveFlags = PrimitiveFlags.None;
 
         return primitive.gameObject;
@@ -240,7 +245,7 @@ public class SchematicBlockData
 
     private GameObject CreatePrimitive()
     {
-        PrimitiveObjectToy primitive = GameObject.Instantiate(PrefabManager.PrimitiveObject);
+        PrimitiveObjectToy primitive = Object.Instantiate(PrefabManager.PrimitiveObject);
 
         primitive.NetworkPrimitiveType = (PrimitiveType)Convert.ToInt32(Properties["PrimitiveType"]);
         primitive.NetworkMaterialColor = Properties["Color"].ToString().GetColorFromString();
@@ -263,7 +268,7 @@ public class SchematicBlockData
 
     private GameObject CreateLight()
     {
-        LightSourceToy light = GameObject.Instantiate(PrefabManager.LightSource);
+        LightSourceToy light = Object.Instantiate(PrefabManager.LightSource);
 
         light.NetworkLightType = Properties.TryGetValue("LightType", out object lightType)
             ? (LightType)Convert.ToInt32(lightType) : LightType.Point;
@@ -326,7 +331,7 @@ public class SchematicBlockData
 
     private GameObject CreateWorkstation()
     {
-        WorkstationController workstation = GameObject.Instantiate(PrefabManager.Workstation);
+        WorkstationController workstation = Object.Instantiate(PrefabManager.Workstation);
         workstation.NetworkStatus = (byte)(Properties.TryGetValue("IsInteractable", out object isInteractable) &&
                                            Convert.ToBoolean(isInteractable) ? 0 : 4);
 
@@ -335,7 +340,7 @@ public class SchematicBlockData
 
     private GameObject CreateText()
     {
-        TextToy text = GameObject.Instantiate(PrefabManager.Text);
+        TextToy text = Object.Instantiate(PrefabManager.Text);
 
         text.TextFormat = Convert.ToString(Properties["Text"]);
         text.DisplaySize = Properties["DisplaySize"].ToVector2() * 20f;
@@ -343,20 +348,90 @@ public class SchematicBlockData
         return text.gameObject;
     }
 
-    private GameObject CreateInteractable()
+    private GameObject CreateScp079Camera()
     {
-        InvisibleInteractableToy interactable = GameObject.Instantiate(PrefabManager.Interactable);
-        interactable.NetworkShape = (InvisibleInteractableToy.ColliderShape)Convert.ToInt32(Properties["Shape"]);
-        interactable.NetworkInteractionDuration = Convert.ToSingle(Properties["InteractionDuration"]);
-        interactable.NetworkIsLocked =
-            Properties.TryGetValue("IsLocked", out object isLocked) && Convert.ToBoolean(isLocked);
+        CameraType cameraType = Properties.TryGetValue("CameraType", out object ct)
+            ? (CameraType)Convert.ToInt32(ct) : CameraType.Lcz;
 
-        return interactable.gameObject;
+        Scp079CameraToy cameraToy = cameraType switch
+        {
+            CameraType.Hcz => Object.Instantiate(PrefabManager.CameraHcz),
+            CameraType.Lcz => Object.Instantiate(PrefabManager.CameraLcz),
+            CameraType.Ez => Object.Instantiate(PrefabManager.CameraEz),
+            CameraType.Sz => Object.Instantiate(PrefabManager.CameraSz),
+            CameraType.EzArm => Object.Instantiate(PrefabManager.CameraEzArm),
+            _ => Object.Instantiate(PrefabManager.CameraLcz),
+        };
+
+        string label = Properties.TryGetValue("Label", out object lbl) ? Convert.ToString(lbl) : "REDIRECT";
+        cameraToy.NetworkLabel = label;
+
+        string uniqueId = Properties.TryGetValue("UniqueId", out object uid) ? Convert.ToString(uid) : Guid.NewGuid().ToString("N").Substring(0, 9);
+
+        MapEditorObject mapEditorObject = cameraToy.gameObject.AddComponent<MapEditorObject>();
+        mapEditorObject.Id = uniqueId;
+
+        List<TargetTeleporter> targetCameras = new();
+        List<Dictionary<string, object>> targetsData = "TargetCameras".GetListOfDicts(Properties);
+    
+        foreach (Dictionary<string, object> targetData in targetsData)
+        {
+            targetCameras.Add(new TargetTeleporter
+            {
+                Id = Convert.ToString(targetData["Id"]),
+                Chance = targetData.TryGetValue("Chance", out object ch) ? Convert.ToInt32(ch) : 100,
+            });
+        }
+
+        if (targetCameras.Count > 0)
+        {
+            CameraToy adminCamera = AdminToy.Get<CameraToy>(cameraToy);
+            cameraToy.gameObject.AddComponent<CameraRedirectObject>().Init(targetCameras, adminCamera);
+        }
+
+        return cameraToy.gameObject;
+    }
+    
+    private GameObject CreateTeleport()
+    {
+        GameObject gameObject = new GameObject("Teleport");
+
+        BoxCollider boxCollider = gameObject.AddComponent<BoxCollider>();
+        boxCollider.isTrigger = true;
+
+        string uniqueId = Properties.TryGetValue("UniqueId", out object uid) ? Convert.ToString(uid) : Guid.NewGuid().ToString("N").Substring(0, 9);
+
+        MapEditorObject mapEditorObject = gameObject.AddComponent<MapEditorObject>();
+        mapEditorObject.Id = uniqueId;
+
+        float cooldown = Properties.TryGetValue("Cooldown", out object cd) ? Convert.ToSingle(cd) : 5f;
+        int teleportSoundId = Properties.TryGetValue("TeleportSoundId", out object sid) ? Convert.ToInt32(sid) : -1;
+        TeleportFlags teleportFlags = Properties.TryGetValue("TeleportFlags", out object tf) ? (TeleportFlags)Convert.ToInt32(tf) : TeleportFlags.Player;
+        LockOnEvent lockOnEvent = Properties.TryGetValue("LockOnEvent", out object loe) ? (LockOnEvent)Convert.ToInt32(loe) : LockOnEvent.None;
+
+        List<string> allowedRoles = "AllowedRoles".GetStringList(Properties);
+
+        List<TargetTeleporter> targetTeleporters = new();
+        List<Dictionary<string, object>> targetsData = "TargetTeleporters".GetListOfDicts(Properties);
+        foreach (Dictionary<string, object> targetData in targetsData)
+        {
+            targetTeleporters.Add(new TargetTeleporter
+            {
+                Id = Convert.ToString(targetData["Id"]),
+                Chance = targetData.TryGetValue("Chance", out object ch) ? Convert.ToInt32(ch) : 100,
+            });
+        }
+
+        TeleportObject teleportObject = gameObject.AddComponent<TeleportObject>();
+        teleportObject.InitForSchematic(targetTeleporters, allowedRoles, cooldown, teleportSoundId, teleportFlags, lockOnEvent);
+
+        return gameObject;
+
     }
 
     private GameObject CreateWaypoint()
     {
-        WaypointToy waypoint = GameObject.Instantiate(PrefabManager.Waypoint);
+        WaypointToy waypoint = Object.Instantiate(PrefabManager.Waypoint);
         waypoint.NetworkPriority = byte.MaxValue;
 
         return waypoint.gameObject;
