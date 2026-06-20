@@ -60,6 +60,7 @@ public class SchematicBlockData
                 BlockType.Pickup => CreatePickup(),
                 BlockType.Workstation => CreateWorkstation(),
                 BlockType.Text => CreateText(),
+                BlockType.InteractableToy => CreateInteractableToy(),
                 BlockType.Camera => CreateScp079Camera(),
                 BlockType.Teleport => CreateTeleport(),
                 BlockType.Waypoint => CreateWaypoint(),
@@ -390,6 +391,23 @@ public class SchematicBlockData
         }
 
         return cameraToy.gameObject;
+    }
+    
+    private GameObject CreateInteractableToy()
+    {
+        InvisibleInteractableToy interactable = Object.Instantiate(PrefabManager.Interactable);
+
+        InvisibleInteractableToy.ColliderShape shape = Properties.TryGetValue("Shape", out object sh)
+            ? (InvisibleInteractableToy.ColliderShape)Convert.ToInt32(sh) : InvisibleInteractableToy.ColliderShape.Box;
+        float duration = Properties.TryGetValue("InteractionDuration", out object dur)
+            ? Convert.ToSingle(dur) : 0f;
+        bool isLocked = Properties.TryGetValue("IsLocked", out object lk) && Convert.ToBoolean(lk);
+
+        interactable.NetworkShape = shape;
+        interactable.NetworkInteractionDuration = duration;
+        interactable.NetworkIsLocked = isLocked;
+
+        return interactable.gameObject;
     }
     
     private GameObject CreateTeleport()

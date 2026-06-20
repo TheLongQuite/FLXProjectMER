@@ -58,10 +58,15 @@ public enum BlockType
     /// <summary>
     /// Represents a Camera.
     /// </summary>
-    CameraRedirect = 11,
+    Camera = 11,
 
     /// <summary>
     /// Represents a Sound.
     /// </summary>
-    Sound = 12
+    Sound = 12,
+    
+    /// <summary>
+    /// Represents a Sound.
+    /// </summary>
+    InteractableToy = 13,
 }
