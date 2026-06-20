@@ -9,7 +9,7 @@ public partial class EventHandlers
 {
     public void OnChangingCamera(Scp079ChangingCameraEventArgs ev)
     {
-        if (!CameraRedirectObject.Dictionary.TryGetValue(ev.Camera, out CameraRedirectObject redirect))
+        if (!CameraRedirectObject.Dictionary.TryGetValue(ev.Camera.Base, out CameraRedirectObject redirect))
             return;
 
         Scp079Camera? targetCamera = redirect.GetRandomTargetCamera();

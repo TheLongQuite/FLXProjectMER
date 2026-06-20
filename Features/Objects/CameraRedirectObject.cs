@@ -14,15 +14,15 @@ namespace ProjectMER.Features.Objects;
 
 public class CameraRedirectObject : MonoBehaviour
 {
-    public static readonly Dictionary<Camera, CameraRedirectObject> Dictionary = new();
+    public static readonly Dictionary<Scp079Camera, CameraRedirectObject> Dictionary = new();
 
-    private Camera? _scpCamera;
+    private Scp079Camera? _scpCamera;
     private List<TargetTeleporter> _targets;
 
     public void Init(List<TargetTeleporter> targets, Camera camera)
     {
         _targets = targets;
-        _scpCamera = camera;
+        _scpCamera = camera.Base.Camera;
         if (_scpCamera != null)
             Dictionary[_scpCamera] = this;
     }
