@@ -407,6 +407,7 @@ public class SchematicBlockData
     
     private GameObject CreateInteractableToy()
     {
+        Log.Info("Создаю интерактебл той");
         InvisibleInteractableToy interactable = Object.Instantiate(PrefabManager.Interactable);
 
         InvisibleInteractableToy.ColliderShape shape = Properties.TryGetValue("Shape", out object sh)
@@ -421,7 +422,10 @@ public class SchematicBlockData
 
         if (!Properties.TryGetValue("VisualPrimitive", out object visObj) ||
             visObj is not Dictionary<string, object> visProps)
+        {
+            Log.Info("Не нашёл визуал для интерактбл тоя");
             return interactable.gameObject;
+        }
 
         PrimitiveObjectToy primitive = Object
             .Instantiate(PrefabManager.PrimitiveObject, interactable.transform, true);
