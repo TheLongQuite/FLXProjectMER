@@ -423,24 +423,26 @@ public class SchematicBlockData
         if (!Properties.TryGetValue("VisualPrimitive", out object visObj) ||
             visObj is not Dictionary<string, object> visProps)
         {
-            Log.Info("Не нашёл визуал для интерактбл тоя");
+            Log.Info("Не нашёл визуальную инфу о интерактебл той");
             return interactable.gameObject;
         }
 
-        PrimitiveObjectToy primitive = Object
-            .Instantiate(PrefabManager.PrimitiveObject, interactable.transform, true);
-            
+        PrimitiveObjectToy primitive = Object.Instantiate(PrefabManager.PrimitiveObject, interactable.transform, true);
         primitive.transform.localPosition = Vector3.zero;
         primitive.transform.localRotation = Quaternion.identity;
-        primitive.transform.localScale = Vector3.one;
+        primitive.transform.localScale = Vector3.one; 
 
         if (visProps.TryGetValue("PrimitiveType", out object pt))
             primitive.NetworkPrimitiveType = (PrimitiveType)Convert.ToInt32(pt);
 
         if (visProps.TryGetValue("Color", out object col))
             primitive.NetworkMaterialColor = col.ToString().GetColorFromString();
-            
-        primitive.NetworkPrimitiveFlags = PrimitiveFlags.Visible;
+        
+        if (visProps.TryGetValue("PrimitiveFlags", out object pf))
+            primitive.NetworkPrimitiveFlags = (PrimitiveFlags)Convert.ToByte(pf);
+        else
+            primitive.NetworkPrimitiveFlags = PrimitiveFlags.Visible;
+        
         return interactable.gameObject;
     }
     
