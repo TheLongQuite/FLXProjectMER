@@ -24,7 +24,7 @@ public class TeleportObject : MonoBehaviour
     private void Start()
     {
         _mapEditorObject = GetComponent<MapEditorObject>();
-        if (_mapEditorObject)
+        if (_mapEditorObject != null && Base == null) 
             Base = (SerializableTeleport)_mapEditorObject.Base;
 
         Teleports = [];

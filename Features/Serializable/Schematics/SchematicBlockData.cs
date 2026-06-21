@@ -13,6 +13,7 @@ using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Objects;
 using ProjectMER.Features.Serializable.Lockers;
 using ProjectMER.Features.Serializable.Utility;
+using RelativePositioning;
 using UnityEngine;
 using CameraType = ProjectMER.Features.Enums.CameraType;
 using LightSourceToy = AdminToys.LightSourceToy;
@@ -105,6 +106,9 @@ public class SchematicBlockData
             structurePositionSync.Network_position = transform.position;
             structurePositionSync.Network_rotationY = (sbyte)Mathf.RoundToInt(transform.eulerAngles.y / 5.625f);
         }
+        
+        if (Properties != null && Properties.TryGetValue("FollowWaypoint", out object followObj) && Convert.ToBoolean(followObj))
+            gameObject.AddComponent<TransformWaypointFollower>();
 
         return gameObject;
     }
@@ -371,7 +375,7 @@ public class SchematicBlockData
 
         MapEditorObject mapEditorObject = cameraToy.gameObject.AddComponent<MapEditorObject>();
         mapEditorObject.Id = uniqueId;
-
+        
         List<TargetTeleporter> targetCameras = new();
         List<Dictionary<string, object>> targetsData = "TargetCameras".GetListOfDicts(Properties);
     
@@ -384,6 +388,14 @@ public class SchematicBlockData
             });
         }
 
+        mapEditorObject.Base = new SerializableCameraRedirect
+        {
+            ObjectId = uniqueId,
+            TargetCameras = targetCameras,
+            Label = label,
+            CameraType = cameraType
+        };
+        
         if (targetCameras.Count > 0)
         {
             CameraToy adminCamera = AdminToy.Get<CameraToy>(cameraToy);
@@ -407,6 +419,24 @@ public class SchematicBlockData
         interactable.NetworkInteractionDuration = duration;
         interactable.NetworkIsLocked = isLocked;
 
+        if (!Properties.TryGetValue("VisualPrimitive", out object visObj) ||
+            visObj is not Dictionary<string, object> visProps)
+            return interactable.gameObject;
+
+        PrimitiveObjectToy primitive = Object
+            .Instantiate(PrefabManager.PrimitiveObject, interactable.transform, true);
+            
+        primitive.transform.localPosition = Vector3.zero;
+        primitive.transform.localRotation = Quaternion.identity;
+        primitive.transform.localScale = Vector3.one;
+
+        if (visProps.TryGetValue("PrimitiveType", out object pt))
+            primitive.NetworkPrimitiveType = (PrimitiveType)Convert.ToInt32(pt);
+
+        if (visProps.TryGetValue("Color", out object col))
+            primitive.NetworkMaterialColor = col.ToString().GetColorFromString();
+            
+        primitive.NetworkPrimitiveFlags = PrimitiveFlags.Visible;
         return interactable.gameObject;
     }
     
