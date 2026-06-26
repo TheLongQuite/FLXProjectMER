@@ -1,4 +1,5 @@
 using AdminToys;
+using AudioSystem;
 using Exiled.API.Enums;
 using Exiled.API.Features;
 using Exiled.API.Features.Pickups;
@@ -6,8 +7,11 @@ using Exiled.API.Features.Toys;
 using Exiled.CustomItems.API.Features;
 using Interactables.Interobjects.DoorUtils;
 using InventorySystem.Items.Firearms.Attachments;
+using MapGeneration;
 using MapGeneration.Distributors;
 using Newtonsoft.Json.Linq;
+using PlayerRoles.PlayableScps.Scp079.Cameras;
+using PlayerRoles.PlayableScps.Scp079.Overcons;
 using ProjectMER.Features.Enums;
 using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Objects;
@@ -62,9 +66,10 @@ public class SchematicBlockData
                 BlockType.Workstation => CreateWorkstation(),
                 BlockType.Text => CreateText(),
                 BlockType.InteractableToy => CreateInteractableToy(),
-                BlockType.Camera => CreateScp079Camera(),
+                BlockType.Camera => CreateScp079Camera(schematicObject),
                 BlockType.Teleport => CreateTeleport(),
                 BlockType.Waypoint => CreateWaypoint(),
+                BlockType.Sound => CreateSound(),
                 _ => CreateEmpty(true)
             };
         }
@@ -353,7 +358,7 @@ public class SchematicBlockData
         return text.gameObject;
     }
 
-    private GameObject CreateScp079Camera()
+    private GameObject CreateScp079Camera(SchematicObject schematicObject)
     {
         CameraType cameraType = Properties.TryGetValue("CameraType", out object ct)
             ? (CameraType)Convert.ToInt32(ct) : CameraType.Lcz;
@@ -367,10 +372,10 @@ public class SchematicBlockData
             CameraType.EzArm => Object.Instantiate(PrefabManager.CameraEzArm),
             _ => Object.Instantiate(PrefabManager.CameraLcz),
         };
-
+        
         string label = Properties.TryGetValue("Label", out object lbl) ? Convert.ToString(lbl) : "REDIRECT";
         cameraToy.NetworkLabel = label;
-
+        cameraToy.NetworkRoom = schematicObject.Room?.Identifier;
         string uniqueId = Properties.TryGetValue("UniqueId", out object uid) ? Convert.ToString(uid) : Guid.NewGuid().ToString("N").Substring(0, 9);
 
         MapEditorObject mapEditorObject = cameraToy.gameObject.AddComponent<MapEditorObject>();
@@ -407,7 +412,6 @@ public class SchematicBlockData
     
     private GameObject CreateInteractableToy()
     {
-        Log.Info("Создаю интерактебл той");
         InvisibleInteractableToy interactable = Object.Instantiate(PrefabManager.Interactable);
 
         InvisibleInteractableToy.ColliderShape shape = Properties.TryGetValue("Shape", out object sh)
@@ -420,14 +424,24 @@ public class SchematicBlockData
         interactable.NetworkInteractionDuration = duration;
         interactable.NetworkIsLocked = isLocked;
 
-        if (!Properties.TryGetValue("VisualPrimitive", out object visObj) ||
-            visObj is not Dictionary<string, object> visProps)
+        if (!Properties.TryGetValue("VisualPrimitive", out object visObj) || visObj == null)
+            return interactable.gameObject;
+
+        Dictionary<string, object>? visProps = visObj switch
         {
-            Log.Info("Не нашёл визуальную инфу о интерактебл той");
+            JObject jObj => jObj.ToObject<Dictionary<string, object>>(),
+            Dictionary<string, object> dict => dict,
+            _ => null
+        };
+
+        if (visProps == null)
+        {
+            Log.Warn($"[CreateInteractableToy] Failed to parse VisualPrimitive for {Name}");
             return interactable.gameObject;
         }
 
-        PrimitiveObjectToy primitive = Object.Instantiate(PrefabManager.PrimitiveObject, interactable.transform, true);
+        PrimitiveObjectToy primitive = Object.Instantiate(PrefabManager.PrimitiveObject);
+        primitive.transform.SetParent(interactable.transform,false);
         primitive.transform.localPosition = Vector3.zero;
         primitive.transform.localRotation = Quaternion.identity;
         primitive.transform.localScale = Vector3.one; 
@@ -489,5 +503,18 @@ public class SchematicBlockData
         waypoint.NetworkPriority = byte.MaxValue;
 
         return waypoint.gameObject;
+    }
+    
+    private GameObject CreateSound()
+    {
+        short id = Methods.PlayAudio(
+            $"{Convert.ToString(Properties["SoundName"])}.ogg", Vector3.zero, 
+            (float)Convert.ToDouble(Properties["Radius"]), 
+            (float)Convert.ToDouble(Properties["MinRadius"]),
+            Convert.ToByte(Properties["Volume"]), 
+            "AUDIO", 
+            Convert.ToBoolean(Properties["Loop"]));
+
+        return Methods.GetAudio(id).InternalPlayer.gameObject;
     }
 }

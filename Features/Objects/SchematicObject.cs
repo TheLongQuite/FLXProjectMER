@@ -18,6 +18,8 @@ public class SchematicObject : MonoBehaviour
 
     public string DirectoryPath { get; private set; }
 
+    public Room? Room { get; set; }
+    
     public Vector3 Position
     {
         get => transform.position;
@@ -77,7 +79,7 @@ public class SchematicObject : MonoBehaviour
                 if (block.TryGetComponent(out NetworkIdentity networkIdentity))
                     _networkIdentities.Add(networkIdentity);
             }
-
+            
             return _networkIdentities;
         }
     }
@@ -103,11 +105,12 @@ public class SchematicObject : MonoBehaviour
     public AnimationController AnimationController => AnimationController.Get(this);
     public bool ShouldBeOptimized { get; set; }
 
-    public SchematicObject Init(SchematicObjectDataList data, bool manuallySpawned = false)
+    public SchematicObject Init(SchematicObjectDataList data, bool manuallySpawned = false, Room? room = null)
     {
         Name = Path.GetFileNameWithoutExtension(data.Path);
         DirectoryPath = data.Path;
 
+        Room = room;
         Log.Debug($"[SchematicObject.Init] Инициализация схематика: {Name}, путь: {DirectoryPath}");
         Log.Debug($"[SchematicObject.Init] Блоков: {data.Blocks.Count}, RootObjectId: {data.RootObjectId}");
 

@@ -53,7 +53,7 @@ public class SerializableSchematic : SerializableObject
             }
 
             NetworkServer.Spawn(schematic.gameObject);
-            schematic.gameObject.AddComponent<SchematicObject>().Init(data, manuallySpawned);
+            schematic.gameObject.AddComponent<SchematicObject>().Init(data, manuallySpawned, room);
         }
 
         return schematic.gameObject;

@@ -51,6 +51,11 @@ public enum BlockType
     Text = 8,
 
     /// <summary>
+    /// Represents a Sound.
+    /// </summary>
+    InteractableToy = 9,
+    
+    /// <summary>
     /// Represents a Waypoint.
     /// </summary>
     Waypoint = 10,
@@ -64,9 +69,4 @@ public enum BlockType
     /// Represents a Sound.
     /// </summary>
     Sound = 12,
-    
-    /// <summary>
-    /// Represents a Sound.
-    /// </summary>
-    InteractableToy = 13,
 }

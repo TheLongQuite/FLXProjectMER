@@ -1,8 +1,11 @@
 using Exiled.API.Features;
+using Exiled.Events.EventArgs.Map;
 using HarmonyLib;
+using MapGeneration;
 using MEC;
 using ProjectMER.Configs;
 using ProjectMER.Features;
+using ProjectMER.Patches;
 
 namespace ProjectMER;
 
@@ -27,6 +30,7 @@ public class ProjectMER : Plugin<Config>
 
     public override void OnEnabled()
     {
+        MirrorPatches.RegisterRoomIdentifierWriter();
         _ev = new();
         Singleton = this;
 
@@ -58,7 +62,8 @@ public class ProjectMER : Plugin<Config>
         LabApi.Events.Handlers.PlayerEvents.Spawned += _ev.OnPlayerSpawning;
         LabApi.Events.Handlers.PlayerEvents.InteractingShootingTarget += _ev.OnPlayerInteractingShootingTarget;
         LabApi.Events.Handlers.Scp079Events.ChangingCamera += _ev.OnChangingCamera;
-
+        
+        Exiled.Events.Handlers.Player.Spawned += _ev.OnSpawned;
         Exiled.Events.Handlers.Player.SearchingPickup += _ev.OnPlayerSearchingPickup;
         Exiled.Events.Handlers.Player.PickingUpItem += _ev.OnPlayerPickingUpItem;
         Exiled.Events.Handlers.Player.DryfiringWeapon += _ev.OnPlayerDryFiringWeapon;
