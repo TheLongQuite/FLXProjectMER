@@ -1,4 +1,5 @@
 using System.Collections;
+using Exiled.API.Enums;
 using Exiled.API.Features;
 using Exiled.API.Features.Doors;
 using NorthwoodLib.Pools;
@@ -101,7 +102,7 @@ public class MapSchematic
         RagdollSpawnPoints.AddRange(other.RagdollSpawnPoints);
         Sounds.AddRange(other.Sounds);
         Cameras.AddRange(other.Cameras);
-
+        
         return this;
     }
 

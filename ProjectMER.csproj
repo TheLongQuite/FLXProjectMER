@@ -14,6 +14,9 @@
         </PostBuildEvent>
     </PropertyGroup>
     <ItemGroup>
+        <Reference Include="AdvancedMERTools">
+          <HintPath>..\References\AdvancedMERTools.dll</HintPath>
+        </Reference>
         <Reference Include="AudioPlayerApi">
           <HintPath>..\References\AudioPlayerApi.dll</HintPath>
         </Reference>
@@ -52,6 +55,9 @@
         </Reference>
         <Reference Include="Newtonsoft.Json">
             <HintPath>$(EXILED_REFERENCES)\Newtonsoft.Json.dll</HintPath>
+        </Reference>
+        <Reference Include="Pooling">
+          <HintPath>..\References\Pooling.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine" HintPath="$(EXILED_REFERENCES)\UnityEngine.dll"/>
         <Reference Include="UnityEngine.AnimationModule" HintPath="$(EXILED_REFERENCES)\UnityEngine.AnimationModule.dll"/>

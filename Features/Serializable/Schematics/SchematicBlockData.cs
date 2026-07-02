@@ -1,5 +1,6 @@
 using AdminToys;
 using AudioSystem;
+using AudioSystem.Models;
 using Exiled.API.Enums;
 using Exiled.API.Features;
 using Exiled.API.Features.Pickups;
@@ -514,7 +515,11 @@ public class SchematicBlockData
             Convert.ToByte(Properties["Volume"]), 
             "AUDIO", 
             Convert.ToBoolean(Properties["Loop"]));
+        
+        BetterAudioBase audio = Methods.GetAudio(id);
+        audio.BroadcastTransform = audio.InternalPlayer.gameObject.transform;
+        audio.BroadcastPosition = null;
 
-        return Methods.GetAudio(id).InternalPlayer.gameObject;
+        return audio.InternalPlayer.gameObject;
     }
 }

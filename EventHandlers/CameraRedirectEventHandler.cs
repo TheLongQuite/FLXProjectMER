@@ -15,19 +15,18 @@ public partial class EventHandlers
     {
         if (!ev.IsAllowed)
             return;
-        
-        if (!CameraRedirectObject.Dictionary.TryGetValue(ev.Camera.Base, out CameraRedirectObject redirect))
+
+        if (CameraRedirectObject.Dictionary.TryGetValue(ev.Camera.Base, out CameraRedirectObject redirect))
         {
-            if (!CameraRoomFaker.Managers.TryGetValue(ev.Player, out CameraRoomFaker faker))
-                return;
-
-            faker.OnCameraChanged(ev.Camera.Base);
-            return;
+            Scp079Camera? targetCamera = redirect.GetRandomTargetCamera();
+            if (targetCamera)
+                ev.Camera = Camera.Get(targetCamera);
         }
+        
+        if (!CameraRoomFaker.Managers.TryGetValue(ev.Player, out CameraRoomFaker faker))
+            return;
 
-        Scp079Camera? targetCamera = redirect.GetRandomTargetCamera();
-        if (targetCamera)
-            ev.Camera = Camera.Get(targetCamera);
+        faker.OnCameraChanged(ev.Camera.Base);
     }
 
     public void OnSpawned(SpawnedEventArgs ev)
