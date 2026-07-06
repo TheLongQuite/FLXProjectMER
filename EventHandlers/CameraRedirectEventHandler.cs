@@ -11,22 +11,21 @@ namespace ProjectMER.EventHandlers;
 
 public partial class EventHandlers
 {
-    public void OnChangingCamera(Scp079ChangingCameraEventArgs ev)
+    public void OnChangedCamera(Scp079ChangedCameraEventArgs ev)
     {
-        if (!ev.IsAllowed)
-            return;
-
+        Scp079CurrentCameraSync cameraSync = ((PlayerRoles.PlayableScps.Scp079.Scp079Role)ev.Player.RoleBase)
+            ._curCamSync;
         if (CameraRedirectObject.Dictionary.TryGetValue(ev.Camera.Base, out CameraRedirectObject redirect))
         {
             Scp079Camera? targetCamera = redirect.GetRandomTargetCamera();
             if (targetCamera)
-                ev.Camera = Camera.Get(targetCamera);
+                cameraSync.CurrentCamera = Camera.Get(targetCamera).Base;
         }
         
         if (!CameraRoomFaker.Managers.TryGetValue(ev.Player, out CameraRoomFaker faker))
             return;
 
-        faker.OnCameraChanged(ev.Camera.Base);
+        faker.OnCameraChanged(cameraSync.CurrentCamera);
     }
 
     public void OnSpawned(SpawnedEventArgs ev)

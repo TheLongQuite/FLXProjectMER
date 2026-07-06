@@ -45,13 +45,10 @@ public class CameraRedirectObject : MonoBehaviour
         if (Enum.TryParse(targetId, out RoomType type))
             return Room.Get(type).Cameras.GetRandomValue()?.Base;
 
-        foreach (MapEditorObject mapEditorObject in FindObjectsByType<MapEditorObject>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
-        {
-            if (mapEditorObject.Id == targetId && mapEditorObject.TryGetComponent(out Scp079Camera? cam))
-                return cam;
-        }
+        if (!MapEditorObject.DictionaryById.TryGetValue(targetId, out MapEditorObject mapEditorObject))
+            return null;
 
-        return null;
+        return mapEditorObject.TryGetComponent(out Scp079Camera? cam) ? cam : null;
     }
 
     private void OnDestroy()

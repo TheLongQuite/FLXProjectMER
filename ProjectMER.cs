@@ -1,3 +1,4 @@
+using System.Reflection;
 using Exiled.API.Features;
 using Exiled.Events.EventArgs.Map;
 using HarmonyLib;
@@ -5,6 +6,7 @@ using MapGeneration;
 using MEC;
 using ProjectMER.Configs;
 using ProjectMER.Features;
+using ProjectMER.Features.Serializable;
 using ProjectMER.Patches;
 
 namespace ProjectMER;
@@ -61,7 +63,7 @@ public class ProjectMER : Plugin<Config>
         LabApi.Events.Handlers.ServerEvents.LczDecontaminationStarted += _ev.OnServerLczDecontaminationStarted;
         LabApi.Events.Handlers.PlayerEvents.Spawned += _ev.OnPlayerSpawning;
         LabApi.Events.Handlers.PlayerEvents.InteractingShootingTarget += _ev.OnPlayerInteractingShootingTarget;
-        LabApi.Events.Handlers.Scp079Events.ChangingCamera += _ev.OnChangingCamera;
+        LabApi.Events.Handlers.Scp079Events.ChangedCamera += _ev.OnChangedCamera;
         
         Exiled.Events.Handlers.Player.Spawned += _ev.OnSpawned;
         Exiled.Events.Handlers.Player.SearchingPickup += _ev.OnPlayerSearchingPickup;
@@ -91,7 +93,7 @@ public class ProjectMER : Plugin<Config>
             Log.Debug("FileSystemWatcher enabled!");
         }
     }
-
+    
     private void OnMapFileChanged(object _, FileSystemEventArgs ev)
     {
         string mapName = ev.Name.Split('.')[0];

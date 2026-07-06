@@ -32,8 +32,6 @@ public class SchematicObject : MonoBehaviour
         set => transform.rotation = value;
     }
 
-    public bool IsStatic { get; set; }
-
     public Vector3 EulerAngles
     {
         get => Rotation.eulerAngles;
@@ -103,9 +101,8 @@ public class SchematicObject : MonoBehaviour
     }
 
     public AnimationController AnimationController => AnimationController.Get(this);
-    public bool ShouldBeOptimized { get; set; }
 
-    public SchematicObject Init(SchematicObjectDataList data, bool manuallySpawned = false, Room? room = null)
+    public SchematicObject Init(SchematicObjectDataList data, bool shouldBeOptimized = true, Room? room = null)
     {
         Name = Path.GetFileNameWithoutExtension(data.Path);
         DirectoryPath = data.Path;
@@ -144,7 +141,7 @@ public class SchematicObject : MonoBehaviour
             Log.Error($"[SchematicObject.Init] Ошибка при добавлении аниматоров для {Name}: {ex.Message}");
         }
 
-        Schematic.OnSchematicSpawned(new(this, Name, !manuallySpawned));
+        Schematic.OnSchematicSpawned(new(this, Name, shouldBeOptimized));
 
         return this;
     }

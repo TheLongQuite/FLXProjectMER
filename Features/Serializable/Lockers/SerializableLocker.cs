@@ -17,7 +17,7 @@ public class SerializableLocker : SerializableObject
     public List<SerializableLockerLoot> Loot { get; set; } = [];
 
     public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null,
-        bool isForced = false, bool manuallySpawned = false)
+        bool isForced = false, bool shouldBeOptimized = true)
     {
         Locker locker = instance == null ? UnityEngine.Object.Instantiate(GetLockerObjectByType(LockerType))
             : instance.GetComponent<Locker>();

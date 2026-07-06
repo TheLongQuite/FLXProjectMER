@@ -8,6 +8,8 @@ namespace ProjectMER.Features.Objects;
 
 public class MapEditorObject : MonoBehaviour
 {
+    public static readonly Dictionary<string, MapEditorObject> DictionaryById = new();
+    
     public SerializableObject Base;
 
     public string MapName { get; protected set; }
@@ -25,6 +27,7 @@ public class MapEditorObject : MonoBehaviour
         Id = id;
         CurrentRoom = room;
 
+        DictionaryById[Id] = this;
         return this;
     }
 
@@ -71,6 +74,9 @@ public class MapEditorObject : MonoBehaviour
     /// </summary>
     public void Destroy()
     {
+        if (!string.IsNullOrEmpty(Id))
+            DictionaryById.Remove(Id);
+
         IndicatorObject.TryDestroyIndicator(this);
         Destroy(gameObject);
     }

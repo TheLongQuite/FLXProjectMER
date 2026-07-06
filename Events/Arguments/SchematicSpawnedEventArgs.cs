@@ -5,14 +5,14 @@ namespace ProjectMER.Events.Arguments;
 
 public class SchematicSpawnedEventArgs : EventArgs, ISchematicEvent
 {
-    public SchematicSpawnedEventArgs(SchematicObject schematic, string name, bool isEventBased)
+    public SchematicSpawnedEventArgs(SchematicObject schematic, string name, bool shouldBeOptimized)
     {
         Schematic = schematic;
         Name = name;
-        IsEventBased = isEventBased;
+        ShouldBeOptimized = shouldBeOptimized;
     }
 
     public SchematicObject Schematic { get; }
-    public bool IsEventBased { get; }
+    public bool ShouldBeOptimized { get; }
     public string Name { get; }
 }

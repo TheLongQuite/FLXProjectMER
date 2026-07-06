@@ -32,7 +32,7 @@ public abstract class SerializableObject
     public virtual int Index { get; set; } = -1;
 
     public virtual GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null,
-        bool isForced = false, bool manuallySpawned = false) => throw new NotSupportedException();
+        bool isForced = false, bool shouldBeOptimized = true) => throw new NotSupportedException();
 
     [YamlIgnore]
     public virtual bool RequiresReloading => Index != _prevIndex;

@@ -25,9 +25,6 @@ public static class Scp096DamagePatch
             if (!hit.TryGetComponent<HealthObjectProxy>(out HealthObjectProxy? proxy))
                 continue;
 
-            if (Physics.Linecast(role.CameraPosition, proxy.CenterOfMass, Scp096HitHandler.SolidObjectMask))
-                continue;
-
             Scp096DamageHandler handler = new(role, damage, attackType);
             proxy.Damage(damage, handler, position);
         }
@@ -45,9 +42,6 @@ public static class Scp939OverlapPatch
         for (int i = 0; i < count; i++)
         {
             if (!Scp939Motor.Detections[i].TryGetComponent<HealthObjectProxy>(out HealthObjectProxy? proxy))
-                continue;
-
-            if (Physics.Linecast(proxy.CenterOfMass, point2, PlayerRolesUtils.AttackMask))
                 continue;
 
             Scp939DamageHandler handler = new(role, 120f, Scp939DamageType.LungeTarget);

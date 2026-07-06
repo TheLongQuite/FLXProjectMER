@@ -29,13 +29,13 @@ public class CameraRoomFaker(Player player)
             if (Vector3.Distance(currentPos, cam.Position) > 25f)
                 continue;
 
-            Log.Info("Камера близко, рассматриваем");
+            Log.Debug("Камера близко, рассматриваем");
             Scp079CameraToy toy = cam.GetComponent<Scp079CameraToy>();
             if (toy == null)
                 continue;
 
             currentlyVisibleToys.Add(toy);
-            Log.Info("Камера игрушка, фейкуем");
+            Log.Debug("Камера игрушка, фейкуем");
             player.SendFakeSyncVar(toy.netIdentity, typeof(Scp079CameraToy), "NetworkRoom", currentRoom);
         }
         

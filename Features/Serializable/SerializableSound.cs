@@ -17,7 +17,7 @@ public class SerializableSound : SerializableObject, IIndicatorDefinition
     public bool Loop { get; set; } = true;
 
     public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null,
-        bool isForced = false, bool manuallySpawned = false)
+        bool isForced = false, bool shouldBeOptimized = true)
     {
         GameObject gameObject = instance ?? new GameObject("Sound");
         Vector3 position = room.GetAbsolutePosition(Position);

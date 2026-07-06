@@ -188,7 +188,7 @@ public class MapSchematic
         }
     }
 
-    public void SpawnObject<T>(T serializableObject, bool manuallySpawned = false) where T : SerializableObject
+    public void SpawnObject<T>(T serializableObject, bool shouldBeOptimized = true) where T : SerializableObject
     {
         List<Room> rooms = ListPool<Room>.Shared.Rent();
         
@@ -212,7 +212,7 @@ public class MapSchematic
 
                 try
                 {
-                    GameObject? gameObject = serializableObject.SpawnOrUpdateObject(room, manuallySpawned: manuallySpawned);
+                    GameObject? gameObject = serializableObject.SpawnOrUpdateObject(room, shouldBeOptimized: shouldBeOptimized);
                     if (gameObject == null)
                     {
                         Log.Debug($"[SpawnObject] SpawnOrUpdateObject вернул null для {serializableObject.ObjectId} в комнате {room.Type}");
@@ -228,8 +228,8 @@ public class MapSchematic
                 }
                 catch (Exception ex)
                 {
-                    Log.Error($"[SpawnObject] Ошибка при создании объекта {serializableObject.ObjectId} в комнате {room.Type}: {ex.Message}");
-                    Log.Debug($"[SpawnObject] Stack trace: {ex.StackTrace}");
+                    Log.Error($"[SpawnObject] Ошибка при создании объекта {serializableObject.ObjectId} в комнате {room.Type}: {ex.Message}\n" +
+                              $"SpawnObject] Stack trace: {ex.StackTrace}");
                 }
             }
         }

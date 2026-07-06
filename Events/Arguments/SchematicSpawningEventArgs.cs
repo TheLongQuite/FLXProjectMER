@@ -5,17 +5,17 @@ namespace ProjectMER.Events.Arguments;
 
 public class SchematicSpawningEventArgs : EventArgs, IDeniableEvent
 {
-    public SchematicSpawningEventArgs(SchematicObjectDataList data, string name, bool isEventBased)
+    public SchematicSpawningEventArgs(SchematicObjectDataList data, string name, bool shouldBeOptimized)
     {
         Data = data;
         Name = name;
         IsAllowed = true;
-        IsEventBased = isEventBased;
+        ShouldBeOptimized = shouldBeOptimized;
     }
 
     public SchematicObjectDataList Data { get; set; }
 
-    public bool IsEventBased { get; }
+    public bool ShouldBeOptimized { get; }
     public string Name { get; }
 
     public bool IsAllowed { get; set; }

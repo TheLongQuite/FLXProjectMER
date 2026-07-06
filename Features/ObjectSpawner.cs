@@ -168,21 +168,18 @@ public static class ObjectSpawner
             : Locker.Get(locker.SpawnOrUpdateObject()?.GetComponent<MapGeneration.Distributors.Locker>());
     }
 
-    public static SchematicObject SpawnSchematic(SerializableSchematic serializableSchematic, bool isOptimized = false,
-        bool isStatic = true)
+    public static SchematicObject SpawnSchematic(SerializableSchematic serializableSchematic, bool isOptimized = false)
     {
         GameObject? gameObject = serializableSchematic.SpawnOrUpdateObject(
-            serializableSchematic.RoomType == RoomType.Unknown ? null : Room.Get(serializableSchematic.RoomType));
+            serializableSchematic.RoomType == RoomType.Unknown ? null : Room.Get(serializableSchematic.RoomType), shouldBeOptimized: isOptimized);
         if (gameObject == null)
             return null!;
 
         SchematicObject schematic = gameObject.GetComponent<SchematicObject>();
-        schematic.ShouldBeOptimized = isOptimized;
-        schematic.IsStatic = isStatic;
         return schematic;
     }
 
-    public static SchematicObject SpawnSchematic(string schematicName, Vector3 position, RoomType roomType = RoomType.Unknown, bool isStatic = true)
+    public static SchematicObject SpawnSchematic(string schematicName, Vector3 position, RoomType roomType = RoomType.Unknown)
         => SpawnSchematic(new() { SchematicName = schematicName, Position = position, RoomType = roomType });
 
     public static SchematicObject SpawnSchematic(string schematicName, Vector3 position, Quaternion rotation, RoomType roomType = RoomType.Unknown,
@@ -196,14 +193,14 @@ public static class ObjectSpawner
         => SpawnSchematic(new() { SchematicName = schematicName, Position = position, Rotation = eulerAngles, RoomType = roomType });
 
     public static SchematicObject
-        SpawnSchematic(string schematicName, Vector3 position, Quaternion rotation, Vector3 scale, bool isStatic = true)
+        SpawnSchematic(string schematicName, Vector3 position, Quaternion rotation, Vector3 scale)
         => SpawnSchematic(new()
         {
             SchematicName = schematicName, Position = position, Rotation = rotation.eulerAngles, Scale = scale
         });
 
     public static SchematicObject
-        SpawnSchematic(string schematicName, Vector3 position, Vector3 eulerAngles, Vector3 scale, RoomType roomType = RoomType.Unknown, bool isStatic = true)
+        SpawnSchematic(string schematicName, Vector3 position, Vector3 eulerAngles, Vector3 scale, RoomType roomType = RoomType.Unknown)
         => SpawnSchematic(new()
         {
             SchematicName = schematicName, Position = position, Rotation = eulerAngles, Scale = scale, RoomType = roomType

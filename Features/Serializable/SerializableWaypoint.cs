@@ -14,7 +14,7 @@ public class SerializableWaypoint : SerializableObject, IIndicatorDefinition
     public const float ScaleMultiplier = 1 / 256f;
 
     public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null,
-        bool isForced = false, bool manuallySpawned = false)
+        bool isForced = false, bool shouldBeOptimized = true)
     {
         WaypointToy waypoint = instance == null ? GameObject.Instantiate(PrefabManager.Waypoint)
             : instance.GetComponent<WaypointToy>();

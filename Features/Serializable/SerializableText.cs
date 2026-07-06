@@ -16,7 +16,7 @@ public class SerializableText : SerializableObject, IIndicatorDefinition
     public Vector2 DisplaySize { get; set; } = TextToy.DefaultDisplaySize;
 
     public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null,
-        bool isForced = false, bool manuallySpawned = false)
+        bool isForced = false, bool shouldBeOptimized = true)
     {
         TextToy text = instance == null ? UnityEngine.Object.Instantiate(PrefabManager.Text)
             : instance.GetComponent<TextToy>();
