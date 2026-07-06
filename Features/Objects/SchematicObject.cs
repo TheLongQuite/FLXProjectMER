@@ -108,8 +108,6 @@ public class SchematicObject : MonoBehaviour
         DirectoryPath = data.Path;
 
         Room = room;
-        Log.Debug($"[SchematicObject.Init] Инициализация схематика: {Name}, путь: {DirectoryPath}");
-        Log.Debug($"[SchematicObject.Init] Блоков: {data.Blocks.Count}, RootObjectId: {data.RootObjectId}");
 
         ObjectFromId = new(data.Blocks.Count + 1) { { data.RootObjectId, transform } };
 
@@ -120,7 +118,6 @@ public class SchematicObject : MonoBehaviour
         catch (Exception ex)
         {
             Log.Error($"[SchematicObject.Init] Ошибка при создании блоков схематика {Name}: {ex.Message}");
-            Log.Debug($"[SchematicObject.Init] Stack trace: {ex.StackTrace}");
         }
 
         try
@@ -146,25 +143,31 @@ public class SchematicObject : MonoBehaviour
         return this;
     }
 
-    private void CreateRecursiveFromID(int id, List<SchematicBlockData> blocks, Transform parentGameObject)
+    private void CreateRecursiveFromID(int id, List<SchematicBlockData> blocks, Transform parentGameObject, string currentPath = "")
     {
         SchematicBlockData? blockData = blocks.Find(c => c.ObjectId == id);
         
-        Transform childGameObjectTransform = CreateObject(blockData, parentGameObject) ?? transform;
+        Transform childGameObjectTransform = CreateObject(blockData, parentGameObject, currentPath) ?? transform;
 
         int[] parentSchematics =
             blocks.Where(bl => bl.BlockType == BlockType.Schematic).Select(bl => bl.ObjectId).ToArray();
 
+        int childIndex = 0;
         foreach (SchematicBlockData block in blocks.FindAll(c => c.ParentId == id))
         {
             if (parentSchematics.Contains(block.ParentId))
+            {
+                childIndex++;
                 continue;
+            }
 
-            CreateRecursiveFromID(block.ObjectId, blocks, childGameObjectTransform);
+            string childPath = childIndex + (string.IsNullOrEmpty(currentPath) ? "" : " " + currentPath);
+            CreateRecursiveFromID(block.ObjectId, blocks, childGameObjectTransform, childPath);
+            childIndex++;
         }
     }
 
-    private Transform? CreateObject(SchematicBlockData? block, Transform parentTransform)
+    private Transform? CreateObject(SchematicBlockData? block, Transform parentTransform, string currentPath)
     {
         if (block == null)
             return null;
@@ -183,7 +186,20 @@ public class SchematicObject : MonoBehaviour
 
         ObjectFromId.Add(block.ObjectId, gameObject.transform);
 
-        // Пропускаем Light и пустые AnimatorName
+        if (!string.IsNullOrEmpty(block.Guid))
+        {
+            GuidToTransform[block.Guid] = gameObject.transform;
+            if (!string.IsNullOrEmpty(currentPath))
+                PathToGuid[currentPath] = block.Guid;
+        }
+        else
+        {
+            string tempGuid = System.Guid.NewGuid().ToString("N");
+            GuidToTransform[tempGuid] = gameObject.transform;
+            if (!string.IsNullOrEmpty(currentPath))
+                PathToGuid[currentPath] = tempGuid;
+        }
+
         if (block.BlockType != BlockType.Light && !string.IsNullOrEmpty(block.AnimatorName))
         {
             if (TryGetAnimatorController(block.AnimatorName, out RuntimeAnimatorController animatorController))
@@ -195,14 +211,43 @@ public class SchematicObject : MonoBehaviour
         return gameObject.transform;
     }
 
+    public Transform? GetTransform(string guid, string path)
+    {
+        if (!string.IsNullOrEmpty(guid) && GuidToTransform.TryGetValue(guid, out Transform t))
+            return t;
+
+        if (string.IsNullOrEmpty(path))
+            return null;
+
+        if (PathToGuid.TryGetValue(path, out string pathGuid) && GuidToTransform.TryGetValue(pathGuid, out Transform pt))
+            return pt;
+
+        return FindObjectWithPath(transform, path);
+    }
+
+    private static Transform? FindObjectWithPath(Transform target, string pathO)
+    {
+        if (pathO == "")
+            return target;
+
+        string[] path = pathO.Split(' ');
+        for (int i = path.Length - 1; i > -1; i--)
+        {
+            if (target.childCount == 0 || target.childCount <= int.Parse(path[i]))
+                return null;
+
+            target = target.GetChild(int.Parse(path[i]));
+        }
+
+        return target;
+    }
+
     private bool TryGetAnimatorController(string animatorName, out RuntimeAnimatorController animatorController)
     {
         animatorController = null!;
 
         if (string.IsNullOrEmpty(animatorName))
             return false;
-
-        Log.Debug($"[TryGetAnimatorController] Поиск аниматора: '{animatorName}' для схематика: {Name}");
 
         try
         {
@@ -215,11 +260,6 @@ public class SchematicObject : MonoBehaviour
             {
                 animatorObject = matchingBundle.LoadAllAssets()
                     .FirstOrDefault(x => x is RuntimeAnimatorController);
-                
-                if (animatorObject != null)
-                {
-                    Log.Debug($"[TryGetAnimatorController] Аниматор найден в загруженном бандле: {animatorName}");
-                }
             }
 
             if (animatorObject == null)
@@ -227,28 +267,17 @@ public class SchematicObject : MonoBehaviour
                 string path = Path.Combine(DirectoryPath, animatorName);
 
                 if (!File.Exists(path))
-                {
-                    Log.Debug($"[TryGetAnimatorController] Файл аниматора не найден: {path}");
                     return false;
-                }
 
                 AssetBundle? bundle = AssetBundle.LoadFromFile(path);
                 if (bundle == null)
-                {
-                    Log.Warn($"[TryGetAnimatorController] Не удалось загрузить AssetBundle: {path}");
                     return false;
-                }
 
                 animatorObject = bundle.LoadAllAssets()
                     .FirstOrDefault(x => x is RuntimeAnimatorController);
 
                 if (animatorObject == null)
-                {
-                    Log.Warn($"[TryGetAnimatorController] RuntimeAnimatorController не найден в бандле: {path}");
                     return false;
-                }
-
-                Log.Debug($"[TryGetAnimatorController] Аниматор загружен из файла: {path}");
             }
 
             animatorController = (RuntimeAnimatorController)animatorObject;
@@ -257,7 +286,6 @@ public class SchematicObject : MonoBehaviour
         catch (Exception ex)
         {
             Log.Error($"[TryGetAnimatorController] Ошибка при поиске аниматора '{animatorName}': {ex.Message}");
-            Log.Debug($"[TryGetAnimatorController] Stack trace: {ex.StackTrace}");
             return false;
         }
     }
@@ -342,6 +370,8 @@ public class SchematicObject : MonoBehaviour
     }
 
     internal Dictionary<int, Transform> ObjectFromId = [];
+    public readonly Dictionary<string, Transform> GuidToTransform = new();
+    public readonly Dictionary<string, string> PathToGuid = new();
 
     private readonly ObservableCollection<GameObject> _attachedBlocks = [];
     private readonly List<NetworkIdentity> _networkIdentities = [];

@@ -51,6 +51,8 @@ public class SchematicBlockData
 
     public virtual Dictionary<string, object> Properties { get; set; }
 
+    public virtual string Guid { get; set; }
+
     public GameObject Create(SchematicObject schematicObject, Transform parentTransform)
     {
         GameObject gameObject;
@@ -266,7 +268,6 @@ public class SchematicBlockData
             primitiveFlags = (PrimitiveFlags)Convert.ToByte(flags);
         else
         {
-            // Backward compatibility
             primitiveFlags = PrimitiveFlags.Visible;
             if (Scale.x >= 0f)
                 primitiveFlags |= PrimitiveFlags.Collidable;
@@ -290,7 +291,6 @@ public class SchematicBlockData
 
         if (Properties.TryGetValue("Shadows", out object shadows))
         {
-            // Backward compatibility
             light.NetworkShadowType = Convert.ToBoolean(shadows) ? LightShadows.Soft : LightShadows.None;
         }
         else
@@ -377,7 +377,9 @@ public class SchematicBlockData
         string label = Properties.TryGetValue("Label", out object lbl) ? Convert.ToString(lbl) : "REDIRECT";
         cameraToy.NetworkLabel = label;
         cameraToy.NetworkRoom = schematicObject.Room?.Identifier;
-        string uniqueId = Properties.TryGetValue("UniqueId", out object uid) ? Convert.ToString(uid) : Guid.NewGuid().ToString("N").Substring(0, 9);
+
+        string uniqueId = Properties.TryGetValue("UniqueId", out object uid) ? Convert.ToString(uid) : 
+            System.Guid.NewGuid().ToString("N").Substring(0, 9);
 
         MapEditorObject mapEditorObject = cameraToy.gameObject.AddComponent<MapEditorObject>();
         mapEditorObject.Id = uniqueId;
@@ -469,7 +471,8 @@ public class SchematicBlockData
         BoxCollider boxCollider = gameObject.AddComponent<BoxCollider>();
         boxCollider.isTrigger = true;
 
-        string uniqueId = Properties.TryGetValue("UniqueId", out object uid) ? Convert.ToString(uid) : Guid.NewGuid().ToString("N").Substring(0, 9);
+        string uniqueId = Properties.TryGetValue("UniqueId", out object uid) ? Convert.ToString(uid) 
+            : System.Guid.NewGuid().ToString("N").Substring(0, 9);
 
         MapEditorObject mapEditorObject = gameObject.AddComponent<MapEditorObject>();
         mapEditorObject.Id = uniqueId;

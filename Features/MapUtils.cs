@@ -1,5 +1,7 @@
 using Exiled.API.Enums;
 using Exiled.API.Features;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using ProjectMER.Features.Converters;
 using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Objects;
@@ -234,17 +236,48 @@ public static class MapUtils
             throw new FileNotFoundException(error);
         }
 
+        string jsonText = File.ReadAllText(schematicJsonPath);
+
         try
         {
-            data = JsonSerializer.Deserialize<SchematicObjectDataList>(File.ReadAllText(schematicJsonPath));
+            data = Utf8Json.JsonSerializer.Deserialize<SchematicObjectDataList>(jsonText);
             data.Path = schematicDirPath;
             Log.Debug($"[GetSchematicDataByName] Схематик загружен: {schematicName}");
+
+            bool needsSave = false;
+            JObject jsonObject = JObject.Parse(jsonText);
+            JArray blocks = (JArray)jsonObject["Blocks"];
+            
+            if (blocks != null)
+            {
+                foreach (JObject block in blocks)
+                {
+                    if (block["Guid"] == null)
+                    {
+                        block["Guid"] = System.Guid.NewGuid().ToString("N");
+                        needsSave = true;
+                    }
+                }
+            }
+
+            if (needsSave)
+            {
+                try
+                {
+                    File.WriteAllText(schematicJsonPath, jsonObject.ToString(Formatting.Indented));
+                    Log.Debug($"[GetSchematicDataByName] Авто-апгрейд схематика '{schematicName}' с добавлением GUID.");
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"[GetSchematicDataByName] Ошибка сохранения авто-апгрейда для '{schematicName}': {ex.Message}");
+                }
+            }
         }
-        catch (JsonParsingException e)
+        catch (Utf8Json.JsonParsingException e)
         {
             string error = $"Failed to load schematic data: File {schematicName}.json has JSON errors!\n{e.ToString().Split('\n')[0]}";
             Log.Error($"[GetSchematicDataByName] {error}");
-            throw new JsonParsingException(error);
+            throw new Utf8Json.JsonParsingException(error);
         }
 
         return data;
