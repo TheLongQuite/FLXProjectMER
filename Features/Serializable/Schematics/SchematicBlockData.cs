@@ -66,7 +66,7 @@ public class SchematicBlockData
                 BlockType.Pickup => CreatePickup(),
                 BlockType.Workstation => CreateWorkstation(),
                 BlockType.Text => CreateText(),
-                BlockType.InteractableToy => CreateInteractableToy(),
+                BlockType.InteractableToy => CreateInteractableToy(schematicObject),
                 BlockType.Camera => CreateScp079Camera(schematicObject),
                 BlockType.Teleport => CreateTeleport(),
                 BlockType.Waypoint => CreateWaypoint(),
@@ -411,7 +411,7 @@ public class SchematicBlockData
         return cameraToy.gameObject;
     }
     
-    private GameObject CreateInteractableToy()
+    private GameObject CreateInteractableToy(SchematicObject schematicObject)
     {
         InvisibleInteractableToy interactable = Object.Instantiate(PrefabManager.Interactable);
 
@@ -425,6 +425,7 @@ public class SchematicBlockData
         interactable.NetworkInteractionDuration = duration;
         interactable.NetworkIsLocked = isLocked;
 
+        Log.Info($"Создаём InteractableToy в рамках схематика с именем: {schematicObject.Name}");
         if (!Properties.TryGetValue("VisualPrimitive", out object visObj) || visObj == null)
             return interactable.gameObject;
 
@@ -434,7 +435,7 @@ public class SchematicBlockData
             Dictionary<string, object> dict => dict,
             _ => null
         };
-
+        
         if (visProps == null)
         {
             Log.Warn($"[CreateInteractableToy] Failed to parse VisualPrimitive for {Name}");

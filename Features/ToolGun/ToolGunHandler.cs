@@ -67,7 +67,7 @@ public static class ToolGunHandler
 
         serializableObject.ObjectId = id;
         if (map.TryAddElement(serializableObject))
-            map.SpawnObject(serializableObject, true);
+            map.SpawnObject(serializableObject, false);
 
         foreach (MapEditorObject mapEditorObject in map.SpawnedObjects)
         {
