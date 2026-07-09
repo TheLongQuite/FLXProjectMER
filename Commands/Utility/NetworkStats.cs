@@ -33,6 +33,7 @@ public class NetworkStats : ICommand
 
         List<PrimitiveObjectToy> primitives = [];
         Dictionary<PrimitiveObjectToy, string> primitiveToSchematic = new();
+        
         foreach (NetworkIdentity netId in NetworkServer.spawned.Values)
         {
             if (netId != null && netId.gameObject != null && netId.TryGetComponent(out PrimitiveObjectToy prim))
@@ -50,22 +51,66 @@ public class NetworkStats : ICommand
         
         int[] parent = new int[primitives.Count];
         for (int i = 0; i < primitives.Count; i++) parent[i] = i;
+        
+        const float cellSize = 12f;
+        Dictionary<Vector3Int, List<int>> grid = new();
 
         for (int i = 0; i < primitives.Count; i++)
         {
-            for (int j = i + 1; j < primitives.Count; j++)
-            {
-                if (!(Vector3.Distance(primitives[i].transform.position, primitives[j].transform.position) <= 12f))
-                    continue;
+            Vector3 pos = primitives[i].transform.position;
+            Vector3Int cell = new(
+                Mathf.FloorToInt(pos.x / cellSize),
+                Mathf.FloorToInt(pos.y / cellSize),
+                Mathf.FloorToInt(pos.z / cellSize)
+            );
 
-                int rootI = FindParent(parent, i);
-                int rootJ = FindParent(parent, j);
+            if (!grid.TryGetValue(cell, out List<int> list))
+            {
+                list = new List<int>();
+                grid[cell] = list;
+            }
+            list.Add(i);
+        }
+
+        for (int i = 0; i < primitives.Count; i++)
+        {
+            Vector3 posI = primitives[i].transform.position;
+            Vector3Int centerCell = new(
+                Mathf.FloorToInt(posI.x / cellSize),
+                Mathf.FloorToInt(posI.y / cellSize),
+                Mathf.FloorToInt(posI.z / cellSize)
+            );
+            
+            for (int x = -1; x <= 1; x++)
+            {
+                for (int y = -1; y <= 1; y++)
+                {
+                    for (int z = -1; z <= 1; z++)
+                    {
+                        Vector3Int neighborCell = new(centerCell.x + x, centerCell.y + y, centerCell.z + z);
+                        
+                        if (!grid.TryGetValue(neighborCell, out List<int> cellPrimitives))
+                            continue;
+
+                        foreach (int j in cellPrimitives)
+                        {
+                            if (j <= i) 
+                                continue;
+
+                            if (Vector3.Distance(posI, primitives[j].transform.position) <= 12f)
+                            {
+                                int rootI = FindParent(parent, i);
+                                int rootJ = FindParent(parent, j);
                     
-                if (rootI != rootJ)
-                    parent[rootI] = rootJ;
+                                if (rootI != rootJ)
+                                    parent[rootI] = rootJ;
+                            }
+                        }
+                    }
+                }
             }
         }
-        
+
         Dictionary<int, List<int>> clusters = new();
         for (int i = 0; i < primitives.Count; i++)
         {
@@ -93,30 +138,43 @@ public class NetworkStats : ICommand
         sb.AppendLine();
 
         int clusterIndex = 1;
-        foreach (List<int>? cluster in clusters.Values.OrderByDescending(c => c.Count))
+        int displayedClusters = 0;
+        const int maxDisplayedClusters = 15;
+
+        foreach (List<int> cluster in clusters.Values.OrderByDescending(c => c.Count))
         {
-            Vector3 center = Vector3.zero;
-            Dictionary<string, int> clusterSchematicCounts = new();
-
-            foreach (int idx in cluster)
+            if (displayedClusters < maxDisplayedClusters)
             {
-                center += primitives[idx].transform.position;
-                string schemName = primitiveToSchematic[primitives[idx]];
-                if (!clusterSchematicCounts.ContainsKey(schemName))
-                    clusterSchematicCounts[schemName] = 0;
+                Vector3 center = Vector3.zero;
+                Dictionary<string, int> clusterSchematicCounts = new();
+
+                foreach (int idx in cluster)
+                {
+                    center += primitives[idx].transform.position;
+                    string schemName = primitiveToSchematic[primitives[idx]];
+                    if (!clusterSchematicCounts.ContainsKey(schemName))
+                        clusterSchematicCounts[schemName] = 0;
+                    
+                    clusterSchematicCounts[schemName]++;
+                }
+
+                center /= cluster.Count;
+
+                string color = cluster.Count > 50 ? "red" : cluster.Count > 20 ? "yellow" : "white";
+                sb.AppendLine($"<color={color}><b>Кластер {clusterIndex}</b> ({cluster.Count} примитивов): Центр ≈ ({center.x:F1}, {center.y:F1}, {center.z:F1})</color>");
                 
-                clusterSchematicCounts[schemName]++;
+                foreach (KeyValuePair<string, int> kvp in clusterSchematicCounts.OrderByDescending(x => x.Value))
+                    sb.AppendLine($"   └ Схематик: <color=cyan>{kvp.Key}</color> ({kvp.Value} шт.)");
+
+                displayedClusters++;
             }
-
-            center /= cluster.Count;
-
-            string color = cluster.Count > 50 ? "red" : cluster.Count > 20 ? "yellow" : "white";
-            sb.AppendLine($"<color={color}><b>Кластер {clusterIndex}</b> ({cluster.Count} примитивов): Центр ≈ ({center.x:F1}, {center.y:F1}, {center.z:F1})</color>");
             
-            foreach (KeyValuePair<string, int> kvp in clusterSchematicCounts.OrderByDescending(x => x.Value))
-                sb.AppendLine($"   └ Схематик: <color=cyan>{kvp.Key}</color> ({kvp.Value} шт.)");
-
             clusterIndex++;
+        }
+
+        if (clusters.Count > maxDisplayedClusters)
+        {
+            sb.AppendLine($"\n... и еще {clusters.Count - maxDisplayedClusters} кластеров скрыты для экономии места в консоли.");
         }
         
         sb.AppendLine();
