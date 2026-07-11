@@ -8,11 +8,7 @@ using Exiled.API.Features.Toys;
 using Exiled.CustomItems.API.Features;
 using Interactables.Interobjects.DoorUtils;
 using InventorySystem.Items.Firearms.Attachments;
-using MapGeneration;
 using MapGeneration.Distributors;
-using Newtonsoft.Json.Linq;
-using PlayerRoles.PlayableScps.Scp079.Cameras;
-using PlayerRoles.PlayableScps.Scp079.Overcons;
 using ProjectMER.Features.Enums;
 using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Objects;
@@ -88,12 +84,30 @@ public class SchematicBlockData
         Transform transform = gameObject.transform;
         transform.SetParent(parentTransform);
         transform.SetLocalPositionAndRotation(Position, Quaternion.Euler(Rotation));
-
-        transform.localScale = BlockType switch
+        
+        if (BlockType == BlockType.InteractableToy)
         {
-            BlockType.Empty when Scale == Vector3.zero => Vector3.one,
-            _ => Scale
-        };
+            Vector3 parentScale = parentTransform.localScale;
+            transform.localScale = new Vector3(
+                Mathf.Approximately(parentScale.x, 0f) ? Scale.x : Scale.x / parentScale.x,
+                Mathf.Approximately(parentScale.y, 0f) ? Scale.y : Scale.y / parentScale.y,
+                Mathf.Approximately(parentScale.z, 0f) ? Scale.z : Scale.z / parentScale.z
+            );
+        }
+        else
+        {
+            transform.localScale = BlockType switch
+            {
+                BlockType.Empty when Scale == Vector3.zero => Vector3.one,
+                _ => Scale
+            };
+        }
+
+        if (BlockType == BlockType.InteractableToy)
+        {
+            Log.Info($"Спавню Interactable Toy в рамках схематика: {schematicObject.Name}\n" +
+                     $"На позиции: {gameObject.transform.position}");
+        }
         
         if (BlockType == BlockType.Waypoint)
         {
@@ -123,64 +137,18 @@ public class SchematicBlockData
 
     private GameObject CreateLocker()
     {
-        LockerType lockerType = LockerType.Unknown;
-    
-        if (Properties != null && Properties.TryGetValue("LockerType", out object lockerTypeProperty))
-        {
-            try
-            {
-                lockerType = (LockerType)Convert.ToInt32(lockerTypeProperty);
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[CreateLocker] Ошибка парсинга LockerType '{lockerTypeProperty}': {ex.Message}");
-            }
-        }
+        LockerType lockerType = Properties.TryGetValue("LockerType", out object lockerTypeProperty)
+            ? (LockerType)Convert.ToInt32(lockerTypeProperty)
+            : LockerType.Unknown;
 
-        if (lockerType == LockerType.Unknown)
-        {
-            Log.Warn($"[CreateLocker] LockerType не указан или Unknown для блока '{Name}'. Использую Misc.");
-            lockerType = LockerType.Misc;
-        }
+        Locker locker = Object.Instantiate(SerializableLocker.GetLockerObjectByType(lockerType));
 
-        Locker locker;
-        try
-        {
-            locker = Object.Instantiate(SerializableLocker.GetLockerObjectByType(lockerType));
-        }
-        catch (Exception ex)
-        {
-            Log.Error($"[CreateLocker] Ошибка создания локера типа {lockerType}: {ex.Message}");
-            locker = Object.Instantiate(PrefabManager.LockerMisc);
-        }
+        if (Properties.TryGetValue("ChambersSettings", out object chambersProperty) &&
+            chambersProperty is List<object> chambersList)
+            ApplyChambersSettings(locker, chambersList);
 
-        if (Properties != null)
-        {
-            if (Properties.TryGetValue("ChambersSettings", out object chambersProperty) &&
-                chambersProperty is List<object> chambersList)
-            {
-                try
-                {
-                    ApplyChambersSettings(locker, chambersList);
-                }
-                catch (Exception ex)
-                {
-                    Log.Error($"[CreateLocker] Ошибка применения ChambersSettings: {ex.Message}");
-                }
-            }
-
-            if (Properties.TryGetValue("Loot", out object lootProperty) && lootProperty is List<object> lootList)
-            {
-                try
-                {
-                    ApplyLootSettings(locker, lootList);
-                }
-                catch (Exception ex)
-                {
-                    Log.Error($"[CreateLocker] Ошибка применения Loot: {ex.Message}");
-                }
-            }
-        }
+        if (Properties.TryGetValue("Loot", out object lootProperty) && lootProperty is List<object> lootList)
+            ApplyLootSettings(locker, lootList);
 
         return locker.gameObject;
     }
@@ -359,6 +327,19 @@ public class SchematicBlockData
         return text.gameObject;
     }
 
+    private GameObject CreateInteractableToy(SchematicObject schematicObject)
+    {
+        InvisibleInteractableToy interactable = Object.Instantiate(PrefabManager.Interactable);
+
+        interactable.NetworkShape = Properties.TryGetValue("Shape", out object sh)
+            ? (InvisibleInteractableToy.ColliderShape)Convert.ToInt32(sh) : InvisibleInteractableToy.ColliderShape.Box;
+        interactable.NetworkInteractionDuration = Properties.TryGetValue("InteractionDuration", out object dur)
+            ? Convert.ToSingle(dur) : 0f;
+        interactable.NetworkIsLocked = Properties.TryGetValue("IsLocked", out object lk) && Convert.ToBoolean(lk);
+
+        return interactable.gameObject;
+    }
+
     private GameObject CreateScp079Camera(SchematicObject schematicObject)
     {
         CameraType cameraType = Properties.TryGetValue("CameraType", out object ct)
@@ -413,57 +394,6 @@ public class SchematicBlockData
         return cameraToy.gameObject;
     }
     
-    private GameObject CreateInteractableToy(SchematicObject schematicObject)
-    {
-        InvisibleInteractableToy interactable = Object.Instantiate(PrefabManager.Interactable);
-
-        InvisibleInteractableToy.ColliderShape shape = Properties.TryGetValue("Shape", out object sh)
-            ? (InvisibleInteractableToy.ColliderShape)Convert.ToInt32(sh) : InvisibleInteractableToy.ColliderShape.Box;
-        float duration = Properties.TryGetValue("InteractionDuration", out object dur)
-            ? Convert.ToSingle(dur) : 0f;
-        bool isLocked = Properties.TryGetValue("IsLocked", out object lk) && Convert.ToBoolean(lk);
-
-        interactable.NetworkShape = shape;
-        interactable.NetworkInteractionDuration = duration;
-        interactable.NetworkIsLocked = isLocked;
-
-        Log.Info($"Создаём InteractableToy в рамках схематика с именем: {schematicObject.Name}");
-        if (!Properties.TryGetValue("VisualPrimitive", out object visObj) || visObj == null)
-            return interactable.gameObject;
-
-        Dictionary<string, object>? visProps = visObj switch
-        {
-            JObject jObj => jObj.ToObject<Dictionary<string, object>>(),
-            Dictionary<string, object> dict => dict,
-            _ => null
-        };
-        
-        if (visProps == null)
-        {
-            Log.Warn($"[CreateInteractableToy] Failed to parse VisualPrimitive for {Name}");
-            return interactable.gameObject;
-        }
-
-        PrimitiveObjectToy primitive = Object.Instantiate(PrefabManager.PrimitiveObject);
-        primitive.transform.SetParent(interactable.transform,false);
-        primitive.transform.localPosition = Vector3.zero;
-        primitive.transform.localRotation = Quaternion.identity;
-        primitive.transform.localScale = Vector3.one; 
-
-        if (visProps.TryGetValue("PrimitiveType", out object pt))
-            primitive.NetworkPrimitiveType = (PrimitiveType)Convert.ToInt32(pt);
-
-        if (visProps.TryGetValue("Color", out object col))
-            primitive.NetworkMaterialColor = col.ToString().GetColorFromString();
-        
-        if (visProps.TryGetValue("PrimitiveFlags", out object pf))
-            primitive.NetworkPrimitiveFlags = (PrimitiveFlags)Convert.ToByte(pf);
-        else
-            primitive.NetworkPrimitiveFlags = PrimitiveFlags.Visible;
-        
-        return interactable.gameObject;
-    }
-    
     private GameObject CreateTeleport()
     {
         GameObject gameObject = new GameObject("Teleport");
@@ -499,7 +429,6 @@ public class SchematicBlockData
         teleportObject.InitForSchematic(targetTeleporters, allowedRoles, cooldown, teleportSoundId, teleportFlags, lockOnEvent);
 
         return gameObject;
-
     }
 
     private GameObject CreateWaypoint()
