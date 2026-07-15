@@ -6,6 +6,7 @@ using MEC;
 using PlayerRoles.PlayableScps.Scp079.Cameras;
 using ProjectMER.Features.Objects;
 using ProjectMER.Features.Objects.Models;
+using Object = UnityEngine.Object;
 
 namespace ProjectMER.EventHandlers;
 
@@ -42,5 +43,14 @@ public partial class EventHandlers
         CameraRoomFaker manager = new(ev.Player);
         CameraRoomFaker.Managers[ev.Player] = manager;
         Timing.CallDelayed(0.5f, () => manager.OnCameraChanged(scp079Role.Camera.Base));
+    }
+
+    public void OnServerWaitingForPlayersRedirect()
+    {
+        foreach (CameraRedirectObject obj in CameraRedirectObject.Dictionary.Values)
+            Object.Destroy(obj);
+
+        CameraRedirectObject.Dictionary.Clear();
+        CameraRoomFaker.Managers.Clear();
     }
 }

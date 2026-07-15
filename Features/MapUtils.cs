@@ -58,7 +58,7 @@ public static class MapUtils
 
     public static void LoadMap(string mapName)
     {
-        Log.Info($"[LoadMap] Начинаю загрузку карты: {mapName}");
+        Log.Debug($"[LoadMap] Начинаю загрузку карты: {mapName}");
         
         try
         {
@@ -72,7 +72,7 @@ public static class MapUtils
             Log.Debug($"[LoadMap] Карта перезагружена: {mapName}");
 
             LoadedMaps.Add(mapName, map);
-            Log.Info($"[LoadMap] Карта успешно загружена: {mapName}, объектов: {map.SpawnedObjects.Count}");
+            Log.Debug($"[LoadMap] Карта успешно загружена: {mapName}, объектов: {map.SpawnedObjects.Count}");
         }
         catch (InvalidOperationException ex) when (ex.Message.Contains("Sequence contains no matching element"))
         {

@@ -21,7 +21,7 @@ public class SoundObject : MonoBehaviour
     {
         if (string.IsNullOrEmpty(serializable.SoundName))
         {
-            Log.Info($"[SoundObject] SoundName is empty on object at {transform.position}. Skipping playback.");
+            Log.Debug($"[SoundObject] SoundName is empty on object at {transform.position}. Skipping playback.");
             return;
         }
 
@@ -38,7 +38,7 @@ public class SoundObject : MonoBehaviour
         }
         catch (Exception e)
         {
-            Log.Info($"[SoundObject] Failed to play sound '{serializable.SoundName}': {e.Message}");
+            Log.Debug($"[SoundObject] Failed to play sound '{serializable.SoundName}': {e.Message}");
         }
     }
 
@@ -53,7 +53,7 @@ public class SoundObject : MonoBehaviour
         }
         catch (Exception e)
         {
-            Log.Info($"[SoundObject] Failed to stop audio id {_audioId}: {e.Message}");
+            Log.Debug($"[SoundObject] Failed to stop audio id {_audioId}: {e.Message}");
         }
 
         _audioId = -1;

@@ -290,12 +290,10 @@ public class SchematicObject : MonoBehaviour
         }
     }
 
-    private bool AddAnimators()
+    private void AddAnimators()
     {
-        bool isAnimated = false;
         if (!_animators.IsEmpty())
         {
-            isAnimated = true;
             foreach (KeyValuePair<GameObject, RuntimeAnimatorController> pair in _animators)
             {
                 try
@@ -308,9 +306,8 @@ public class SchematicObject : MonoBehaviour
                 }
             }
         }
-
-        _animators.Clear();
         
+        _animators.Clear();
         try
         {
             AssetBundle.UnloadAllAssetBundles(false);
@@ -319,8 +316,6 @@ public class SchematicObject : MonoBehaviour
         {
             Log.Debug($"[AddAnimators] Ошибка выгрузки бандлов: {ex.Message}");
         }
-        
-        return isAnimated;
     }
 
     private bool AddRigidbodies()

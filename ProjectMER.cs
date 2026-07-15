@@ -6,6 +6,7 @@ using MapGeneration;
 using MEC;
 using ProjectMER.Configs;
 using ProjectMER.Features;
+using ProjectMER.Features.Objects;
 using ProjectMER.Features.Serializable;
 using ProjectMER.Patches;
 
@@ -56,7 +57,7 @@ public class ProjectMER : Plugin<Config>
             Log.Warn("Schematics directory does not exist. Creating...");
             Directory.CreateDirectory(SchematicsDir);
         }
-
+        
         LabApi.Events.Handlers.WarheadEvents.Started += _ev.OnWarheadStarted;
         LabApi.Events.Handlers.WarheadEvents.Stopped += _ev.OnWarheadStopped;
         LabApi.Events.Handlers.WarheadEvents.Detonated += _ev.OnWarheadDetonated;
@@ -75,6 +76,7 @@ public class ProjectMER : Plugin<Config>
         Exiled.Events.Handlers.Server.RoundStarted += _ev.OnServerRoundStartedAction;
         Exiled.Events.Handlers.Server.RoundStarted += _ev.OnServerRoundStartedToolGun;
 
+        Exiled.Events.Handlers.Server.WaitingForPlayers += _ev.OnServerWaitingForPlayersRedirect;
         Exiled.Events.Handlers.Server.WaitingForPlayers += _ev.OnServerWaitingForPlayersAction;
         Exiled.Events.Handlers.Server.WaitingForPlayers += _ev.OnServerWaitingForPlayersGeneric;
 

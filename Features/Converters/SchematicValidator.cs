@@ -88,7 +88,7 @@ public static class SchematicValidator
 
             string newContent = root.ToString(Formatting.Indented);
             File.WriteAllText(jsonPath, newContent);
-            Log.Info($"Schematic converted: {Path.GetFileName(jsonPath)}");
+            Log.Debug($"Schematic converted: {Path.GetFileName(jsonPath)}");
             return true;
         }
         catch (Exception e)

@@ -45,7 +45,7 @@ public static class ValidationManager
                 response = $"Карта '{mapName}' успешно провалидирована. Схематиков обработано: {
                     result.ConvertedSchematics.Count}";
 
-                Log.Info($"[VALIDATE] Карта {mapName} успешно обработана");
+                Log.Debug($"[VALIDATE] Карта {mapName} успешно обработана");
                 return true;
             }
 
@@ -101,7 +101,7 @@ public static class ValidationManager
                 ValidationResult result = MapValidator.ValidateMap(mapName, mapPath);
 
                 if (result.IsSuccess)
-                    Log.Info($"[VALIDATE] Карта {mapName} успешно обработана");
+                    Log.Debug($"[VALIDATE] Карта {mapName} успешно обработана");
                 else
                 {
                     foreach (string error in result.Errors)
@@ -127,7 +127,7 @@ public static class ValidationManager
     {
         ValidationResult result = SchematicValidator.ValidateAllSchematics();
 
-        Log.Info($"[VALIDATE] Схематики: успешно {result.SuccessCount}, ошибок {result.FailedCount}");
+        Log.Debug($"[VALIDATE] Схематики: успешно {result.SuccessCount}, ошибок {result.FailedCount}");
 
         foreach (string error in result.Errors)
             Log.Error($"[VALIDATE] {error}");
@@ -135,9 +135,9 @@ public static class ValidationManager
 
     public static void ValidateEverything()
     {
-        Log.Info("[VALIDATE] Начинаем полную валидацию...");
+        Log.Debug("[VALIDATE] Начинаем полную валидацию...");
         ValidateAllMaps();
         ValidateAllSchematics();
-        Log.Info("[VALIDATE] Валидация завершена.");
+        Log.Debug("[VALIDATE] Валидация завершена.");
     }
 }

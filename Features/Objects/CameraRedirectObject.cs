@@ -50,10 +50,4 @@ public class CameraRedirectObject : MonoBehaviour
 
         return mapEditorObject.TryGetComponent(out Scp079Camera? cam) ? cam : null;
     }
-
-    private void OnDestroy()
-    {
-        if (_scpCamera != null)
-            Dictionary.Remove(_scpCamera);
-    }
 }

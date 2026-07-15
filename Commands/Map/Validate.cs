@@ -68,7 +68,7 @@ public class Validate : ICommand
                         return;
                 }
 
-                Log.Info($"[VALIDATE] Завершено: {mode}");
+                Log.Debug($"[VALIDATE] Завершено: {mode}");
             }
             catch (Exception e)
             {

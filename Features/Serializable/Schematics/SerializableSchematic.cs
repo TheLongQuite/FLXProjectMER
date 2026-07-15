@@ -13,7 +13,6 @@ namespace ProjectMER.Features.Serializable.Schematics;
 public class SerializableSchematic : SerializableObject
 {
     public string SchematicName { get; set; } = "None";
-    public bool IsStatic { get; set; } = false;
 
     public override GameObject? SpawnOrUpdateObject(Room? room = null, GameObject? instance = null,
         bool isForced = false, bool shouldBeOptimized = true)
@@ -55,7 +54,7 @@ public class SerializableSchematic : SerializableObject
             NetworkServer.Spawn(schematic.gameObject);
             schematic.gameObject.AddComponent<SchematicObject>().Init(data, shouldBeOptimized, room);
         }
-
+        
         return schematic.gameObject;
     }
 }

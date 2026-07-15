@@ -56,7 +56,7 @@ public static class MirrorPatches
             if (writeMethod != null)
             {
                 dict[typeof(RoomIdentifier)] = writeMethod;
-                Log.Info($"Successfully registered WriteRoomIdentifier from {writeMethod.DeclaringType.Name} in MirrorExtensions!");
+                Log.Debug($"Successfully registered WriteRoomIdentifier from {writeMethod.DeclaringType.Name} in MirrorExtensions!");
             }
             else
             {

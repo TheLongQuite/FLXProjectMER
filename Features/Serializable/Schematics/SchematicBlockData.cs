@@ -105,7 +105,7 @@ public class SchematicBlockData
 
         if (BlockType == BlockType.InteractableToy)
         {
-            Log.Info($"Спавню Interactable Toy в рамках схематика: {schematicObject.Name}\n" +
+            Log.Debug($"Спавню Interactable Toy в рамках схематика: {schematicObject.Name}\n" +
                      $"На позиции: {gameObject.transform.position}");
         }
         
@@ -115,13 +115,7 @@ public class SchematicBlockData
         }
 
         if (gameObject.TryGetComponent(out AdminToyBase adminToyBase))
-        {
-            if (Properties != null && Properties.TryGetValue("Static", out object isStatic) &&
-                Convert.ToBoolean(isStatic))
-                adminToyBase.NetworkIsStatic = true;
-            else
-                adminToyBase.NetworkMovementSmoothing = 60;
-        }
+            adminToyBase.NetworkMovementSmoothing = 40;
 
         if (gameObject.TryGetComponent(out StructurePositionSync structurePositionSync))
         {
@@ -364,6 +358,7 @@ public class SchematicBlockData
 
         MapEditorObject mapEditorObject = cameraToy.gameObject.AddComponent<MapEditorObject>();
         mapEditorObject.Id = uniqueId;
+        MapEditorObject.DictionaryById[uniqueId] = mapEditorObject;
         
         List<TargetTeleporter> targetCameras = new();
         List<Dictionary<string, object>> targetsData = "TargetCameras".GetListOfDicts(Properties);
