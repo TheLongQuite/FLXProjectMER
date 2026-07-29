@@ -1,103 +1,84 @@
-﻿using Exiled.API.Enums;
-using Exiled.API.Extensions;
-using Exiled.API.Features;
-using Exiled.Events.EventArgs.Map;
-using Exiled.Events.EventArgs.Player;
-using FLXLib.Extensions;
-using InventorySystem.Items.Armor;
-using InventorySystem.Items.Firearms.Modules;
-using InventorySystem.Items.ThrowableProjectiles;
+﻿using Mirror;
+using PlayerStatsSystem;
 using ProjectMER.Events.Arguments;
 using ProjectMER.Events.Handlers;
+using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Objects;
 using UnityEngine;
 
 namespace ProjectMER.Features.Components;
 
-using Firearm = InventorySystem.Items.Firearms.Firearm;
-using PlayerEv = Exiled.Events.Handlers.Player;
-using MapEv = Exiled.Events.Handlers.Map;
-
-public class DamageableComponent : MonoBehaviour
+public abstract class DamageableComponent : MonoBehaviour, IDestructible
 {
-    private SchematicObject _schematic;
-    public float Health { get; set; }
+    private uint _networkId;
+    
+    public uint NetworkId => _networkId;
+    public Vector3 CenterOfMass => transform.position;
+    public SchematicObject SchematicObject { get; set; }
+    protected virtual bool ShouldSetHitboxLayer => true;
 
-    public void Start()
+    public float Health;
+
+    protected virtual void Start()
     {
-        _schematic = gameObject.GetComponent<SchematicObject>();
-        SubscribeEvents();
-    }
+        SchematicObject = GetComponentInParent<SchematicObject>();
+        NetworkIdentity netIdentity = GetComponentInParent<NetworkIdentity>();
+        _networkId = netIdentity != null ? netIdentity.netId : 0;
 
-    public void OnDestroy() => UnsubscribeEvents();
-
-    public void SubscribeEvents()
-    {
-        PlayerEv.Shot += OnShot;
-        MapEv.ExplodingGrenade += OnExploding;
-    }
-
-    public void UnsubscribeEvents()
-    {
-        PlayerEv.Shot -= OnShot;
-        MapEv.ExplodingGrenade -= OnExploding;
-    }
-
-    private void OnShot(ShotEventArgs ev)
-    {
-        SchematicObject comp = ev.RaycastHit.transform.GetComponentInParent<SchematicObject>();
-        if (!comp || _schematic != comp)
-            return;
-
-        Firearm firearmBase = ev.Firearm.Base;
-        firearmBase.TryGetModule<HitscanHitregModuleBase>(out HitscanHitregModuleBase hitregModule);
-        float damage = BodyArmorUtils.ProcessDamage(1, hitregModule.DamageAtDistance(ev.Distance),
-            Mathf.RoundToInt(hitregModule.EffectivePenetration * 100f));
-
-        if (!DamageTypeExtensions.ItemConversion.TryGetValue(ev.Firearm.Type, out DamageType damageType))
-            damageType = DamageType.Firearm;
-
-        Log.Debug($"Schematic {_schematic.Name} has been shot for {damage} with {damageType} ({
-            ev.Firearm.GetCustomOrBasicType()})");
-
-        Damage(damage, damageType, ev.Player);
-    }
-
-    private void OnExploding(ExplodingGrenadeEventArgs ev)
-    {
-        Log.Debug("Что-то взорвалось");
-
-        if (ev.Projectile?.Base is not ExplosionGrenade grenade ||
-            ev.Player?.CurrentItem?.Type == ItemType.ParticleDisruptor) // Ибо эта штука вызывает взрыв, как гранаты
-            return;
-
-        float damage = grenade._playerDamageOverDistance.Evaluate(Vector3.Distance(transform.position, ev.Position));
-        if (damage <= 0)
-            return;
-
-
-        Log.Debug($"Schematic {_schematic.Name} has been exploded with {ev.Projectile.GetCustomOrBasicType()}");
-        Damage(damage, DamageType.Explosion, ev.Player);
-    }
-
-    private void Damage(float damage, DamageType damageType, Player attacker)
-    {
-        Log.Debug($"Object has been damaged by {damage}");
-        SchematicDamagingEventArgs schematicDamagingEventArgs = new(_schematic, _schematic.Name, damage, damageType);
-        Schematic.OnSchematicDamaging(schematicDamagingEventArgs);
-        if (!schematicDamagingEventArgs.IsAllowed)
+        if (ShouldSetHitboxLayer)
         {
-            Log.Debug($"Schematic {_schematic.Name} damage denied by event");
-            return;
+            SetupProxies();
+        }
+    }
+
+    private void SetupProxies()
+    {
+        int hitboxLayer = LayerMask.NameToLayer("Hitbox");
+        if (hitboxLayer < 0)
+            hitboxLayer = LayerMask.NameToLayer("Default");
+
+        foreach (Collider col in GetComponentsInChildren<Collider>(true))
+        {
+            if (col.isTrigger) 
+                continue;
+
+            if (col.GetComponent<IDestructible>() != null) 
+                continue;
+
+            col.gameObject.layer = hitboxLayer;
+
+            DamageableProxy proxy = col.gameObject.AddComponent<DamageableProxy>();
+            proxy.Init(this);
+        }
+    }
+
+    public abstract bool Damage(float damage, DamageHandlerBase handler, Vector3 pos);
+
+    public class DamageableProxy : MonoBehaviour, IDestructible
+    {
+        private DamageableComponent? _parent;
+
+        public void Init(DamageableComponent parent)
+        {
+            _parent = parent;
         }
 
-        Health -= schematicDamagingEventArgs.Damage;
-        attacker?.ShowHitMarker(0.7f);
+        public uint NetworkId => _parent != null ? _parent.NetworkId : 0;
+        public Vector3 CenterOfMass => _parent != null ? _parent.CenterOfMass : transform.position;
 
-        if (Health > 0)
-            return;
+        public bool Damage(float damage, DamageHandlerBase handler, Vector3 pos)
+        {
+            if (_parent == null) 
+                return false;
 
-        Health = 0;
-        Destroy(gameObject);
+            SchematicDamagingEventArgs ev = new(_parent.SchematicObject,
+                damage, handler.GetDamageType() ?? default);
+            
+            Schematic.OnSchematicDamaging(ev);
+            
+            return _parent.Damage(ev.Damage, handler, pos);
+        }
+
+        private void OnDestroy() => _parent = null;
     }
 }

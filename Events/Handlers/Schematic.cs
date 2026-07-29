@@ -8,7 +8,7 @@ public static class Schematic
     public static Event<SchematicSpawningEventArgs> SchematicSpawning { get; set; } = new();
 
     public static Event<SchematicSpawnedEventArgs> SchematicSpawned { get; set; } = new();
-    public static Event<SchematicDamagingEventArgs> SchematicDamaged { get; set; } = new();
+    public static Event<SchematicDamagingEventArgs> SchematicDamaging { get; set; } = new();
     public static Event<ButtonInteractedEventArgs> ButtonInteracted { get; set; } = new();
 
     public static Event<SchematicDestroyedEventArgs> SchematicDestroyed { get; set; } = new();
@@ -21,5 +21,5 @@ public static class Schematic
 
     public static void OnSchematicDestroyed(SchematicDestroyedEventArgs ev) => SchematicDestroyed.InvokeSafely(ev);
 
-    public static void OnSchematicDamaging(SchematicDamagingEventArgs ev) => SchematicDamaged.InvokeSafely(ev);
+    public static void OnSchematicDamaging(SchematicDamagingEventArgs ev) => SchematicDamaging.InvokeSafely(ev);
 }

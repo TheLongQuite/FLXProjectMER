@@ -1,8 +1,13 @@
 using System.Collections;
+using AdminToys;
+using CustomPlayerEffects;
 using Exiled.API.Enums;
 using Exiled.API.Features;
 using Exiled.API.Features.Doors;
+using Interactables.Interobjects.DoorUtils;
 using NorthwoodLib.Pools;
+using PlayerRoles.FirstPersonControl;
+using PlayerRoles.FirstPersonControl.Thirdperson;
 using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Objects;
 using ProjectMER.Features.Serializable.Lockers;
@@ -138,7 +143,7 @@ public class MapSchematic
                 Log.Error($"[MapSchematic.Reload] Ошибка при спавне двери {obj.ObjectId}: {ex.Message}");
             }
         });
-
+        
         SafeSpawnObjects("WorkStations", WorkStations);
         SafeSpawnObjects("PlayerSpawnPoints", PlayerSpawnPoints);
         SafeSpawnObjects("ItemSpawnPoints", ItemSpawnPoints);

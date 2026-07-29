@@ -249,6 +249,14 @@ public class SchematicObject : MonoBehaviour
         if (string.IsNullOrEmpty(animatorName))
             return false;
 
+        string cacheKey = Path.Combine(DirectoryPath, animatorName);
+
+        if (AnimatorControllerCache.TryGetValue(cacheKey, out RuntimeAnimatorController cached))
+        {
+            animatorController = cached;
+            return animatorController != null;
+        }
+
         try
         {
             AssetBundle? matchingBundle = AssetBundle.GetAllLoadedAssetBundles()
@@ -264,28 +272,37 @@ public class SchematicObject : MonoBehaviour
 
             if (animatorObject == null)
             {
-                string path = Path.Combine(DirectoryPath, animatorName);
-
-                if (!File.Exists(path))
+                if (!File.Exists(cacheKey))
+                {
+                    AnimatorControllerCache[cacheKey] = null!;
                     return false;
+                }
 
-                AssetBundle? bundle = AssetBundle.LoadFromFile(path);
+                AssetBundle? bundle = AssetBundle.LoadFromFile(cacheKey);
                 if (bundle == null)
+                {
+                    AnimatorControllerCache[cacheKey] = null!;
                     return false;
+                }
 
                 animatorObject = bundle.LoadAllAssets()
                     .FirstOrDefault(x => x is RuntimeAnimatorController);
 
                 if (animatorObject == null)
+                {
+                    AnimatorControllerCache[cacheKey] = null!;
                     return false;
+                }
             }
 
             animatorController = (RuntimeAnimatorController)animatorObject;
+            AnimatorControllerCache[cacheKey] = animatorController;
             return true;
         }
         catch (Exception ex)
         {
             Log.Error($"[TryGetAnimatorController] Ошибка при поиске аниматора '{animatorName}': {ex.Message}");
+            AnimatorControllerCache[cacheKey] = null!;
             return false;
         }
     }
@@ -321,38 +338,51 @@ public class SchematicObject : MonoBehaviour
     private bool AddRigidbodies()
     {
         string rigidbodyPath = Path.Combine(DirectoryPath, $"{Name}-Rigidbodies.json");
-        if (!File.Exists(rigidbodyPath))
+
+        if (!RigidbodyCache.TryGetValue(rigidbodyPath, out Dictionary<int, SerializableRigidbody> rigidbodies))
+        {
+            rigidbodies = LoadRigidbodies(rigidbodyPath);
+            RigidbodyCache[rigidbodyPath] = rigidbodies;
+        }
+
+        if (rigidbodies == null)
             return false;
 
         bool hasRigidbodies = false;
 
-        try
+        foreach (KeyValuePair<int, SerializableRigidbody> dict in rigidbodies)
         {
-            Dictionary<int, SerializableRigidbody> rigidbodies = JsonSerializer
-                .Deserialize<Dictionary<int, SerializableRigidbody>>(File.ReadAllText(rigidbodyPath));
+            if (!ObjectFromId.TryGetValue(dict.Key, out Transform objTransform))
+                continue;
 
-            foreach (KeyValuePair<int, SerializableRigidbody> dict in rigidbodies)
-            {
-                if (!ObjectFromId.TryGetValue(dict.Key, out Transform objTransform))
-                    continue;
+            if (!objTransform.gameObject.TryGetComponent(out Rigidbody rigidbody))
+                rigidbody = objTransform.gameObject.AddComponent<Rigidbody>();
 
-                if (!objTransform.gameObject.TryGetComponent(out Rigidbody rigidbody))
-                    rigidbody = objTransform.gameObject.AddComponent<Rigidbody>();
+            rigidbody.isKinematic = dict.Value.IsKinematic;
+            rigidbody.useGravity = dict.Value.UseGravity;
+            rigidbody.constraints = dict.Value.Constraints;
+            rigidbody.mass = dict.Value.Mass;
 
-                rigidbody.isKinematic = dict.Value.IsKinematic;
-                rigidbody.useGravity = dict.Value.UseGravity;
-                rigidbody.constraints = dict.Value.Constraints;
-                rigidbody.mass = dict.Value.Mass;
-
-                hasRigidbodies = true;
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Error($"[AddRigidbodies] Ошибка загрузки Rigidbodies для {Name}: {ex.Message}");
+            hasRigidbodies = true;
         }
 
         return hasRigidbodies;
+    }
+
+    private static Dictionary<int, SerializableRigidbody> LoadRigidbodies(string rigidbodyPath)
+    {
+        if (!File.Exists(rigidbodyPath))
+            return null;
+
+        try
+        {
+            return JsonSerializer.Deserialize<Dictionary<int, SerializableRigidbody>>(File.ReadAllText(rigidbodyPath));
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"[AddRigidbodies] Ошибка загрузки Rigidbodies из {rigidbodyPath}: {ex.Message}");
+            return null;
+        }
     }
 
     public void Destroy() => Destroy(gameObject);
@@ -372,4 +402,7 @@ public class SchematicObject : MonoBehaviour
     private readonly List<NetworkIdentity> _networkIdentities = [];
     private readonly List<AdminToyBase> _adminToyBases = [];
     private readonly Dictionary<GameObject, RuntimeAnimatorController> _animators = [];
+
+    private static readonly Dictionary<string, Dictionary<int, SerializableRigidbody>> RigidbodyCache = new();
+    private static readonly Dictionary<string, RuntimeAnimatorController> AnimatorControllerCache = new();
 }

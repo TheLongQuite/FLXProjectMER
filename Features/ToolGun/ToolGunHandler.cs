@@ -14,17 +14,17 @@ public static class ToolGunHandler
 {
     public static Dictionary<Player, MapEditorObject> PlayerSelectedObjectDict { get; private set; } = [];
 
-    public static void CreateObject(Player player, ToolGunObjectType objectType, string schematicName = "")
+    public static void CreateObject(Player player, ToolGunObjectType objectType, string schematicName = "", bool shouldBeOptimized = false)
     {
         if (!Raycast(player, out RaycastHit hit))
             return;
 
-        CreateObject(hit.point, objectType, schematicName);
+        CreateObject(hit.point, objectType, schematicName, shouldBeOptimized);
         if (Config.AutoSelect)
             SelectObject(player, MapUtils.UntitledMap.SpawnedObjects.LastOrDefault());
     }
 
-    public static void CreateObject(Vector3 position, ToolGunObjectType objectType, string schematicName = "")
+    public static void CreateObject(Vector3 position, ToolGunObjectType objectType, string schematicName = "", bool shouldBeOptimized = false)
     {
         Room room = RoomExtensions.GetRoomAtPosition(position);
 
@@ -67,7 +67,7 @@ public static class ToolGunHandler
 
         serializableObject.ObjectId = id;
         if (map.TryAddElement(serializableObject))
-            map.SpawnObject(serializableObject, false);
+            map.SpawnObject(serializableObject, shouldBeOptimized);
 
         foreach (MapEditorObject mapEditorObject in map.SpawnedObjects)
         {

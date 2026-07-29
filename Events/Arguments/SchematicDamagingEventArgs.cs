@@ -9,17 +9,14 @@ namespace ProjectMER.Events.Arguments;
 /// </summary>
 public class SchematicDamagingEventArgs : IDeniableEvent
 {
-    public SchematicDamagingEventArgs(SchematicObject schematic, string name, float damage, DamageType damageType)
+    public SchematicDamagingEventArgs(SchematicObject schematic, float damage, DamageType damageType)
     {
         Schematic = schematic;
-        Name = name;
         Damage = damage;
         DamageType = damageType;
     }
 
     public SchematicObject Schematic { get; }
-
-    public string Name { get; }
 
     /// <summary>
     /// Gets or sets damage that will be applied on schematic.

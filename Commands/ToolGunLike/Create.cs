@@ -34,6 +34,10 @@ public class Create : ICommand
 
         Player? player = Player.Get(sender)!;
 
+        List<string> argsList = arguments.ToList();
+        bool shouldBeOptimized = argsList.Remove("-opt");
+        arguments = new ArraySegment<string>(argsList.ToArray());
+
         if (arguments.Count == 0)
         {
             StringBuilder sb = StringBuilderPool.Shared.Rent();
@@ -52,6 +56,8 @@ public class Create : ICommand
 
             sb.AppendLine();
             sb.Append("To spawn a custom schematic, please use it's file name as an argument.");
+            sb.AppendLine();
+            sb.Append("Use -opt flag to spawn an optimized schematic.");
 
             response = StringBuilderPool.Shared.ToStringReturn(sb);
             return true;
@@ -60,7 +66,7 @@ public class Create : ICommand
         Vector3 position = Vector3.zero;
         if (arguments.Count >= 4 && !TryGetVector(arguments.At(1), arguments.At(2), arguments.At(3), out position))
         {
-            response = "Invalid arguments. Usage: mp create <object> <posX> <posY> <posZ>";
+            response = "Invalid arguments. Usage: mp create <object> <posX> <posY> <posZ> [-opt]";
             return false;
         }
 
@@ -76,7 +82,7 @@ public class Create : ICommand
         }
         else if (arguments.Count < 4)
         {
-            response = "Invalid arguments. Usage: mp create <object> optionally: <posX> <posY> <posZ>";
+            response = "Invalid arguments. Usage: mp create <object> optionally: <posX> <posY> <posZ> [-opt]";
             return false;
         }
 
@@ -85,7 +91,7 @@ public class Create : ICommand
         if (Enum.TryParse(objectName, true, out ToolGunObjectType parsedEnum) &&
             Enum.IsDefined(typeof(ToolGunObjectType), parsedEnum))
         {
-            ToolGunHandler.CreateObject(position, parsedEnum);
+            ToolGunHandler.CreateObject(position, parsedEnum, shouldBeOptimized: shouldBeOptimized);
             if (Config.AutoSelect && player is not null)
                 ToolGunHandler.SelectObject(player, MapUtils.UntitledMap.SpawnedObjects.Last());
 
@@ -104,7 +110,7 @@ public class Create : ICommand
             return false;
         }
 
-        ToolGunHandler.CreateObject(position, ToolGunObjectType.Schematic, objectName);
+        ToolGunHandler.CreateObject(position, ToolGunObjectType.Schematic, objectName, shouldBeOptimized);
         if (Config.AutoSelect && player is not null)
             ToolGunHandler.SelectObject(player, MapUtils.UntitledMap.SpawnedObjects.LastOrDefault());
 
