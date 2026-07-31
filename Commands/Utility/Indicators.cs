@@ -14,9 +14,9 @@ public class Indicators : ICommand
 
     public bool Execute(ArraySegment<string> arguments, ICommandSender sender, out string response)
     {
-        if (!sender.CheckPermission($"mpr.{Command}"))
+        if (!sender.CheckPermission("mpr.indicators"))
         {
-            response = $"You don't have permission to execute this command. Required permission: mpr.{Command}";
+            response = $"You don't have permission to execute this command. Required permission: mpr.indicators";
             return false;
         }
 
