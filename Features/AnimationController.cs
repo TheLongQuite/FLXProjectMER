@@ -1,3 +1,4 @@
+using ProjectMER.Features.Components;
 using ProjectMER.Features.Objects;
 using UnityEngine;
 
@@ -16,14 +17,20 @@ public class AnimationController
     {
         AttachedSchematic = schematic;
 
-        List<Animator> list = [];
+        List<Animator> animatorList = [];
+        List<AnimationStateTracker> trackerList = [];
+
         foreach (GameObject gameObject in schematic.AttachedBlocks)
         {
-            if (gameObject.TryGetComponent(out Animator animator))
-                list.Add(animator);
+            if (!gameObject.TryGetComponent(out Animator animator))
+                continue;
+
+            animatorList.Add(animator);
+            trackerList.Add(AnimationStateTracker.GetOrCreate(animator));
         }
 
-        Animators = list;
+        Animators = animatorList;
+        StateTrackers = trackerList;
         Dictionary.Add(schematic, this);
     }
 
@@ -36,7 +43,51 @@ public class AnimationController
     /// Gets a <see cref="IReadOnlyList{T}"/> of <see cref="Animator"/> containing all the animators.
     /// </summary>
     public IReadOnlyList<Animator> Animators { get; }
+    
+    /// <summary>
+    /// Gets a <see cref="IReadOnlyList{T}"/> of <see cref="AnimationStateTracker"/> containing all the state trackers.
+    /// </summary>
+    public IReadOnlyList<AnimationStateTracker> StateTrackers { get; }
 
+    /// <summary>
+    /// Подписаться на вход в конкретный стейт по имени.
+    /// </summary>
+    public void OnStateEnter(string stateName, Action callback, int animatorIndex = 0)
+    {
+        int hash = Animator.StringToHash(stateName);
+        StateTrackers[animatorIndex].OnStateEntered += incomingHash =>
+        {
+            if (incomingHash == hash) 
+                callback();
+        };
+    }
+
+    /// <summary>
+    /// Подписаться на выход из конкретного стейта по имени.
+    /// </summary>
+    public void OnStateExit(string stateName, Action callback, int animatorIndex = 0)
+    {
+        int hash = Animator.StringToHash(stateName);
+        StateTrackers[animatorIndex].OnStateExited += exitedHash =>
+        {
+            if (exitedHash == hash) 
+                callback();
+        };
+    }
+
+    /// <summary>
+    /// Подписаться на любую смену стейта.
+    /// </summary>
+    public void OnAnyStateChange(Action<int, int> callback, int animatorIndex = 0)
+    {
+        int previousHash = 0;
+        StateTrackers[animatorIndex].OnStateEntered += newHash =>
+        {
+            callback(previousHash, newHash);
+            previousHash = newHash;
+        };
+    }
+    
     /// <summary>
     /// Plays an animation.
     /// </summary>
