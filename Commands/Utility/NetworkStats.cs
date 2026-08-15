@@ -17,6 +17,8 @@ public class NetworkStats : ICommand
 
     public string Description => "Отображает статистику активных объектов NetworkIdentity на сервере.";
 
+    private const string OutsideSchematicLabel = "Вне схематика (Карта)";
+
     public bool Execute(ArraySegment<string> arguments, ICommandSender sender, out string response)
     {
         if (!sender.CheckPermission($"mpr.{Command}"))
@@ -31,6 +33,9 @@ public class NetworkStats : ICommand
             return false;
         }
 
+        bool onlyOutsideSchematics = arguments.Count > 0 &&
+            arguments.ElementAt(arguments.Count - 1).Equals("none", StringComparison.OrdinalIgnoreCase);
+
         List<PrimitiveObjectToy> primitives = [];
         Dictionary<PrimitiveObjectToy, string> primitiveToSchematic = new();
         
@@ -38,21 +43,29 @@ public class NetworkStats : ICommand
         {
             if (netId != null && netId.gameObject != null && netId.TryGetComponent(out PrimitiveObjectToy prim))
             {
+                string schemName = GetSchematicName(prim);
+
+                if (onlyOutsideSchematics && schemName != OutsideSchematicLabel)
+                    continue;
+
                 primitives.Add(prim);
-                primitiveToSchematic[prim] = GetSchematicName(prim);
+                primitiveToSchematic[prim] = schemName;
             }
         }
 
         if (primitives.Count == 0)
         {
-            response = "На сервере нет активных PrimitiveObjectToy.";
+            response = onlyOutsideSchematics
+                ? "На сервере нет активных PrimitiveObjectToy вне схематиков."
+                : "На сервере нет активных PrimitiveObjectToy.";
             return true;
         }
         
         int[] parent = new int[primitives.Count];
         for (int i = 0; i < primitives.Count; i++) parent[i] = i;
-        
-        const float cellSize = 12f;
+
+        float clusterDistance = onlyOutsideSchematics ? 3.5f : 12f;
+        float cellSize = clusterDistance;
         Dictionary<Vector3Int, List<int>> grid = new();
 
         for (int i = 0; i < primitives.Count; i++)
@@ -97,7 +110,7 @@ public class NetworkStats : ICommand
                             if (j <= i) 
                                 continue;
 
-                            if (Vector3.Distance(posI, primitives[j].transform.position) <= 12f)
+                            if (Vector3.Distance(posI, primitives[j].transform.position) <= clusterDistance)
                             {
                                 int rootI = FindParent(parent, i);
                                 int rootJ = FindParent(parent, j);
@@ -133,13 +146,23 @@ public class NetworkStats : ICommand
         StringBuilder sb = StringBuilderPool.Shared.Rent();
 
         sb.AppendLine();
-        sb.AppendLine($"<color=red><b>Всего активных PrimitiveObjectToy: {primitives.Count}</b></color>");
-        sb.AppendLine($"<color=green><b>Сформировано кластеров (дистанция <= 12): {clusters.Count}</b></color>");
+
+        if (onlyOutsideSchematics)
+        {
+            sb.AppendLine($"<color=red><b>Всего активных PrimitiveObjectToy вне схематиков: {primitives.Count}</b></color>");
+            sb.AppendLine($"<color=green><b>Сформировано кластеров (дистанция <= {clusterDistance:F1}): {clusters.Count}</b></color>");
+        }
+        else
+        {
+            sb.AppendLine($"<color=red><b>Всего активных PrimitiveObjectToy: {primitives.Count}</b></color>");
+            sb.AppendLine($"<color=green><b>Сформировано кластеров (дистанция <= {clusterDistance:F1}): {clusters.Count}</b></color>");
+        }
+
         sb.AppendLine();
 
         int clusterIndex = 1;
         int displayedClusters = 0;
-        const int maxDisplayedClusters = 15;
+        int maxDisplayedClusters = onlyOutsideSchematics ? 40 : 15;
 
         foreach (List<int> cluster in clusters.Values.OrderByDescending(c => c.Count))
         {
@@ -161,10 +184,13 @@ public class NetworkStats : ICommand
                 center /= cluster.Count;
 
                 string color = cluster.Count > 50 ? "red" : cluster.Count > 20 ? "yellow" : "white";
-                sb.AppendLine($"<color={color}><b>Кластер {clusterIndex}</b> ({cluster.Count} примитивов): Центр ≈ ({center.x:F1}, {center.y:F1}, {center.z:F1})</color>");
-                
-                foreach (KeyValuePair<string, int> kvp in clusterSchematicCounts.OrderByDescending(x => x.Value))
-                    sb.AppendLine($"   └ Схематик: <color=cyan>{kvp.Key}</color> ({kvp.Value} шт.)");
+                sb.AppendLine($"<color={color}><b>Кластер {clusterIndex}</b> ({cluster.Count} примитивов): Позиция ≈ ({center.x:F1}, {center.y:F1}, {center.z:F1})</color>");
+
+                if (!onlyOutsideSchematics)
+                {
+                    foreach (KeyValuePair<string, int> kvp in clusterSchematicCounts.OrderByDescending(x => x.Value))
+                        sb.AppendLine($"   └ Схематик: <color=cyan>{kvp.Key}</color> ({kvp.Value} шт.)");
+                }
 
                 displayedClusters++;
             }
@@ -176,12 +202,15 @@ public class NetworkStats : ICommand
         {
             sb.AppendLine($"\n... и еще {clusters.Count - maxDisplayedClusters} кластеров скрыты для экономии места в консоли.");
         }
-        
-        sb.AppendLine();
-        sb.AppendLine("<color=orange><b>--- Всего примитивов по схематикам ---</b></color>");
-        
-        foreach (KeyValuePair<string, int> kvp in globalSchematicCounts.OrderByDescending(x => x.Value))
-            sb.AppendLine($"- <color=cyan>{kvp.Key}</color>: {kvp.Value} примитивов");
+
+        if (!onlyOutsideSchematics)
+        {
+            sb.AppendLine();
+            sb.AppendLine("<color=orange><b>--- Всего примитивов по схематикам ---</b></color>");
+
+            foreach (KeyValuePair<string, int> kvp in globalSchematicCounts.OrderByDescending(x => x.Value))
+                sb.AppendLine($"- <color=cyan>{kvp.Key}</color>: {kvp.Value} примитивов");
+        }
 
         response = StringBuilderPool.Shared.ToStringReturn(sb);
         return true;
@@ -198,7 +227,7 @@ public class NetworkStats : ICommand
             current = current.parent;
         }
         
-        return "Вне схематика (Карта)";
+        return OutsideSchematicLabel;
     }
     
     private static int FindParent(int[] parent, int i)

@@ -9,6 +9,7 @@ using Exiled.CustomItems.API.Features;
 using Interactables.Interobjects.DoorUtils;
 using InventorySystem.Items.Firearms.Attachments;
 using MapGeneration.Distributors;
+using Mirror;
 using ProjectMER.Features.Enums;
 using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Objects;
@@ -85,29 +86,11 @@ public class SchematicBlockData
         transform.SetParent(parentTransform);
         transform.SetLocalPositionAndRotation(Position, Quaternion.Euler(Rotation));
         
-        if (BlockType == BlockType.InteractableToy)
+        transform.localScale = BlockType switch
         {
-            Vector3 parentScale = parentTransform.localScale;
-            transform.localScale = new Vector3(
-                Mathf.Approximately(parentScale.x, 0f) ? Scale.x : Scale.x / parentScale.x,
-                Mathf.Approximately(parentScale.y, 0f) ? Scale.y : Scale.y / parentScale.y,
-                Mathf.Approximately(parentScale.z, 0f) ? Scale.z : Scale.z / parentScale.z
-            );
-        }
-        else
-        {
-            transform.localScale = BlockType switch
-            {
-                BlockType.Empty when Scale == Vector3.zero => Vector3.one,
-                _ => Scale
-            };
-        }
-
-        if (BlockType == BlockType.InteractableToy)
-        {
-            Log.Debug($"Спавню Interactable Toy в рамках схематика: {schematicObject.Name}\n" +
-                     $"На позиции: {gameObject.transform.position}");
-        }
+            BlockType.Empty when Scale == Vector3.zero => Vector3.one,
+            _ => Scale
+        };
         
         if (BlockType == BlockType.Waypoint)
         {
@@ -125,7 +108,7 @@ public class SchematicBlockData
         
         if (Properties != null && Properties.TryGetValue("FollowWaypoint", out object followObj) && Convert.ToBoolean(followObj))
             gameObject.AddComponent<TransformWaypointFollower>();
-
+        
         return gameObject;
     }
 
