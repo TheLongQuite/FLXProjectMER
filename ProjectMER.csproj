@@ -14,14 +14,11 @@
         </PostBuildEvent>
     </PropertyGroup>
     <ItemGroup>
-        <Reference Include="AdvancedMERTools">
-          <HintPath>..\References\AdvancedMERTools.dll</HintPath>
-        </Reference>
         <Reference Include="AudioPlayerApi">
-          <HintPath>..\References\AudioPlayerApi.dll</HintPath>
+          <HintPath>$(EXILED_REFERENCES)\AudioPlayerApi.dll</HintPath>
         </Reference>
         <Reference Include="AudioSystem">
-          <HintPath>..\References\AudioSystem.dll</HintPath>
+          <HintPath>$(EXILED_REFERENCES)\AudioSystem.dll</HintPath>
         </Reference>
         <Reference Include="Exiled.API">
             <HintPath>$(EXILED_REFERENCES)\Exiled.API.dll</HintPath>
@@ -57,7 +54,7 @@
             <HintPath>$(EXILED_REFERENCES)\Newtonsoft.Json.dll</HintPath>
         </Reference>
         <Reference Include="Pooling">
-          <HintPath>..\References\Pooling.dll</HintPath>
+          <HintPath>$(EXILED_REFERENCES)\Pooling.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine" HintPath="$(EXILED_REFERENCES)\UnityEngine.dll"/>
         <Reference Include="UnityEngine.AnimationModule" HintPath="$(EXILED_REFERENCES)\UnityEngine.AnimationModule.dll"/>
