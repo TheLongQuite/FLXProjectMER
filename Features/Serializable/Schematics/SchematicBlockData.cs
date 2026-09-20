@@ -419,18 +419,17 @@ public class SchematicBlockData
     
     private GameObject CreateSound()
     {
-        short id = Methods.PlayAudio(
-            $"{Convert.ToString(Properties["SoundName"])}.ogg", Vector3.zero, 
-            (float)Convert.ToDouble(Properties["Radius"]), 
-            (float)Convert.ToDouble(Properties["MinRadius"]),
-            Convert.ToByte(Properties["Volume"]), 
-            "AUDIO", 
-            Convert.ToBoolean(Properties["Loop"]));
+        AudioHandle handle = Methods.Play($"{Convert.ToString(Properties["SoundName"])}.ogg", r =>
+        {
+            r.Position = Vector3.zero;
+            r.MinDistance = (float)Convert.ToDouble(Properties["MinRadius"]);
+            r.MaxDistance = (float)Convert.ToDouble(Properties["MinRadius"]);
+            r.Volume = Convert.ToByte(Properties["Volume"]);
+            r.Loop = Convert.ToBoolean(Properties["Loop"]);
+            r.Label = "MER_AUDIO";
+        });
         
-        BetterAudioBase audio = Methods.GetAudio(id);
-        audio.BroadcastTransform = audio.InternalPlayer.gameObject.transform;
-        audio.BroadcastPosition = null;
-
-        return audio.InternalPlayer.gameObject;
+        handle.Follow = handle.Speaker.transform;
+        return handle.Speaker.gameObject;
     }
 }

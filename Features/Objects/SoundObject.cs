@@ -1,4 +1,5 @@
 ﻿using AudioSystem;
+using AudioSystem.Models;
 using Exiled.API.Features;
 using ProjectMER.Features.Serializable;
 using UnityEngine;
@@ -7,7 +8,7 @@ namespace ProjectMER.Features.Objects;
 
 public class SoundObject : MonoBehaviour
 {
-    private short _audioId = -1;
+    private AudioHandle? _audioHandle;
 
     public void Init(SerializableSound serializable) => Play(serializable);
 
@@ -27,14 +28,15 @@ public class SoundObject : MonoBehaviour
 
         try
         {
-            _audioId = Methods.PlayAudio(
-                $"{serializable.SoundName}.ogg",
-                transform,
-                serializable.Radius,
-                serializable.MinRadius,
-                serializable.Volume,
-                "MER_Sound",
-                serializable.Loop);
+            _audioHandle = Methods.Play($"{serializable.SoundName}.ogg", r =>
+                {
+                    r.Follow = transform;
+                    r.MaxDistance = serializable.Radius;
+                    r.MinDistance = serializable.MinRadius;
+                    r.Volume = serializable.Volume;
+                    r.Label = "MER_Sound";
+                    r.Loop = serializable.Loop;
+                });
         }
         catch (Exception e)
         {
@@ -44,19 +46,19 @@ public class SoundObject : MonoBehaviour
 
     public void Stop()
     {
-        if (_audioId < 0)
+        if (_audioHandle == null)
             return;
 
         try
         {
-            Methods.StopAudio(_audioId);
+            _audioHandle.Stop();
         }
         catch (Exception e)
         {
-            Log.Debug($"[SoundObject] Failed to stop audio id {_audioId}: {e.Message}");
+            Log.Debug($"[SoundObject] Failed to stop audio id {_audioHandle}: {e.Message}");
         }
 
-        _audioId = -1;
+        _audioHandle = null;
     }
 
     private void OnDestroy() => Stop();
