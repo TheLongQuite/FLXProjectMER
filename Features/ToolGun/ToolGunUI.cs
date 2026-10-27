@@ -31,12 +31,6 @@ public static class ToolGunUI
                      2;
         }
 
-        for (int i = 0; i < 36 - offset; i++)
-        {
-            sb.Append("<size=50%> </size>");
-            sb.AppendLine();
-        }
-
         if (mapEditorObject != null)
         {
             sb.Append($"<size=50%>MapName: {MapUtils.GetColoredMapName(mapEditorObject.MapName)}</size>");
