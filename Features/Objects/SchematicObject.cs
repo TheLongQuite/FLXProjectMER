@@ -186,18 +186,14 @@ public class SchematicObject : MonoBehaviour
 
         ObjectFromId.Add(block.ObjectId, gameObject.transform);
 
+        if (!string.IsNullOrEmpty(currentPath))
+            PathToTransform[currentPath] = gameObject.transform;
+
         if (!string.IsNullOrEmpty(block.Guid))
         {
             GuidToTransform[block.Guid] = gameObject.transform;
             if (!string.IsNullOrEmpty(currentPath))
                 PathToGuid[currentPath] = block.Guid;
-        }
-        else
-        {
-            string tempGuid = System.Guid.NewGuid().ToString("N");
-            GuidToTransform[tempGuid] = gameObject.transform;
-            if (!string.IsNullOrEmpty(currentPath))
-                PathToGuid[currentPath] = tempGuid;
         }
 
         if (block.BlockType != BlockType.Light && !string.IsNullOrEmpty(block.AnimatorName))
@@ -219,7 +215,7 @@ public class SchematicObject : MonoBehaviour
         if (string.IsNullOrEmpty(path))
             return null;
 
-        if (PathToGuid.TryGetValue(path, out string pathGuid) && GuidToTransform.TryGetValue(pathGuid, out Transform pt))
+        if (PathToTransform.TryGetValue(path, out Transform pt))
             return pt;
 
         return FindObjectWithPath(transform, path);
@@ -397,6 +393,7 @@ public class SchematicObject : MonoBehaviour
     internal Dictionary<int, Transform> ObjectFromId = [];
     public readonly Dictionary<string, Transform> GuidToTransform = new();
     public readonly Dictionary<string, string> PathToGuid = new();
+    public readonly Dictionary<string, Transform> PathToTransform = new();
 
     private readonly ObservableCollection<GameObject> _attachedBlocks = [];
     private readonly List<NetworkIdentity> _networkIdentities = [];

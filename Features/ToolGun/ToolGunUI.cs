@@ -7,7 +7,6 @@ using ProjectMER.Features.Extensions;
 using ProjectMER.Features.Objects;
 using UnityEngine;
 using UserSettings.ServerSpecific;
-using YamlDotNet.Serialization;
 
 namespace ProjectMER.Features.ToolGun;
 
@@ -16,60 +15,33 @@ public static class ToolGunUI
     public static string GetHintHUD(Player player)
     {
         StringBuilder sb = StringBuilderPool.Shared.Rent();
+        
+        sb.Append("<font=\"LiberationSans SDF\"><size=50%>");
 
-        sb.Append("<font=\"LiberationSans SDF\">");
-
-        int offset = 0;
-        object instance = null!;
-        List<PropertyInfo> properties = [];
         if (ToolGunHandler.TryGetSelectedMapObject(player, out MapEditorObject mapEditorObject) &&
             mapEditorObject != null)
         {
-            instance = mapEditorObject.GetType().GetField("Base").GetValue(mapEditorObject);
-            properties = instance.GetType().GetProperties().ToList();
-            offset = properties.Count - properties.Count(x => Attribute.IsDefined(x, typeof(YamlIgnoreAttribute))) + 2 +
-                     2;
+            object instance = mapEditorObject.GetType().GetField("Base").GetValue(mapEditorObject);
+            List<PropertyInfo> properties = instance.GetType().GetProperties().ToList();
+
+            sb.Append($"MapName: {MapUtils.GetColoredMapName(mapEditorObject.MapName)}\n");
+            sb.Append($"ID: {MapUtils.GetColoredString(mapEditorObject.Id)}");
+
+            foreach (string property in properties.GetColoredProperties(instance))
+                sb.Append('\n').Append(property);
         }
 
-        if (mapEditorObject != null)
+        if (player.CurrentItem.IsToolGun(out ToolGunItem toolGun))
         {
-            sb.Append($"<size=50%>MapName: {MapUtils.GetColoredMapName(mapEditorObject.MapName)}</size>");
-            sb.AppendLine();
-            sb.Append($"<size=50%>ID: {MapUtils.GetColoredString(mapEditorObject.Id)}</size>");
-            sb.AppendLine();
+            if (mapEditorObject != null)
+                sb.Append("\n\n");
+
+            sb.Append(GetToolGunModeString(player, toolGun)).Append('\n');
+            sb.Append($"{player.Position:F3}\n");
+            sb.Append(GetRoomString(player));
         }
 
-        foreach (string property in properties.GetColoredProperties(instance))
-        {
-            sb.Append($"<size=50%>");
-            sb.Append(property);
-            sb.Append("</size>");
-            sb.AppendLine();
-        }
-
-        if (offset > 0)
-            sb.AppendLine();
-
-        if (!player.CurrentItem.IsToolGun(out ToolGunItem toolGun))
-            return StringBuilderPool.Shared.ToStringReturn(sb);
-
-        sb.Append($"<size=50%>");
-        sb.Append(GetToolGunModeString(player, toolGun));
-        sb.Append("</size>");
-
-        sb.AppendLine();
-
-
-        sb.Append($"<size=50%>");
-        sb.Append($"{player.Position:F3}");
-        sb.Append("</size>");
-
-        sb.AppendLine();
-
-        sb.Append($"<size=50%>");
-        sb.Append(GetRoomString(player));
-        sb.Append("</size>");
-        sb.Append("</font>");
+        sb.Append("</size></font>");
 
         return StringBuilderPool.Shared.ToStringReturn(sb);
     }

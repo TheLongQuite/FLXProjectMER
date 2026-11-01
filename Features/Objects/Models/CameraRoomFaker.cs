@@ -15,8 +15,17 @@ public class CameraRoomFaker(Player player)
 
     private HashSet<Scp079CameraToy> _fakedCameras = [];
 
+    /// <summary>
+    /// Камера, для которой комнаты уже подменены: ChangedCamera после ChangingCamera не шлёт их повторно.
+    /// </summary>
+    private Scp079Camera? _lastCamera;
+
     public void OnCameraChanged(Scp079Camera newCamera)
     {
+        if (newCamera == _lastCamera)
+            return;
+
+        _lastCamera = newCamera;
         RoomIdentifier currentRoom = newCamera.Room;
         Vector3 currentPos = newCamera.Position;
 

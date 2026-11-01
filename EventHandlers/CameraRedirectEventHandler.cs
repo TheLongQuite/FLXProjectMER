@@ -12,6 +12,29 @@ namespace ProjectMER.EventHandlers;
 
 public partial class EventHandlers
 {
+    /// <summary>
+    /// Редирект и подмена комнат камер-игрушек до переключения: игра отправляет клиенту RPC о новой камере
+    /// сразу при смене, и клиент тут же строит иконки камер. Поддельные комнаты, отправленные позже
+    /// (в ChangedCamera), доходят уже после этого, и иконки соседних камер отстают на одно переключение.
+    /// </summary>
+    public void OnChangingCamera(Scp079ChangingCameraEventArgs ev)
+    {
+        if (!ev.IsAllowed)
+            return;
+
+        Scp079CurrentCameraSync cameraSync = ((PlayerRoles.PlayableScps.Scp079.Scp079Role)ev.Player.RoleBase)
+            ._curCamSync;
+        if (CameraRedirectObject.Dictionary.TryGetValue(ev.Camera.Base, out CameraRedirectObject redirect))
+        {
+            Scp079Camera? targetCamera = redirect.GetRandomTargetCamera();
+            if (targetCamera && targetCamera != cameraSync.CurrentCamera)
+                ev.Camera = Camera.Get(targetCamera);
+        }
+
+        if (CameraRoomFaker.Managers.TryGetValue(ev.Player, out CameraRoomFaker faker))
+            faker.OnCameraChanged(ev.Camera.Base);
+    }
+
     public void OnChangedCamera(Scp079ChangedCameraEventArgs ev)
     {
         Scp079CurrentCameraSync cameraSync = ((PlayerRoles.PlayableScps.Scp079.Scp079Role)ev.Player.RoleBase)

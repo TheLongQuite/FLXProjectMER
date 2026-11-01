@@ -243,35 +243,6 @@ public static class MapUtils
             data = Utf8Json.JsonSerializer.Deserialize<SchematicObjectDataList>(jsonText);
             data.Path = schematicDirPath;
             Log.Debug($"[GetSchematicDataByName] Схематик загружен: {schematicName}");
-
-            bool needsSave = false;
-            JObject jsonObject = JObject.Parse(jsonText);
-            JArray blocks = (JArray)jsonObject["Blocks"];
-            
-            if (blocks != null)
-            {
-                foreach (JObject block in blocks)
-                {
-                    if (block["Guid"] == null)
-                    {
-                        block["Guid"] = System.Guid.NewGuid().ToString("N");
-                        needsSave = true;
-                    }
-                }
-            }
-
-            if (needsSave)
-            {
-                try
-                {
-                    File.WriteAllText(schematicJsonPath, jsonObject.ToString(Formatting.Indented));
-                    Log.Debug($"[GetSchematicDataByName] Авто-апгрейд схематика '{schematicName}' с добавлением GUID.");
-                }
-                catch (Exception ex)
-                {
-                    Log.Error($"[GetSchematicDataByName] Ошибка сохранения авто-апгрейда для '{schematicName}': {ex.Message}");
-                }
-            }
         }
         catch (Utf8Json.JsonParsingException e)
         {

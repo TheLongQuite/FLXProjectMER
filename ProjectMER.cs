@@ -64,6 +64,7 @@ public class ProjectMER : Plugin<Config>
         LabApi.Events.Handlers.ServerEvents.LczDecontaminationStarted += _ev.OnServerLczDecontaminationStarted;
         LabApi.Events.Handlers.PlayerEvents.Spawned += _ev.OnPlayerSpawning;
         LabApi.Events.Handlers.PlayerEvents.InteractingShootingTarget += _ev.OnPlayerInteractingShootingTarget;
+        LabApi.Events.Handlers.Scp079Events.ChangingCamera += _ev.OnChangingCamera;
         LabApi.Events.Handlers.Scp079Events.ChangedCamera += _ev.OnChangedCamera;
         
         Exiled.Events.Handlers.Player.Spawned += _ev.OnSpawned;
