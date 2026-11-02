@@ -35,21 +35,16 @@ public partial class EventHandlers
             faker.OnCameraChanged(ev.Camera.Base);
     }
 
+    /// <summary>
+    /// Только досылает подмену комнат. Редирект сделан в <see cref="OnChangingCamera"/>; повторять его здесь нельзя:
+    /// если цель камеры-перехода — та камера, с которой 079 переключается, редирект вернул бы его обратно.
+    /// </summary>
     public void OnChangedCamera(Scp079ChangedCameraEventArgs ev)
     {
-        Scp079CurrentCameraSync cameraSync = ((PlayerRoles.PlayableScps.Scp079.Scp079Role)ev.Player.RoleBase)
-            ._curCamSync;
-        if (CameraRedirectObject.Dictionary.TryGetValue(ev.Camera.Base, out CameraRedirectObject redirect))
-        {
-            Scp079Camera? targetCamera = redirect.GetRandomTargetCamera();
-            if (targetCamera)
-                cameraSync.CurrentCamera = Camera.Get(targetCamera).Base;
-        }
-        
         if (!CameraRoomFaker.Managers.TryGetValue(ev.Player, out CameraRoomFaker faker))
             return;
 
-        faker.OnCameraChanged(cameraSync.CurrentCamera);
+        faker.OnCameraChanged(ev.Camera.Base);
     }
 
     public void OnSpawned(SpawnedEventArgs ev)
