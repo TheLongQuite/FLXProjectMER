@@ -261,7 +261,7 @@ public static class SchematicValidator
             return false;
 
         JToken? scaleToken = block["Scale"];
-        byte primitiveFlags = 1;
+        byte primitiveFlags = 2;
 
         if (scaleToken != null)
         {
@@ -276,10 +276,10 @@ public static class SchematicValidator
             }
 
             if (scaleX >= 0f)
-                primitiveFlags |= 2;
+                primitiveFlags |= 1;
         }
         else
-            primitiveFlags |= 2;
+            primitiveFlags |= 1;
 
         properties["PrimitiveFlags"] = primitiveFlags;
         modified = true;
